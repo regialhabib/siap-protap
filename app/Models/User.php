@@ -46,5 +46,15 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    public function uppt()
+    {
+        return $this->belongsTo(Uppt::class);
+    }
+
+    public function pengamatans()
+    {
+        return $this->hasMany(Pengamatan::class);
+    }
 }
 
