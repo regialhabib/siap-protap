@@ -23,13 +23,15 @@ class DashboardController extends Controller
             $query->where('pengamatans.uppt_id', $user->uppt_id);
         }
 
+        // Clone query for stats calculation before applying pagination (which modifies limit/offset)
+        $baseQuery = clone $query;
         $pengamatans = $query->paginate(10);
 
         // Simple statistics
         $stats = [
             'total_pengamatan' => $pengamatans->total(),
-            'total_luas_serangan' => $query->sum('serangan_jumlah'),
-            'komoditas_terdampak' => $query->distinct('pengamatans.komoditas_id')->count('pengamatans.komoditas_id'),
+            'total_luas_serangan' => $baseQuery->sum('serangan_jumlah'),
+            'komoditas_terdampak' => $baseQuery->distinct('pengamatans.komoditas_id')->count('pengamatans.komoditas_id'),
         ];
 
         return view('dashboard', compact('pengamatans', 'stats'));
