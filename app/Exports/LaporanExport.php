@@ -46,20 +46,20 @@ class LaporanExport implements FromView, WithColumnWidths, WithEvents
     {
         return [
             'A' => 13.0,
-            'B' => 6.33,
-            'C' => 16.21,
-            'D' => 14.10,
-            'E' => 12.21,
-            'F' => 9.88,
+            'B' => 6.5,
+            'C' => 25.0,  // Wilayah Pengamatan/Kecamatan
+            'D' => 18.0,  // Jenis Komoditas
+            'E' => 16.0,  // Luas Komoditi
+            'F' => 15.0,  // Jenis OPT
             'G' => 13.0,
             'H' => 13.0,
             'I' => 13.0,
             'J' => 13.0,
-            'K' => 14.21,
-            'L' => 13.77,
-            'M' => 13.0,
-            'N' => 13.0,
-            'O' => 13.0,
+            'K' => 16.0,  // APBD Kab
+            'L' => 16.0,  // APBD Prov
+            'M' => 15.0,  // Masyarakat
+            'N' => 13.0,  // APBN
+            'O' => 20.0,  // Kondisi Serangan
         ];
     }
 

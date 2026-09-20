@@ -22,7 +22,7 @@
 </head>
 <body>
     <div class="header">
-        <h3>LAPORAN BULANAN SERANGAN OPT TANAMAN PERKEBUNAN</h3>
+        <h3>LAPORAN {{ strtoupper($jenis) }} SERANGAN OPT TANAMAN PERKEBUNAN</h3>
     </div>
 
     <table class="meta-table">

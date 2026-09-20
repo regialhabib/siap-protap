@@ -1,8 +1,12 @@
 <table>
-    <!-- Spacer row if needed -->
+    <!-- Bantalan atas agar mulai dari A3 -->
+    <tr><td colspan="15"></td></tr>
+    <tr><td colspan="15"></td></tr>
+
+    <!-- Baris Judul (Sekarang di Baris 3) -->
     <tr>
-        <td></td> <!-- A1 -->
-        <td colspan="14" style="font-weight: bold; text-align: center; font-size: 14px;">LAPORAN BULANAN SERANGAN OPT TANAMAN PERKEBUNAN</td> <!-- B1:O1 -->
+        <td></td> <!-- A3 -->
+        <td colspan="14" style="font-weight: bold; text-align: center; font-size: 14px;">LAPORAN {{ strtoupper($jenis) }} SERANGAN OPT TANAMAN PERKEBUNAN</td> <!-- B3:O3 -->
     </tr>
     <tr>
         <td></td> <!-- A2 -->

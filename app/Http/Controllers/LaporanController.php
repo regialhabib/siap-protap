@@ -22,6 +22,7 @@ class LaporanController extends Controller
         $jenis = $request->input('jenis', 'bulanan');
         $tahun = $request->input('tahun', date('Y'));
         $bulan = $request->input('bulan', date('m'));
+        $triwulan = $request->input('triwulan', '1');
         $uppts = Uppt::orderBy('nama_uppt', 'asc')->get();
         $uppt_id = $request->input('uppt_id', $uppts->isNotEmpty() ? $uppts->first()->id : '');
 
@@ -62,6 +63,18 @@ class LaporanController extends Controller
         return view('laporan.index', compact('data', 'jenis', 'tahun', 'bulan', 'triwulan', 'uppt_id', 'uppts'));
     }
 
+    private function getFilename($jenis, $tahun, $bulan, $triwulan, $ext)
+    {
+        $periode = $tahun;
+        if ($jenis == 'bulanan') {
+            $namaBulan = \Carbon\Carbon::create()->month((int)$bulan)->translatedFormat('F');
+            $periode = "{$namaBulan}_{$tahun}";
+        } elseif ($jenis == 'triwulan') {
+            $periode = "Triwulan_{$triwulan}_{$tahun}";
+        }
+        return "Laporan_{$periode}.{$ext}";
+    }
+
     public function exportExcel(Request $request)
     {
         $data = $this->getData($request);
@@ -71,7 +84,7 @@ class LaporanController extends Controller
         $triwulan = $request->input('triwulan', '1');
         $uppt_id = $request->input('uppt_id', '');
 
-        $filename = "Laporan_Pengamatan_{$jenis}_{$tahun}.xlsx";
+        $filename = $this->getFilename($jenis, $tahun, $bulan, $triwulan, 'xlsx');
         return Excel::download(new LaporanExport($data, $jenis, $tahun, $bulan, $triwulan, $uppt_id), $filename);
     }
 
@@ -87,7 +100,7 @@ class LaporanController extends Controller
         $pdf = Pdf::loadView('laporan.pdf', compact('data', 'jenis', 'tahun', 'bulan', 'triwulan', 'uppt_id'))
                   ->setPaper('a4', 'landscape');
         
-        $filename = "Laporan_Pengamatan_{$jenis}_{$tahun}.pdf";
+        $filename = $this->getFilename($jenis, $tahun, $bulan, $triwulan, 'pdf');
         return $pdf->stream($filename);
     }
 }
