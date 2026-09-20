@@ -4,13 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Models\Komoditas;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class KomoditasController extends Controller
 {
     public function index()
     {
         // Hanya Admin yang boleh akses ini nanti (bisa ditambahkan middleware)
-        if(auth()->user()->role !== 'admin') {
+        if(Auth::user()->role !== 'admin') {
             abort(403, 'Hanya Admin yang dapat mengakses Master Data.');
         }
 

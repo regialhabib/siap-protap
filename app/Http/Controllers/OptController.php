@@ -5,11 +5,13 @@ namespace App\Http\Controllers;
 use App\Models\Opt;
 use Illuminate\Http\Request;
 
+use Illuminate\Support\Facades\Auth;
+
 class OptController extends Controller
 {
     public function index()
     {
-        if(auth()->user()->role !== 'admin') {
+        if(Auth::user()->role !== 'admin') {
             abort(403, 'Hanya Admin yang dapat mengakses Master Data.');
         }
 

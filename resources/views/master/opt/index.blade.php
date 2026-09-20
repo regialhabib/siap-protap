@@ -67,7 +67,7 @@
 
                             <!-- Modal Edit OPT -->
                             <x-modal name="edit-opt-{{ $k->id }}" focusable>
-                                <form method="post" action="{{ route('opt.update', $k->id) }}" class="p-6 text-left">
+                                <form method="post" action="{{ route('opt.update', $k->id) }}" class="p-6 text-left whitespace-normal">
                                     @csrf
                                     @method('put')
 
@@ -99,8 +99,8 @@
                             </button>
 
                             <!-- Modal Konfirmasi Hapus -->
-                            <x-modal name="hapus-opt-{{ $k->id }}" focusable>
-                                <form method="post" action="{{ route('opt.destroy', $k->id) }}" class="p-6 text-left">
+                            <x-modal maxWidth="md" name="hapus-opt-{{ $k->id }}" focusable>
+                                <form method="post" action="{{ route('opt.destroy', $k->id) }}" class="p-6 text-left whitespace-normal">
                                     @csrf
                                     @method('delete')
 
@@ -117,7 +117,7 @@
                                             Batal
                                         </button>
 
-                                        <button type="submit" class="px-4 py-2 bg-red-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-red-700 shadow-sm transition ease-in-out duration-150">
+                                        <button type="submit" class="px-4 py-2.5 bg-red-600 border border-transparent rounded-md font-bold text-xs text-white uppercase tracking-widest shadow-sm hover:bg-red-700 transition-colors transition ease-in-out duration-150">
                                             Ya, Hapus Data
                                         </button>
                                     </div>
@@ -151,7 +151,7 @@
 
     <!-- Modal Tambah OPT -->
     <x-modal name="tambah-opt" focusable>
-        <form method="post" action="{{ route('opt.store') }}" class="p-6">
+        <form method="post" action="{{ route('opt.store') }}" class="p-6 text-left whitespace-normal">
             @csrf
 
             <h2 class="text-lg font-bold text-gray-900">
