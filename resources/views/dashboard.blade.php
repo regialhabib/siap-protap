@@ -90,15 +90,15 @@
                             {{ \Carbon\Carbon::parse($p->tanggal_pengamatan)->format('d M Y') }}
                         </td>
                         <td class="px-6 py-4">
-                            <div class="font-bold text-gray-900">{{ $p->nama_uppt }}</div>
+                            <div class="font-bold text-gray-900">{{ $p->uppt->nama_uppt ?? '-' }}</div>
                         </td>
                         <td class="px-6 py-4">
                             <div class="flex items-center space-x-2">
                                 <span class="px-2.5 py-1 rounded-md text-xs font-medium bg-emerald-50 text-emerald-700">
-                                    {{ $p->nama_komoditas }}
+                                    {{ $p->komoditas->nama_komoditas ?? '-' }}
                                 </span>
                                 <span class="px-2.5 py-1 rounded-md text-xs font-medium bg-red-50 text-red-700">
-                                    {{ $p->nama_opt }}
+                                    {{ $p->opt->nama_opt ?? '-' }}
                                 </span>
                             </div>
                         </td>
@@ -143,7 +143,7 @@
                                     @method('DELETE')
                                     <h2 class="text-lg font-bold text-gray-900">Konfirmasi Penghapusan</h2>
                                     <p class="mt-3 text-sm text-gray-600">
-                                        Apakah Anda yakin ingin menghapus data pengamatan komoditas <strong>{{ $p->nama_komoditas }}</strong> tanggal <strong>{{ \Carbon\Carbon::parse($p->tanggal_pengamatan)->format('d M Y') }}</strong>?
+                                        Apakah Anda yakin ingin menghapus data pengamatan komoditas <strong>{{ $p->komoditas->nama_komoditas ?? '-' }}</strong> tanggal <strong>{{ \Carbon\Carbon::parse($p->tanggal_pengamatan)->format('d M Y') }}</strong>?
                                         <br><br>
                                         Tindakan ini permanen dan tidak dapat dibatalkan.
                                     </p>
@@ -212,7 +212,7 @@
                         <div class="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-xl">
                             <div>
                                 <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Wilayah UPPT</p>
-                                <p class="text-sm font-semibold text-gray-900" x-text="detail.nama_uppt"></p>
+                                <p class="text-sm font-semibold text-gray-900" x-text="detail.uppt?.nama_uppt"></p>
                             </div>
                             <div>
                                 <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Tanggal</p>
@@ -220,11 +220,11 @@
                             </div>
                             <div>
                                 <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Komoditas</p>
-                                <p class="text-sm font-semibold text-emerald-600" x-text="detail.nama_komoditas"></p>
+                                <p class="text-sm font-semibold text-emerald-600" x-text="detail.komoditas?.nama_komoditas"></p>
                             </div>
                             <div>
                                 <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Jenis OPT</p>
-                                <p class="text-sm font-semibold text-red-600" x-text="detail.nama_opt"></p>
+                                <p class="text-sm font-semibold text-red-600" x-text="detail.opt?.nama_opt"></p>
                             </div>
                         </div>
 

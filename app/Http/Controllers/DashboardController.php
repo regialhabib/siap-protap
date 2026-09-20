@@ -12,15 +12,11 @@ class DashboardController extends Controller
     {
         $user = Auth::user();
         
-        $query = Pengamatan::query()
-            ->join('komoditas', 'pengamatans.komoditas_id', '=', 'komoditas.id')
-            ->join('opts', 'pengamatans.opt_id', '=', 'opts.id')
-            ->join('uppts', 'pengamatans.uppt_id', '=', 'uppts.id')
-            ->select('pengamatans.*', 'komoditas.nama_komoditas', 'opts.nama_opt', 'uppts.nama_uppt')
+        $query = Pengamatan::with(['komoditas', 'opt', 'uppt'])
             ->orderBy('tanggal_pengamatan', 'desc');
 
         if ($user->role === 'popt') {
-            $query->where('pengamatans.uppt_id', $user->uppt_id);
+            $query->where('uppt_id', $user->uppt_id);
         }
 
         // Clone query for stats calculation before applying pagination (which modifies limit/offset)
@@ -31,7 +27,7 @@ class DashboardController extends Controller
         $stats = [
             'total_pengamatan' => $pengamatans->total(),
             'total_luas_serangan' => $baseQuery->sum('serangan_jumlah'),
-            'komoditas_terdampak' => $baseQuery->distinct('pengamatans.komoditas_id')->count('pengamatans.komoditas_id'),
+            'komoditas_terdampak' => $baseQuery->distinct('komoditas_id')->count('komoditas_id'),
         ];
 
         return view('dashboard', compact('pengamatans', 'stats'));
