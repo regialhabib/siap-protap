@@ -1,15 +1,13 @@
 <x-app-layout>
-    <x-slot name="header">
-        <div class="flex items-center justify-between">
-            <h2 class="font-bold text-2xl text-gray-800 leading-tight tracking-tight">
+    <!-- Filter Form -->
+    <div class="mb-6 bg-white rounded-xl border border-gray-200 shadow-sm mt-6 overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+            <h2 class="font-bold text-xl text-gray-800 leading-tight tracking-tight">
                 Rekap Laporan Pengamatan
             </h2>
         </div>
-    </x-slot>
-
-    <!-- Filter Form -->
-    <div class="mb-6 bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-        <form method="GET" action="{{ route('laporan.index') }}" class="grid grid-cols-1 md:grid-cols-5 gap-4" x-data="{ jenis: '{{ $jenis }}' }">
+        <div class="p-6">
+            <form method="GET" action="{{ route('laporan.index') }}" class="grid grid-cols-1 md:grid-cols-5 gap-4" x-data="{ jenis: '{{ $jenis }}' }">
             
             <!-- Jenis Laporan -->
             <div>
@@ -71,6 +69,7 @@
                 </button>
             </div>
         </form>
+        </div>
     </div>
 
     <!-- Tabel Data -->
