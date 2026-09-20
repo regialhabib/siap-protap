@@ -29,7 +29,7 @@ class DashboardController extends Controller
         $stats = [
             'total_pengamatan' => $pengamatans->total(),
             'total_luas_serangan' => $query->sum('serangan_jumlah'),
-            'komoditas_terdampak' => $query->distinct('komoditas_id')->count('komoditas_id'),
+            'komoditas_terdampak' => $query->distinct('pengamatans.komoditas_id')->count('pengamatans.komoditas_id'),
         ];
 
         return view('dashboard', compact('pengamatans', 'stats'));
