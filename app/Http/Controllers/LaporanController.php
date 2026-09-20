@@ -58,7 +58,7 @@ class LaporanController extends Controller
         $tahun = $request->input('tahun', date('Y'));
         $bulan = $request->input('bulan', date('m'));
         $triwulan = $request->input('triwulan', '1');
-        $uppt_id = $request->input('uppt_id', '');
+        $uppt_id = $request->input('uppt_id', $uppts->isNotEmpty() ? $uppts->first()->id : '');
 
         return view('laporan.index', compact('data', 'jenis', 'tahun', 'bulan', 'triwulan', 'uppt_id', 'uppts'));
     }
@@ -82,7 +82,8 @@ class LaporanController extends Controller
         $tahun = $request->input('tahun', date('Y'));
         $bulan = $request->input('bulan', date('m'));
         $triwulan = $request->input('triwulan', '1');
-        $uppt_id = $request->input('uppt_id', '');
+        $uppts = Uppt::orderBy('nama_uppt', 'asc')->get();
+        $uppt_id = $request->input('uppt_id', $uppts->isNotEmpty() ? $uppts->first()->id : '');
 
         $filename = $this->getFilename($jenis, $tahun, $bulan, $triwulan, 'xlsx');
         return Excel::download(new LaporanExport($data, $jenis, $tahun, $bulan, $triwulan, $uppt_id), $filename);
@@ -95,7 +96,8 @@ class LaporanController extends Controller
         $tahun = $request->input('tahun', date('Y'));
         $bulan = $request->input('bulan', date('m'));
         $triwulan = $request->input('triwulan', '1');
-        $uppt_id = $request->input('uppt_id', '');
+        $uppts = Uppt::orderBy('nama_uppt', 'asc')->get();
+        $uppt_id = $request->input('uppt_id', $uppts->isNotEmpty() ? $uppts->first()->id : '');
 
         $pdf = Pdf::loadView('laporan.pdf', compact('data', 'jenis', 'tahun', 'bulan', 'triwulan', 'uppt_id'))
                   ->setPaper('a4', 'landscape');

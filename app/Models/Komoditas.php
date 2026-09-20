@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Komoditas extends Model
 {
-    protected $guarded = [];
+    protected $fillable = ['nama_komoditas'];
 
     public function pengamatans()
     {

@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Kabupaten extends Model
 {
-    protected $guarded = [];
+    protected $fillable = ['nama_kabupaten'];
 
     public function uppts()
     {

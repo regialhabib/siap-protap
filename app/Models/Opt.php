@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Opt extends Model
 {
-    protected $guarded = [];
+    protected $fillable = ['nama_opt'];
 
     public function pengamatans()
     {

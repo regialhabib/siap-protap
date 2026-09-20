@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Uppt extends Model
 {
-    protected $guarded = [];
+    protected $fillable = ['nama_uppt', 'kabupaten_id'];
 
     public function kabupaten()
     {

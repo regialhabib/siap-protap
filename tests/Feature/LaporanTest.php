@@ -28,7 +28,7 @@ class LaporanTest extends TestCase
         $response = $this->actingAs($admin)->get('/laporan');
         
         $response->assertStatus(200);
-        $response->assertSee('Rekap Laporan Pengamatan');
+        $response->assertSee('Export Laporan');
     }
 
     public function test_popt_cannot_access_laporan_page()
