@@ -257,19 +257,19 @@
                             <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
                                 <div>
                                     <p class="text-xs text-gray-500 mb-1">APBD Kab/Kota</p>
-                                    <p class="text-sm font-semibold text-gray-900"><span x-text="detail.kendali_apbd_kab"></span> Ha</p>
+                                    <p class="text-sm font-semibold text-gray-900"><span x-text="detail.kendali_apbd_kab"></span></p>
                                 </div>
                                 <div>
                                     <p class="text-xs text-gray-500 mb-1">APBD Provinsi</p>
-                                    <p class="text-sm font-semibold text-gray-900"><span x-text="detail.kendali_apbd_prov"></span> Ha</p>
+                                    <p class="text-sm font-semibold text-gray-900"><span x-text="detail.kendali_apbd_prov"></span></p>
                                 </div>
                                 <div>
                                     <p class="text-xs text-gray-500 mb-1">Swadaya</p>
-                                    <p class="text-sm font-semibold text-gray-900"><span x-text="detail.kendali_masyarakat"></span> Ha</p>
+                                    <p class="text-sm font-semibold text-gray-900"><span x-text="detail.kendali_masyarakat"></span></p>
                                 </div>
                                 <div>
-                                    <p class="text-xs text-gray-500 mb-1">APBN Pusat</p>
-                                    <p class="text-sm font-semibold text-gray-900"><span x-text="detail.kendali_apbn"></span> Ha</p>
+                                    <p class="text-xs text-gray-500 mb-1">APBN</p>
+                                    <p class="text-sm font-semibold text-gray-900"><span x-text="detail.kendali_apbn"></span></p>
                                 </div>
                             </div>
                         </div>
