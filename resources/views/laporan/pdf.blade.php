@@ -55,7 +55,6 @@
         <thead>
             <tr>
                 <th rowspan="2">No</th>
-                <th rowspan="2">Tanggal</th>
                 <th rowspan="2">Wilayah / UPPT</th>
                 <th rowspan="2">Jenis Komoditas</th>
                 <th rowspan="2">Luas Komoditi (Ha)</th>
@@ -79,7 +78,6 @@
             @foreach($data as $d)
             <tr>
                 <td>{{ $loop->iteration }}</td>
-                <td>{{ \Carbon\Carbon::parse($d->tanggal_pengamatan)->format('d/m/Y') }}</td>
                 <td class="left">{{ $d->uppt->nama_uppt ?? '-' }}</td>
                 <td class="left">{{ $d->komoditas->nama_komoditas ?? '-' }}</td>
                 <td>{{ floatval($d->luas_komoditi_ha) }}</td>
@@ -101,7 +99,7 @@
             
             @if($data->isEmpty())
             <tr>
-                <td colspan="15">Nihil / Tidak ada data pengamatan pada periode ini.</td>
+                <td colspan="14">Nihil / Tidak ada data pengamatan pada periode ini.</td>
             </tr>
             @endif
         </tbody>
