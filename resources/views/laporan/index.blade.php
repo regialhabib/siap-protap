@@ -3,7 +3,7 @@
     <div class="mb-6 bg-white rounded-xl border border-gray-200 shadow-sm mt-6 overflow-hidden">
         <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
             <h2 class="font-bold text-xl text-gray-800 leading-tight tracking-tight">
-                Rekap Laporan Pengamatan
+                Export Laporan
             </h2>
         </div>
         <div class="p-6">
