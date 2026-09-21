@@ -15,35 +15,41 @@ use Barryvdh\DomPDF\Facade\Pdf;
 
 class LaporanController extends Controller
 {
-    private function getData(Request $request)
+    private function getFilters(Request $request): array
+    {
+        $uppts = Uppt::orderBy('nama_uppt', 'asc')->get();
+        return [
+            'jenis' => $request->input('jenis', 'bulanan'),
+            'tahun' => $request->input('tahun', date('Y')),
+            'bulan' => $request->input('bulan', date('m')),
+            'triwulan' => $request->input('triwulan', '1'),
+            'uppts' => $uppts,
+            'uppt_id' => $request->input('uppt_id', $uppts->first()?->id ?? ''),
+        ];
+    }
+
+    private function getData(array $filters)
     {
         abort_if(Auth::user()->role !== 'admin', 403, 'Akses ditolak.');
-
-        $jenis = $request->input('jenis', 'bulanan');
-        $tahun = $request->input('tahun', date('Y'));
-        $bulan = $request->input('bulan', date('m'));
-        $triwulan = $request->input('triwulan', '1');
-        $uppts = Uppt::orderBy('nama_uppt', 'asc')->get();
-        $uppt_id = $request->input('uppt_id', $uppts->isNotEmpty() ? $uppts->first()->id : '');
 
         $query = Pengamatan::with(['komoditas', 'opt', 'uppt', 'user']);
 
         // Filter Tahun
-        $query->whereYear('tanggal_pengamatan', $tahun);
+        $query->whereYear('tanggal_pengamatan', $filters['tahun']);
 
         // Filter Jenis
-        if ($jenis == 'bulanan') {
-            $query->whereMonth('tanggal_pengamatan', $bulan);
-        } elseif ($jenis == 'triwulan') {
-            $startMonth = ($triwulan - 1) * 3 + 1;
+        if ($filters['jenis'] == 'bulanan') {
+            $query->whereMonth('tanggal_pengamatan', $filters['bulan']);
+        } elseif ($filters['jenis'] == 'triwulan') {
+            $startMonth = ($filters['triwulan'] - 1) * 3 + 1;
             $endMonth = $startMonth + 2;
             $query->whereMonth('tanggal_pengamatan', '>=', $startMonth)
                   ->whereMonth('tanggal_pengamatan', '<=', $endMonth);
         }
 
         // Filter UPPT
-        if (!empty($uppt_id)) {
-            $query->where('uppt_id', $uppt_id);
+        if (!empty($filters['uppt_id'])) {
+            $query->where('uppt_id', $filters['uppt_id']);
         }
 
         return $query->orderBy('tanggal_pengamatan', 'asc')->get();
@@ -51,58 +57,49 @@ class LaporanController extends Controller
 
     public function index(Request $request)
     {
-        $data = $this->getData($request);
-        $uppts = Uppt::orderBy('nama_uppt', 'asc')->get();
-        
-        $jenis = $request->input('jenis', 'bulanan');
-        $tahun = $request->input('tahun', date('Y'));
-        $bulan = $request->input('bulan', date('m'));
-        $triwulan = $request->input('triwulan', '1');
-        $uppt_id = $request->input('uppt_id', $uppts->isNotEmpty() ? $uppts->first()->id : '');
+        $filters = $this->getFilters($request);
+        $data = $this->getData($filters);
 
-        return view('laporan.index', compact('data', 'jenis', 'tahun', 'bulan', 'triwulan', 'uppt_id', 'uppts'));
+        return view('laporan.index', array_merge(['data' => $data], $filters));
     }
 
-    private function getFilename($jenis, $tahun, $bulan, $triwulan, $ext)
+    private function getFilename(array $filters, $ext)
     {
-        $periode = $tahun;
-        if ($jenis == 'bulanan') {
-            $namaBulan = \Carbon\Carbon::create()->month((int)$bulan)->translatedFormat('F');
-            $periode = "{$namaBulan}_{$tahun}";
-        } elseif ($jenis == 'triwulan') {
-            $periode = "Triwulan_{$triwulan}_{$tahun}";
+        $periode = $filters['tahun'];
+        if ($filters['jenis'] == 'bulanan') {
+            $namaBulan = \Carbon\Carbon::create()->month((int)$filters['bulan'])->translatedFormat('F');
+            $periode = "{$namaBulan}_{$filters['tahun']}";
+        } elseif ($filters['jenis'] == 'triwulan') {
+            $periode = "Triwulan_{$filters['triwulan']}_{$filters['tahun']}";
         }
         return "Laporan_{$periode}.{$ext}";
     }
 
     public function exportExcel(Request $request)
     {
-        $data = $this->getData($request);
-        $jenis = $request->input('jenis', 'bulanan');
-        $tahun = $request->input('tahun', date('Y'));
-        $bulan = $request->input('bulan', date('m'));
-        $triwulan = $request->input('triwulan', '1');
-        $uppts = Uppt::orderBy('nama_uppt', 'asc')->get();
-        $uppt_id = $request->input('uppt_id', $uppts->isNotEmpty() ? $uppts->first()->id : '');
+        $filters = $this->getFilters($request);
+        $data = $this->getData($filters);
 
-        $filename = $this->getFilename($jenis, $tahun, $bulan, $triwulan, 'xlsx');
-        return Excel::download(new LaporanExport($data, $jenis, $tahun, $bulan, $triwulan, $uppt_id), $filename);
+        $filename = $this->getFilename($filters, 'xlsx');
+        return Excel::download(new LaporanExport(
+            $data, 
+            $filters['jenis'], 
+            $filters['tahun'], 
+            $filters['bulan'], 
+            $filters['triwulan'], 
+            $filters['uppt_id']
+        ), $filename);
     }
 
     public function exportPdf(Request $request)
     {
-        $data = $this->getData($request);
-        $jenis = $request->input('jenis', 'bulanan');
-        $tahun = $request->input('tahun', date('Y'));
-        $bulan = $request->input('bulan', date('m'));
-        $triwulan = $request->input('triwulan', '1');
-        $uppts = Uppt::orderBy('nama_uppt', 'asc')->get();
-        $uppt_id = $request->input('uppt_id', $uppts->isNotEmpty() ? $uppts->first()->id : '');
+        $filters = $this->getFilters($request);
+        $data = $this->getData($filters);
 
-        $pdf = Pdf::loadView('laporan.pdf', compact('data', 'jenis', 'tahun', 'bulan', 'triwulan', 'uppt_id'))
+        $pdf = Pdf::loadView('laporan.pdf', array_merge(['data' => $data], $filters))
                   ->setPaper('a4', 'landscape');
         
-        $filename = $this->getFilename($jenis, $tahun, $bulan, $triwulan, 'pdf');
+        $filename = $this->getFilename($filters, 'pdf');
         return $pdf->stream($filename);
     }
 }
