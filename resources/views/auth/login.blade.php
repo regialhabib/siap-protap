@@ -24,8 +24,11 @@
                 
                 <div class="relative z-10 flex flex-col h-full">
                     <!-- Top Logo/Name -->
-                    <div class="text-white font-extrabold text-2xl md:text-xl italic tracking-wide mb-6 md:mb-0">
-                        SIAP-PROTAP
+                    <div class="flex items-center mb-6 md:mb-0">
+                        <img src="{{ asset('images/logo_final.jpg') }}" alt="Logo SIAP-PROTAP" class="w-12 h-12 rounded-full shadow-md border-2 border-white">
+                        <span class="text-white font-extrabold text-3xl md:text-2xl ml-3 tracking-wide">
+                            SIAP-PROTAP
+                        </span>
                     </div>
 
                     <!-- Center Content (Hidden on mobile) -->

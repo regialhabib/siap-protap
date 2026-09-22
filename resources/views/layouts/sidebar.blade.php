@@ -7,6 +7,7 @@
     <!-- Branding -->
     <div class="flex items-center justify-center h-20 border-b border-gray-800">
         <div class="text-white font-bold text-lg tracking-widest flex items-center">
+            <img src="{{ asset('images/logo_final.jpg') }}" alt="Logo" class="w-8 h-8 rounded-full mr-3 border border-emerald-500">
             SIAP-PROTAP
         </div>
     </div>

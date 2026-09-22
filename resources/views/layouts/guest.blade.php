@@ -18,11 +18,7 @@
         <div class="min-h-screen flex flex-col sm:justify-center items-center pt-6 sm:pt-0 bg-gray-50">
             <div class="w-full sm:max-w-md px-6 text-center">
                 <a href="/" class="flex flex-col items-center justify-center space-y-2">
-                    <div class="w-16 h-16 bg-emerald-600 text-white flex items-center justify-center rounded-full shadow-lg">
-                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"></path>
-                        </svg>
-                    </div>
+                    <img src="{{ asset('images/logo_final.jpg') }}" alt="Logo SIAP-PROTAP" class="w-16 h-16 rounded-full shadow-lg border-2 border-emerald-100">
                     <h1 class="text-3xl font-extrabold text-emerald-700 tracking-tight">SIAP-PROTAP</h1>
                     <p class="text-sm text-gray-500 font-medium">Sistem Informasi Administrasi Pelaporan Proteksi Tanaman Perkebunan</p>
                 </a>
