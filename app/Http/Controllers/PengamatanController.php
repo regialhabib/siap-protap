@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Http\Requests\PengamatanRequest;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Komoditas;
 use App\Models\Opt;
@@ -21,27 +22,13 @@ class PengamatanController extends Controller
         // Ambil master data untuk dropdown
         $komoditas = Komoditas::orderBy('nama_komoditas')->get();
         $opts = Opt::orderBy('nama_opt')->get();
+        $kecamatans = Auth::user()->uppt ? Auth::user()->uppt->kecamatans : collect();
 
-        return view('pengamatan.create', compact('komoditas', 'opts'));
+        return view('pengamatan.create', compact('komoditas', 'opts', 'kecamatans'));
     }
 
-    public function store(Request $request)
+    public function store(PengamatanRequest $request)
     {
-        // Validasi input tunggal
-        $request->validate([
-            'tanggal_pengamatan' => 'required|date',
-            'komoditas_id' => 'required|exists:komoditas,id',
-            'opt_id' => 'required|exists:opts,id',
-            'luas_komoditi_ha' => 'required|numeric|min:0',
-            'serangan_ringan' => 'nullable|numeric|min:0',
-            'serangan_sedang' => 'nullable|numeric|min:0',
-            'serangan_berat' => 'nullable|numeric|min:0',
-            'kendali_apbd_kab' => 'nullable|numeric|min:0',
-            'kendali_apbd_prov' => 'nullable|numeric|min:0',
-            'kendali_apbn' => 'nullable|numeric|min:0',
-            'kendali_masyarakat' => 'nullable|numeric|min:0',
-            'kondisi_serangan' => 'nullable|string|max:255',
-        ]);
 
         $user = Auth::user();
         
@@ -67,6 +54,7 @@ class PengamatanController extends Controller
                 'serangan_sedang' => $sedang,
                 'serangan_berat' => $berat,
                 'serangan_jumlah' => $jumlah_serangan,
+                'kecamatan_id' => $request->kecamatan_id,
                 'kendali_apbd_kab' => $request->kendali_apbd_kab ?? 0,
                 'kendali_apbd_prov' => $request->kendali_apbd_prov ?? 0,
                 'kendali_apbn' => $request->kendali_apbn ?? 0,
@@ -89,31 +77,17 @@ class PengamatanController extends Controller
 
         $komoditas = Komoditas::orderBy('nama_komoditas')->get();
         $opts = Opt::orderBy('nama_opt')->get();
+        $kecamatans = Auth::user()->uppt ? Auth::user()->uppt->kecamatans : collect();
 
-        return view('pengamatan.edit', compact('pengamatan', 'komoditas', 'opts'));
+        return view('pengamatan.edit', compact('pengamatan', 'komoditas', 'opts', 'kecamatans'));
     }
 
-    public function update(Request $request, Pengamatan $pengamatan)
+    public function update(PengamatanRequest $request, Pengamatan $pengamatan)
     {
         $user = Auth::user();
         if ($user->role === 'popt' && $pengamatan->uppt_id !== $user->uppt_id) {
             abort(403, 'Anda tidak diizinkan mengubah data wilayah lain.');
         }
-
-        $request->validate([
-            'tanggal_pengamatan' => 'required|date',
-            'komoditas_id' => 'required|exists:komoditas,id',
-            'opt_id' => 'required|exists:opts,id',
-            'luas_komoditi_ha' => 'required|numeric|min:0',
-            'serangan_ringan' => 'nullable|numeric|min:0',
-            'serangan_sedang' => 'nullable|numeric|min:0',
-            'serangan_berat' => 'nullable|numeric|min:0',
-            'kendali_apbd_kab' => 'nullable|numeric|min:0',
-            'kendali_apbd_prov' => 'nullable|numeric|min:0',
-            'kendali_apbn' => 'nullable|numeric|min:0',
-            'kendali_masyarakat' => 'nullable|numeric|min:0',
-            'kondisi_serangan' => 'nullable|string|max:255',
-        ]);
 
         try {
             $ringan = $request->serangan_ringan ?? 0;
@@ -130,6 +104,7 @@ class PengamatanController extends Controller
                 'serangan_sedang' => $sedang,
                 'serangan_berat' => $berat,
                 'serangan_jumlah' => $jumlah_serangan,
+                'kecamatan_id' => $request->kecamatan_id,
                 'kendali_apbd_kab' => $request->kendali_apbd_kab ?? 0,
                 'kendali_apbd_prov' => $request->kendali_apbd_prov ?? 0,
                 'kendali_apbn' => $request->kendali_apbn ?? 0,

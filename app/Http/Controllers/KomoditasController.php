@@ -14,8 +14,13 @@ class KomoditasController extends Controller
         if(Auth::user()->role !== 'admin') {
             abort(403, 'Hanya Admin yang dapat mengakses Master Data.');
         }
-
-        $komoditas = Komoditas::orderBy('nama_komoditas')->paginate(10);
+        $query = Komoditas::query();
+        
+        if ($search = request('search')) {
+            $query->where('nama_komoditas', 'like', "%{$search}%");
+        }
+        
+        $komoditas = $query->orderBy('nama_komoditas')->paginate(10)->withQueryString();
         return view('master.komoditas.index', compact('komoditas'));
     }
 

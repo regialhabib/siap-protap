@@ -65,123 +65,172 @@
     </div>
 
     <!-- Data Table Section -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden" x-data="{ detailModalOpen: false, detail: {} }">
-        <div class="px-6 py-5 border-b border-gray-100">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden" x-data="{ 
+        detailModalOpen: false, 
+        detail: {},
+        search: '{{ request('search') }}',
+        loading: false,
+        updateTable() {
+            this.loading = true;
+            let url = new URL(window.location.href);
+            if(this.search) {
+                url.searchParams.set('search', this.search);
+            } else {
+                url.searchParams.delete('search');
+            }
+            url.searchParams.delete('page'); 
+            fetch(url, { headers: {'X-Requested-With': 'XMLHttpRequest'} })
+                .then(res => res.text())
+                .then(html => {
+                    let doc = new DOMParser().parseFromString(html, 'text/html');
+                    document.getElementById('table-container').innerHTML = doc.getElementById('table-container').innerHTML;
+                    this.loading = false;
+                    window.history.pushState({}, '', url);
+                });
+        }
+    }">
+        <div class="px-6 py-5 border-b border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
             <h3 class="text-base font-bold text-gray-900">Riwayat Pengamatan Terbaru</h3>
+            <div class="relative hidden w-full md:w-1/3 flex items-center">
+                <input type="text" x-model.debounce.500ms="search" @input="updateTable()" placeholder="Cari wilayah, komoditas, OPT..." class="block w-full pl-10 pr-10 py-2 border-gray-300 rounded-lg shadow-sm focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                </div>
+                <!-- Tombol Hapus / Clear -->
+                <button type="button" x-cloak x-show="search.length > 0 && !loading" @click="search = ''; updateTable()" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 focus:outline-none">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+                <!-- Spinner Loading -->
+                <div x-show="loading" class="absolute inset-y-0 right-0 pr-3 flex items-center" style="display: none;">
+                    <svg class="animate-spin h-4 w-4 text-emerald-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                </div>
+            </div>
         </div>
         
-        <div class="overflow-x-auto">
-            <table class="w-full text-sm text-left whitespace-nowrap">
-                <thead class="text-xs text-gray-400 uppercase bg-gray-50/50 border-b border-gray-100">
-                    <tr>
-                        <th class="px-6 py-4 font-semibold tracking-wider">Tanggal</th>
-                        <th class="px-6 py-4 font-semibold tracking-wider">Wilayah (UPPT)</th>
-                        <th class="px-6 py-4 font-semibold tracking-wider">Komoditas / OPT</th>
-                        <th class="px-6 py-4 font-semibold tracking-wider text-right">Luas Komoditi</th>
-                        <th class="px-6 py-4 font-semibold tracking-wider text-right">Luas Serangan</th>
-                        <th class="px-6 py-4 font-semibold tracking-wider text-center">Kondisi</th>
-                        <th class="px-6 py-4 font-semibold tracking-wider text-right">Aksi</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-100">
-                    @forelse($pengamatans as $p)
-                    <tr class="hover:bg-gray-50/50 transition-colors">
-                        <td class="px-6 py-4 text-gray-600">
-                            {{ \Carbon\Carbon::parse($p->tanggal_pengamatan)->format('d M Y') }}
-                        </td>
-                        <td class="px-6 py-4">
-                            <div class="font-bold text-gray-900">{{ $p->uppt->nama_uppt ?? '-' }}</div>
-                        </td>
-                        <td class="px-6 py-4">
-                            <div class="flex items-center space-x-2">
-                                <span class="px-2.5 py-1 rounded-md text-xs font-medium bg-emerald-50 text-emerald-700">
-                                    {{ $p->komoditas->nama_komoditas ?? '-' }}
-                                </span>
-                                <span class="px-2.5 py-1 rounded-md text-xs font-medium bg-red-50 text-red-700">
-                                    {{ $p->opt->nama_opt ?? '-' }}
-                                </span>
-                            </div>
-                        </td>
-                        <td class="px-6 py-4 text-right text-gray-600 font-mono">
-                            {{ number_format($p->luas_komoditi_ha, 2) }} Ha
-                        </td>
-                        <td class="px-6 py-4 text-right text-gray-600 font-mono">
-                            {{ number_format($p->serangan_jumlah, 2) }} Ha
-                        </td>
-                        <td class="px-6 py-4 text-center">
-                            @if($p->kondisi_serangan)
-                                <span class="px-3 py-1 bg-gray-100 text-gray-700 text-xs rounded-full font-medium">{{ $p->kondisi_serangan }}</span>
-                            @else
-                                <span class="text-gray-400 text-xs">-</span>
-                            @endif
-                        </td>
-                        <td class="px-6 py-4 text-right whitespace-nowrap">
-                            <div class="flex items-center justify-end space-x-2">
-                                <!-- Tombol Detail -->
-                                <button type="button" @click='detail = @json($p); detailModalOpen = true' class="p-2 text-white bg-blue-500 hover:bg-blue-600 rounded-lg shadow-sm shadow-blue-500/30 transition-all tooltip-trigger" title="Lihat Detail">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
-                                </button>
-                                
-                                @if(Auth::user()->role === 'popt')
-                                <!-- Tombol Edit -->
-                                <a href="{{ route('pengamatan.edit', $p->id) }}" class="p-2 text-white bg-amber-500 hover:bg-amber-600 rounded-lg shadow-sm shadow-amber-500/30 transition-all tooltip-trigger" title="Edit Data">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                                </a>
-
-                                <!-- Tombol Hapus -->
-                                <button type="button" x-data="" x-on:click.prevent="$dispatch('open-modal', 'hapus-pengamatan-{{ $p->id }}')" class="p-2 text-white bg-red-500 hover:bg-red-600 rounded-lg shadow-sm shadow-red-500/30 transition-all tooltip-trigger" title="Hapus Data">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                                </button>
+        <div id="table-container" @click="if($event.target.closest('.pagination a') || $event.target.closest('nav[role=navigation] a')) { 
+            $event.preventDefault(); 
+            let link = $event.target.closest('a').href;
+            fetch(link, { headers: {'X-Requested-With': 'XMLHttpRequest'} })
+                .then(res => res.text())
+                .then(html => {
+                    let doc = new DOMParser().parseFromString(html, 'text/html');
+                    document.getElementById('table-container').innerHTML = doc.getElementById('table-container').innerHTML;
+                    window.history.pushState({}, '', link);
+                });
+        }">
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm text-left whitespace-nowrap">
+                    <thead class="text-xs text-gray-400 uppercase bg-gray-50/50 border-b border-gray-100">
+                        <tr>
+                            <th class="px-6 py-4 font-semibold tracking-wider">Tanggal</th>
+                            <th class="px-6 py-4 font-semibold tracking-wider">Wilayah (UPPT)</th>
+                            <th class="px-6 py-4 font-semibold tracking-wider">Komoditas / OPT</th>
+                            <th class="px-6 py-4 font-semibold tracking-wider text-right">Luas Komoditi</th>
+                            <th class="px-6 py-4 font-semibold tracking-wider text-right">Luas Serangan</th>
+                            <th class="px-6 py-4 font-semibold tracking-wider text-center">Kondisi</th>
+                            <th class="px-6 py-4 font-semibold tracking-wider text-right">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        @forelse($pengamatans as $p)
+                        <tr class="hover:bg-gray-50/50 transition-colors">
+                            <td class="px-6 py-4 text-gray-600">
+                                {{ \Carbon\Carbon::parse($p->tanggal_pengamatan)->format('d M Y') }}
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="font-bold text-gray-900">{{ $p->uppt->nama_uppt ?? '-' }}</div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="flex items-center space-x-2">
+                                    <span class="px-2.5 py-1 rounded-md text-xs font-medium bg-emerald-50 text-emerald-700">
+                                        {{ $p->komoditas->nama_komoditas ?? '-' }}
+                                    </span>
+                                    <span class="px-2.5 py-1 rounded-md text-xs font-medium bg-red-50 text-red-700">
+                                        {{ $p->opt->nama_opt ?? '-' }}
+                                    </span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 text-right text-gray-600 font-mono">
+                                {{ number_format($p->luas_komoditi_ha, 2) }} Ha
+                            </td>
+                            <td class="px-6 py-4 text-right text-gray-600 font-mono">
+                                {{ number_format($p->serangan_jumlah, 2) }} Ha
+                            </td>
+                            <td class="px-6 py-4 text-center">
+                                @if($p->kondisi_serangan)
+                                    <span class="px-3 py-1 bg-gray-100 text-gray-700 text-xs rounded-full font-medium">{{ $p->kondisi_serangan }}</span>
+                                @else
+                                    <span class="text-gray-400 text-xs">-</span>
                                 @endif
-                            </div>
+                            </td>
+                            <td class="px-6 py-4 text-right whitespace-nowrap">
+                                <div class="flex items-center justify-end space-x-2">
+                                    <!-- Tombol Detail -->
+                                    <button type="button" @click='detail = @json($p); detailModalOpen = true' class="p-2 text-white bg-blue-500 hover:bg-blue-600 rounded-lg shadow-sm shadow-blue-500/30 transition-all tooltip-trigger" title="Lihat Detail">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                                    </button>
+                                    
+                                    @if(Auth::user()->role === 'popt')
+                                    <!-- Tombol Edit -->
+                                    <a href="{{ route('pengamatan.edit', $p->id) }}" class="p-2 text-white bg-amber-500 hover:bg-amber-600 rounded-lg shadow-sm shadow-amber-500/30 transition-all tooltip-trigger" title="Edit Data">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                                    </a>
 
-                            @if(Auth::user()->role === 'popt')
-                            <!-- Modal Konfirmasi Hapus -->
-                            <x-modal name="hapus-pengamatan-{{ $p->id }}" focusable maxWidth="md">
-                                <form method="POST" action="{{ route('pengamatan.destroy', $p->id) }}" class="p-6 text-left whitespace-normal">
-                                    @csrf
-                                    @method('DELETE')
-                                    <h2 class="text-lg font-bold text-gray-900">Konfirmasi Penghapusan</h2>
-                                    <p class="mt-3 text-sm text-gray-600">
-                                        Apakah Anda yakin ingin menghapus data pengamatan komoditas <strong>{{ $p->komoditas->nama_komoditas ?? '-' }}</strong> tanggal <strong>{{ \Carbon\Carbon::parse($p->tanggal_pengamatan)->format('d M Y') }}</strong>?
-                                        <br><br>
-                                        Tindakan ini permanen dan tidak dapat dibatalkan.
-                                    </p>
-                                    <div class="mt-6 flex justify-end gap-3">
-                                        <button type="button" x-on:click="$dispatch('close')" class="px-4 py-2.5 bg-white border border-gray-300 rounded-md font-bold text-xs text-gray-700 uppercase tracking-widest shadow-sm hover:bg-gray-50 transition-colors">
-                                            Batal
-                                        </button>
-                                        <button type="submit" class="px-4 py-2.5 bg-red-600 border border-transparent rounded-md font-bold text-xs text-white uppercase tracking-widest shadow-sm hover:bg-red-700 transition-colors">
-                                            Ya, Hapus Data
-                                        </button>
-                                    </div>
-                                </form>
-                            </x-modal>
-                            @endif
-                        </td>
-                    </tr>
-                    @empty
-                    <tr>
-                        <td colspan="7" class="px-6 py-12 text-center">
-                            <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-50 mb-4">
-                                <svg class="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
-                                </svg>
-                            </div>
-                            <h3 class="text-sm font-semibold text-gray-900">Tidak ada data</h3>
-                            <p class="text-xs text-gray-500 mt-1">Belum ada data pengamatan yang masuk.</p>
-                        </td>
-                    </tr>
-                    @endforelse
-                </tbody>
-            </table>
+                                    <!-- Tombol Hapus -->
+                                    <button type="button" x-data="" x-on:click.prevent="$dispatch('open-modal', 'hapus-pengamatan-{{ $p->id }}')" class="p-2 text-white bg-red-500 hover:bg-red-600 rounded-lg shadow-sm shadow-red-500/30 transition-all tooltip-trigger" title="Hapus Data">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                    </button>
+                                    @endif
+                                </div>
+
+                                @if(Auth::user()->role === 'popt')
+                                <!-- Modal Konfirmasi Hapus -->
+                                <x-modal name="hapus-pengamatan-{{ $p->id }}" focusable maxWidth="md">
+                                    <form method="POST" action="{{ route('pengamatan.destroy', $p->id) }}" class="p-6 text-left whitespace-normal">
+                                        @csrf
+                                        @method('DELETE')
+                                        <h2 class="text-lg font-bold text-gray-900">Konfirmasi Penghapusan</h2>
+                                        <p class="mt-3 text-sm text-gray-600">
+                                            Apakah Anda yakin ingin menghapus data pengamatan komoditas <strong>{{ $p->komoditas->nama_komoditas ?? '-' }}</strong> tanggal <strong>{{ \Carbon\Carbon::parse($p->tanggal_pengamatan)->format('d M Y') }}</strong>?
+                                            <br><br>
+                                            Tindakan ini permanen dan tidak dapat dibatalkan.
+                                        </p>
+                                        <div class="mt-6 flex justify-end gap-3">
+                                            <button type="button" x-on:click="$dispatch('close')" class="px-4 py-2.5 bg-white border border-gray-300 rounded-md font-bold text-xs text-gray-700 uppercase tracking-widest shadow-sm hover:bg-gray-50 transition-colors">
+                                                Batal
+                                            </button>
+                                            <button type="submit" class="px-4 py-2.5 bg-red-600 border border-transparent rounded-md font-bold text-xs text-white uppercase tracking-widest shadow-sm hover:bg-red-700 transition-colors">
+                                                Ya, Hapus Data
+                                            </button>
+                                        </div>
+                                    </form>
+                                </x-modal>
+                                @endif
+                            </td>
+                        </tr>
+                        @empty
+                        <tr>
+                            <td colspan="7" class="px-6 py-12 text-center">
+                                <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-50 mb-4">
+                                    <svg class="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                                    </svg>
+                                </div>
+                                <h3 class="text-sm font-semibold text-gray-900">Tidak ada data</h3>
+                                <p class="text-xs text-gray-500 mt-1">Belum ada data pengamatan yang cocok.</p>
+                            </td>
+                        </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+            
+            @if($pengamatans->hasPages())
+            <div class="px-6 py-4 border-t border-gray-100 bg-gray-50/50">
+                {{ $pengamatans->links() }}
+            </div>
+            @endif
         </div>
-        
-        @if($pengamatans->hasPages())
-        <div class="px-6 py-4 border-t border-gray-100 bg-gray-50/50">
-            {{ $pengamatans->links() }}
-        </div>
-        @endif
 
         <!-- Modal Detail -->
         <div x-show="detailModalOpen" class="fixed inset-0 z-50 overflow-y-auto" style="display: none;" aria-labelledby="modal-title" role="dialog" aria-modal="true">

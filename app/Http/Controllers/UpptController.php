@@ -16,8 +16,17 @@ class UpptController extends Controller
             abort(403, 'Hanya Admin yang dapat mengakses Master Data.');
         }
 
-        // Mengambil data UPPT beserta relasi ke Kabupaten
-        $uppts = Uppt::with('kabupaten')->orderBy('nama_uppt')->paginate(10);
+        // Mengambil data UPPT beserta relasi ke Kabupaten dan Kecamatans
+        $query = Uppt::with(['kabupaten', 'kecamatans']);
+        
+        if ($search = request('search')) {
+            $query->where('nama_uppt', 'like', "%{$search}%")
+                  ->orWhereHas('kabupaten', function($q) use ($search) {
+                      $q->where('nama_kabupaten', 'like', "%{$search}%");
+                  });
+        }
+
+        $uppts = $query->orderBy('nama_uppt')->paginate(10)->withQueryString();
         
         // Mengambil daftar Kabupaten untuk opsi dropdown di Modal
         $kabupatens = Kabupaten::orderBy('nama_kabupaten')->get();
@@ -33,10 +42,16 @@ class UpptController extends Controller
         ]);
 
         try {
-            Uppt::create([
+            $uppt = Uppt::create([
                 'nama_uppt' => $request->nama_uppt,
                 'kabupaten_id' => $request->kabupaten_id
             ]);
+
+            if ($request->has('kecamatans')) {
+                foreach (array_filter($request->kecamatans) as $nama_kecamatan) {
+                    $uppt->kecamatans()->create(['nama_kecamatan' => $nama_kecamatan]);
+                }
+            }
 
             return redirect()->route('uppt.index')->with('success', 'Data UPPT berhasil ditambahkan!');
         } catch (\Exception $e) {
@@ -56,6 +71,13 @@ class UpptController extends Controller
                 'nama_uppt' => $request->nama_uppt,
                 'kabupaten_id' => $request->kabupaten_id
             ]);
+
+            $uppt->kecamatans()->delete();
+            if ($request->has('kecamatans')) {
+                foreach (array_filter($request->kecamatans) as $nama_kecamatan) {
+                    $uppt->kecamatans()->create(['nama_kecamatan' => $nama_kecamatan]);
+                }
+            }
 
             return redirect()->route('uppt.index')->with('success', 'Data UPPT berhasil diperbarui!');
         } catch (\Exception $e) {

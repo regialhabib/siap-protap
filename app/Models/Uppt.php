@@ -22,4 +22,9 @@ class Uppt extends Model
     {
         return $this->hasMany(Pengamatan::class);
     }
+
+    public function kecamatans()
+    {
+        return $this->hasMany(Kecamatan::class);
+    }
 }

@@ -14,8 +14,13 @@ class OptController extends Controller
         if(Auth::user()->role !== 'admin') {
             abort(403, 'Hanya Admin yang dapat mengakses Master Data.');
         }
+        $query = Opt::query();
+        
+        if ($search = request('search')) {
+            $query->where('nama_opt', 'like', "%{$search}%");
+        }
 
-        $opts = Opt::orderBy('nama_opt')->paginate(10);
+        $opts = $query->orderBy('nama_opt')->paginate(10)->withQueryString();
         return view('master.opt.index', compact('opts'));
     }
 

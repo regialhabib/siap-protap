@@ -11,7 +11,7 @@ class Pengamatan extends Model
         'tanggal_pengamatan', 'luas_komoditi_ha', 'serangan_ringan', 
         'serangan_sedang', 'serangan_berat', 'serangan_jumlah', 
         'kendali_apbd_kab', 'kendali_apbd_prov', 'kendali_masyarakat', 
-        'kendali_apbn', 'kondisi_serangan'
+        'kendali_apbn', 'kondisi_serangan', 'kecamatan_id'
     ];
 
     protected $casts = [
@@ -36,5 +36,10 @@ class Pengamatan extends Model
     public function opt()
     {
         return $this->belongsTo(Opt::class);
+    }
+
+    public function kecamatan()
+    {
+        return $this->belongsTo(Kecamatan::class);
     }
 }

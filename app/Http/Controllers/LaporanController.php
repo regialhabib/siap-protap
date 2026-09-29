@@ -51,6 +51,16 @@ class LaporanController extends Controller
         if (!empty($filters['uppt_id'])) {
             $query->where('uppt_id', $filters['uppt_id']);
         }
+        
+        if ($search = request('search')) {
+            $query->where(function($q) use ($search) {
+                $q->whereHas('komoditas', function($q2) use ($search) {
+                    $q2->where('nama_komoditas', 'like', "%{$search}%");
+                })->orWhereHas('opt', function($q2) use ($search) {
+                    $q2->where('nama_opt', 'like', "%{$search}%");
+                });
+            });
+        }
 
         return $query->orderBy('tanggal_pengamatan', 'asc')->get();
     }

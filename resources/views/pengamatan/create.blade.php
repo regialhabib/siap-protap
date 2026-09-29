@@ -57,6 +57,18 @@
                             <input type="date" name="tanggal_pengamatan" value="{{ old('tanggal_pengamatan', date('Y-m-d')) }}" class="block w-full px-4 py-3 rounded-lg border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm transition-colors" required>
                             <x-input-error :messages="$errors->get('tanggal_pengamatan')" class="mt-2" />
                         </div>
+                        @if(isset($kecamatans) && $kecamatans->count() > 0)
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-2">Kecamatan <span class="text-red-500">*</span></label>
+                            <select name="kecamatan_id" class="block w-full px-4 py-3 rounded-lg border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm transition-colors cursor-pointer" required>
+                                <option value="">-- Pilih Kecamatan --</option>
+                                @foreach($kecamatans as $kec)
+                                    <option value="{{ $kec->id }}" {{ old('kecamatan_id') == $kec->id ? 'selected' : '' }}>{{ $kec->nama_kecamatan }}</option>
+                                @endforeach
+                            </select>
+                            <x-input-error :messages="$errors->get('kecamatan_id')" class="mt-2" />
+                        </div>
+                        @endif
                         <div>
                             <label class="block text-sm font-bold text-gray-700 mb-2">Komoditas <span class="text-red-500">*</span></label>
                             <select name="komoditas_id" class="block w-full px-4 py-3 rounded-lg border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm transition-colors cursor-pointer" required>
