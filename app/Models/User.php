@@ -24,6 +24,7 @@ class User extends Authenticatable
         'password',
         'role',
         'uppt_id',
+        'status',
     ];
 
     /**
@@ -59,4 +60,3 @@ class User extends Authenticatable
         return $this->hasMany(Pengamatan::class);
     }
 }
-

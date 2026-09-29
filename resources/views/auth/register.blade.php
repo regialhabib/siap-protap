@@ -39,6 +39,22 @@
             <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
         </div>
 
+        <!-- Wilayah (UPPT) -->
+        <div class="mt-4">
+            <x-input-label for="uppt_id" value="Wilayah Penugasan (UPPT)" />
+            
+            <select id="uppt_id" name="uppt_id" class="block mt-1 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm" required>
+                <option value="">-- Pilih Wilayah UPPT --</option>
+                @foreach($uppts as $uppt)
+                    <option value="{{ $uppt->id }}" {{ old('uppt_id') == $uppt->id ? 'selected' : '' }}>
+                        {{ $uppt->nama_uppt }}
+                    </option>
+                @endforeach
+            </select>
+            
+            <x-input-error :messages="$errors->get('uppt_id')" class="mt-2" />
+        </div>
+
         <div class="flex items-center justify-end mt-4">
             <a class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" href="{{ route('login') }}">
                 {{ __('Already registered?') }}

@@ -97,6 +97,7 @@
                             <th class="px-6 py-4 font-bold tracking-wider">Nama & Email</th>
                             <th class="px-6 py-4 font-bold tracking-wider">Peran (Role)</th>
                             <th class="px-6 py-4 font-bold tracking-wider">Wilayah (UPPT)</th>
+                            <th class="px-6 py-4 font-bold tracking-wider">Status</th>
                             <th class="px-6 py-4 font-bold tracking-wider text-right w-32">Aksi</th>
                         </tr>
                     </thead>
@@ -120,9 +121,46 @@
                             <td class="px-6 py-4 text-gray-500">
                                 {{ $u->role === 'admin' ? 'Semua Wilayah' : ($u->uppt->nama_uppt ?? 'Belum Ditugaskan') }}
                             </td>
-                            <td class="px-6 py-4 text-right">
+                            <td class="px-6 py-4">
+                                @if($u->status === 'aktif')
+                                    <span class="px-2.5 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold uppercase tracking-wider">Aktif</span>
+                                @else
+                                    <span class="px-2.5 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-semibold uppercase tracking-wider">Nonaktif</span>
+                                @endif
+                            </td>
+                            <td class="px-6 py-4 text-right flex items-center justify-end gap-2">
+                                <!-- Status Toggle -->
+                                @if($u->status === 'nonaktif')
+                                    <form method="POST" action="{{ route('pengguna.status', $u->id) }}" class="inline">
+                                        @csrf
+                                        @method('PATCH')
+                                        <input type="hidden" name="status" value="aktif">
+                                        <button type="submit" class="inline-flex items-center text-white font-medium text-xs px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 rounded shadow-sm transition">
+                                            Aktifkan
+                                        </button>
+                                    </form>
+                                @else
+                                    <button type="button" x-data="" x-on:click.prevent="$dispatch('open-modal', 'nonaktif-pengguna-{{ $u->id }}')" class="inline-flex items-center text-white font-medium text-xs px-3 py-1.5 bg-gray-500 hover:bg-gray-600 rounded shadow-sm transition">
+                                        Nonaktifkan
+                                    </button>
+
+                                    <!-- Modal Konfirmasi Nonaktif -->
+                                    <x-modal maxWidth="md" name="nonaktif-pengguna-{{ $u->id }}" focusable>
+                                        <form method="post" action="{{ route('pengguna.status', $u->id) }}" class="p-6 text-left whitespace-normal">
+                                            @csrf @method('patch')
+                                            <input type="hidden" name="status" value="nonaktif">
+                                            <h2 class="text-lg font-bold text-gray-900">Konfirmasi Penonaktifan</h2>
+                                            <p class="mt-2 text-sm text-gray-600">Apakah Anda yakin ingin menonaktifkan akun petugas <strong>{{ $u->name }}</strong>? Petugas ini tidak akan bisa login ke dalam sistem.</p>
+                                            <div class="mt-6 flex justify-end">
+                                                <button type="button" x-on:click="$dispatch('close')" class="px-4 py-2 bg-white border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest shadow-sm hover:bg-gray-50 mr-3">Batal</button>
+                                                <button type="submit" class="px-4 py-2.5 bg-gray-600 border border-transparent rounded-md font-bold text-xs text-white uppercase tracking-widest shadow-sm hover:bg-gray-700 transition-colors">Ya, Nonaktifkan</button>
+                                            </div>
+                                        </form>
+                                    </x-modal>
+                                @endif
+
                                 <!-- Edit Button -->
-                                <button type="button" x-data="" x-on:click.prevent="$dispatch('open-modal', 'edit-pengguna-{{ $u->id }}')" class="inline-flex items-center text-white font-medium text-xs px-3 py-1.5 bg-blue-500 hover:bg-blue-600 rounded shadow-sm transition mr-2">
+                                <button type="button" x-data="" x-on:click.prevent="$dispatch('open-modal', 'edit-pengguna-{{ $u->id }}')" class="inline-flex items-center text-white font-medium text-xs px-3 py-1.5 bg-blue-500 hover:bg-blue-600 rounded shadow-sm transition">
                                     <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
                                     Edit
                                 </button>
@@ -161,6 +199,13 @@
                                                         @foreach($uppts as $uppt)
                                                             <option value="{{ $uppt->id }}" {{ old('uppt_id', $u->uppt_id) == $uppt->id ? 'selected' : '' }}>{{ $uppt->nama_uppt }}</option>
                                                         @endforeach
+                                                    </select>
+                                                </div>
+                                                <div class="col-span-2">
+                                                    <label class="block text-sm font-semibold text-gray-700 mb-1">Status</label>
+                                                    <select name="status" class="block w-full px-4 py-2 rounded-md border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm" required>
+                                                        <option value="aktif" {{ old('status', $u->status) === 'aktif' ? 'selected' : '' }}>Aktif</option>
+                                                        <option value="nonaktif" {{ old('status', $u->status) === 'nonaktif' ? 'selected' : '' }}>Nonaktif</option>
                                                     </select>
                                                 </div>
                                             </div>

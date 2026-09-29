@@ -69,7 +69,8 @@ class UserTest extends TestCase
         $this->assertDatabaseHas('users', [
             'email' => 'poptbaru@example.com',
             'role' => 'popt',
-            'uppt_id' => $this->uppt->id
+            'uppt_id' => $this->uppt->id,
+            'status' => 'aktif'
         ]);
     }
 
@@ -90,7 +91,8 @@ class UserTest extends TestCase
         $this->assertDatabaseHas('users', [
             'email' => 'adminbaru@example.com',
             'role' => 'admin',
-            'uppt_id' => null // dipastikan null oleh controller
+            'uppt_id' => null, // dipastikan null oleh controller
+            'status' => 'aktif'
         ]);
     }
 
@@ -150,6 +152,21 @@ class UserTest extends TestCase
         
         $this->assertDatabaseMissing('users', [
             'id' => $userTarget->id
+        ]);
+    }
+
+    public function test_admin_can_update_status_of_user()
+    {
+        $userTarget = User::factory()->create(['status' => 'nonaktif']);
+
+        $response = $this->actingAs($this->admin)->patch("/pengguna/{$userTarget->id}/status", [
+            'status' => 'aktif'
+        ]);
+
+        $response->assertSessionHas('success');
+        $this->assertDatabaseHas('users', [
+            'id' => $userTarget->id,
+            'status' => 'aktif'
         ]);
     }
 }

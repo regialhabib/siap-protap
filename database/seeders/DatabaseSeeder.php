@@ -55,6 +55,7 @@ class DatabaseSeeder extends Seeder
             'email' => 'admin@siap-protap.com',
             'password' => Hash::make('password'),
             'role' => 'admin',
+            'status' => 'aktif',
             'uppt_id' => null,
         ]);
 
@@ -67,6 +68,7 @@ class DatabaseSeeder extends Seeder
                 'email' => 'popt.rimbobujang@siap-protap.com',
                 'password' => Hash::make('password'),
                 'role' => 'popt',
+                'status' => 'aktif',
                 'uppt_id' => $upptSample->id,
             ]);
         }

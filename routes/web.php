@@ -1,8 +1,14 @@
 <?php
 
-use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\KomoditasController;
+use App\Http\Controllers\LaporanController;
+use App\Http\Controllers\OptController;
 use App\Http\Controllers\PengamatanController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\UpptController;
+use App\Http\Controllers\UserController;
+use App\Http\Middleware\IsAdminMiddleware;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -11,7 +17,7 @@ Route::get('/', function () {
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-    
+
     // Fitur Pengamatan (Input Data)
     Route::get('/pengamatan/create', [PengamatanController::class, 'create'])->name('pengamatan.create');
     Route::post('/pengamatan', [PengamatanController::class, 'store'])->name('pengamatan.store');
@@ -20,17 +26,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/pengamatan/{pengamatan}', [PengamatanController::class, 'destroy'])->name('pengamatan.destroy');
 
     // Fitur Khusus Admin (Laporan & Master Data)
-    Route::middleware([\App\Http\Middleware\IsAdminMiddleware::class])->group(function () {
+    Route::middleware([IsAdminMiddleware::class])->group(function () {
         // Laporan
-        Route::get('/laporan', [App\Http\Controllers\LaporanController::class, 'index'])->name('laporan.index');
-        Route::get('/laporan/export/excel', [App\Http\Controllers\LaporanController::class, 'exportExcel'])->name('laporan.export.excel');
-        Route::get('/laporan/export/pdf', [App\Http\Controllers\LaporanController::class, 'exportPdf'])->name('laporan.export.pdf');
+        Route::get('/laporan', [LaporanController::class, 'index'])->name('laporan.index');
+        Route::get('/laporan/export/excel', [LaporanController::class, 'exportExcel'])->name('laporan.export.excel');
+        Route::get('/laporan/export/pdf', [LaporanController::class, 'exportPdf'])->name('laporan.export.pdf');
 
         // Master Data
-        Route::resource('komoditas', \App\Http\Controllers\KomoditasController::class)->except(['create', 'show', 'edit']);
-        Route::resource('opt', \App\Http\Controllers\OptController::class)->except(['create', 'show', 'edit']);
-        Route::resource('uppt', \App\Http\Controllers\UpptController::class)->except(['create', 'show', 'edit']);
-        Route::resource('pengguna', \App\Http\Controllers\UserController::class)->parameters(['pengguna' => 'pengguna'])->except(['create', 'show', 'edit']);
+        Route::resource('komoditas', KomoditasController::class)->except(['create', 'show', 'edit']);
+        Route::resource('opt', OptController::class)->except(['create', 'show', 'edit']);
+        Route::resource('uppt', UpptController::class)->except(['create', 'show', 'edit']);
+        Route::resource('pengguna', UserController::class)->parameters(['pengguna' => 'pengguna'])->except(['create', 'show', 'edit']);
+        Route::patch('pengguna/{pengguna}/status', [UserController::class, 'updateStatus'])->name('pengguna.status');
     });
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

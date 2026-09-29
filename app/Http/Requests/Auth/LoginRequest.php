@@ -50,6 +50,13 @@ class LoginRequest extends FormRequest
             ]);
         }
 
+        if (Auth::user()->status === 'nonaktif') {
+            Auth::logout();
+            throw ValidationException::withMessages([
+                'email' => 'Akun Anda masih berstatus nonaktif. Silakan tunggu persetujuan admin.',
+            ]);
+        }
+
         RateLimiter::clear($this->throttleKey());
     }
 

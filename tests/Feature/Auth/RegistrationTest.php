@@ -18,14 +18,23 @@ class RegistrationTest extends TestCase
 
     public function test_new_users_can_register(): void
     {
+        $kabupaten = \App\Models\Kabupaten::create(['nama_kabupaten' => 'Test Kab']);
+        $uppt = \App\Models\Uppt::create(['nama_uppt' => 'Test Uppt', 'kabupaten_id' => $kabupaten->id]);
+
         $response = $this->post('/register', [
             'name' => 'Test User',
             'email' => 'test@example.com',
             'password' => 'password',
             'password_confirmation' => 'password',
+            'uppt_id' => $uppt->id,
         ]);
 
-        $this->assertAuthenticated();
-        $response->assertRedirect(route('dashboard', absolute: false));
+        $this->assertGuest();
+        $response->assertRedirect(route('login', absolute: false));
+        $this->assertDatabaseHas('users', [
+            'email' => 'test@example.com',
+            'status' => 'nonaktif',
+            'role' => 'popt',
+        ]);
     }
 }

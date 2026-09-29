@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
 use App\Models\Uppt;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -13,26 +13,26 @@ class UserController extends Controller
 {
     public function index()
     {
-        if(Auth::user()->role !== 'admin') {
+        if (Auth::user()->role !== 'admin') {
             abort(403, 'Hanya Admin yang dapat mengakses Manajemen Pengguna.');
         }
 
         // Ambil data user (selain admin utama) beserta relasi UPPT
         $query = User::with('uppt')->where('id', '!=', Auth::id());
-        
+
         if ($search = request('search')) {
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%")
-                  ->orWhere('role', 'like', "%{$search}%")
-                  ->orWhereHas('uppt', function($q2) use ($search) {
-                      $q2->where('nama_uppt', 'like', "%{$search}%");
-                  });
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('role', 'like', "%{$search}%")
+                    ->orWhereHas('uppt', function ($q2) use ($search) {
+                        $q2->where('nama_uppt', 'like', "%{$search}%");
+                    });
             });
         }
-        
+
         $users = $query->orderBy('name')->paginate(10)->withQueryString();
-        
+
         // Ambil data UPPT untuk form pilihan wilayah penugasan
         $uppts = Uppt::orderBy('nama_uppt')->get();
 
@@ -48,7 +48,7 @@ class UserController extends Controller
             'role' => ['required', 'in:admin,popt'],
             'uppt_id' => ['nullable', 'required_if:role,popt', 'exists:uppts,id'],
         ], [
-            'uppt_id.required_if' => 'Wilayah UPPT wajib dipilih untuk petugas POPT.'
+            'uppt_id.required_if' => 'Wilayah UPPT wajib dipilih untuk petugas POPT.',
         ]);
 
         try {
@@ -58,11 +58,12 @@ class UserController extends Controller
                 'password' => Hash::make($request->password),
                 'role' => $request->role,
                 'uppt_id' => $request->role === 'admin' ? null : $request->uppt_id,
+                'status' => 'aktif',
             ]);
 
             return redirect()->route('pengguna.index')->with('success', 'Akun petugas berhasil dibuat!');
         } catch (\Exception $e) {
-            return redirect()->back()->withInput()->with('error', 'Terjadi kesalahan saat menyimpan data: ' . $e->getMessage());
+            return redirect()->back()->withInput()->with('error', 'Terjadi kesalahan saat menyimpan data: '.$e->getMessage());
         }
     }
 
@@ -70,9 +71,10 @@ class UserController extends Controller
     {
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users,email,' . $pengguna->id],
+            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users,email,'.$pengguna->id],
             'password' => ['nullable', 'string', 'min:8', 'confirmed'],
             'role' => ['required', 'in:admin,popt'],
+            'status' => ['required', 'in:aktif,nonaktif'],
             'uppt_id' => ['nullable', 'required_if:role,popt', 'exists:uppts,id'],
         ]);
 
@@ -81,6 +83,7 @@ class UserController extends Controller
                 'name' => $request->name,
                 'email' => $request->email,
                 'role' => $request->role,
+                'status' => $request->status,
                 'uppt_id' => $request->role === 'admin' ? null : $request->uppt_id,
             ];
 
@@ -93,7 +96,7 @@ class UserController extends Controller
 
             return redirect()->route('pengguna.index')->with('success', 'Akun petugas berhasil diperbarui!');
         } catch (\Exception $e) {
-            return redirect()->back()->withInput()->with('error', 'Terjadi kesalahan saat memperbarui data: ' . $e->getMessage());
+            return redirect()->back()->withInput()->with('error', 'Terjadi kesalahan saat memperbarui data: '.$e->getMessage());
         }
     }
 
@@ -106,9 +109,25 @@ class UserController extends Controller
 
         try {
             $pengguna->delete();
+
             return redirect()->route('pengguna.index')->with('success', 'Akun petugas berhasil dihapus!');
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Terjadi kesalahan saat menghapus data: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Terjadi kesalahan saat menghapus data: '.$e->getMessage());
+        }
+    }
+
+    public function updateStatus(Request $request, User $pengguna)
+    {
+        $request->validate([
+            'status' => ['required', 'in:aktif,nonaktif'],
+        ]);
+
+        try {
+            $pengguna->update(['status' => $request->status]);
+
+            return back()->with('success', 'Status akun berhasil diperbarui menjadi '.ucfirst($request->status).'!');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Terjadi kesalahan saat memperbarui status: '.$e->getMessage());
         }
     }
 }
