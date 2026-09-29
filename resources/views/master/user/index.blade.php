@@ -113,9 +113,9 @@
                             </td>
                             <td class="px-6 py-4">
                                 @if($u->role === 'admin')
-                                    <span class="px-2.5 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-semibold uppercase tracking-wider">Admin</span>
+                                    <span class="px-2.5 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-semibold uppercase tracking-wider">Admin</span>
                                 @else
-                                    <span class="px-2.5 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-semibold uppercase tracking-wider">POPT</span>
+                                    <span class="px-2.5 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-semibold uppercase tracking-wider">POPT</span>
                                 @endif
                             </td>
                             <td class="px-6 py-4 text-gray-500">
@@ -123,9 +123,9 @@
                             </td>
                             <td class="px-6 py-4">
                                 @if($u->status === 'aktif')
-                                    <span class="px-2.5 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-semibold uppercase tracking-wider">Aktif</span>
+                                    <span class="px-2.5 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold uppercase tracking-wider">Aktif</span>
                                 @else
-                                    <span class="px-2.5 py-1 bg-amber-100 text-amber-700 rounded-full text-xs font-semibold uppercase tracking-wider">Nonaktif</span>
+                                    <span class="px-2.5 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-semibold uppercase tracking-wider">Nonaktif</span>
                                 @endif
                             </td>
                             <td class="px-6 py-4 text-right flex items-center justify-end gap-2">
@@ -140,7 +140,7 @@
                                         </button>
                                     </form>
                                 @else
-                                    <button type="button" x-data="" x-on:click.prevent="$dispatch('open-modal', 'nonaktif-pengguna-{{ $u->id }}')" class="inline-flex items-center text-white font-medium text-xs px-3 py-1.5 bg-amber-500 hover:bg-amber-600 rounded shadow-sm transition">
+                                    <button type="button" x-data="" x-on:click.prevent="$dispatch('open-modal', 'nonaktif-pengguna-{{ $u->id }}')" class="inline-flex items-center text-white font-medium text-xs px-3 py-1.5 bg-gray-500 hover:bg-gray-600 rounded shadow-sm transition">
                                         Nonaktifkan
                                     </button>
 
@@ -153,7 +153,7 @@
                                             <p class="mt-2 text-sm text-gray-600">Apakah Anda yakin ingin menonaktifkan akun petugas <strong>{{ $u->name }}</strong>? Petugas ini tidak akan bisa login ke dalam sistem.</p>
                                             <div class="mt-6 flex justify-end">
                                                 <button type="button" x-on:click="$dispatch('close')" class="px-4 py-2 bg-white border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest shadow-sm hover:bg-gray-50 mr-3">Batal</button>
-                                                <button type="submit" class="px-4 py-2.5 bg-amber-600 border border-transparent rounded-md font-bold text-xs text-white uppercase tracking-widest shadow-sm hover:bg-amber-700 transition-colors">Ya, Nonaktifkan</button>
+                                                <button type="submit" class="px-4 py-2.5 bg-gray-600 border border-transparent rounded-md font-bold text-xs text-white uppercase tracking-widest shadow-sm hover:bg-gray-700 transition-colors">Ya, Nonaktifkan</button>
                                             </div>
                                         </form>
                                     </x-modal>
