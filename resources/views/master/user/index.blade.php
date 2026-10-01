@@ -95,7 +95,6 @@
                         <tr>
                             <th class="px-6 py-4 font-bold tracking-wider w-16">No</th>
                             <th class="px-6 py-4 font-bold tracking-wider">Nama & Email</th>
-                            <th class="px-6 py-4 font-bold tracking-wider">Peran (Role)</th>
                             <th class="px-6 py-4 font-bold tracking-wider">Wilayah (UPPT)</th>
                             <th class="px-6 py-4 font-bold tracking-wider">Status</th>
                             <th class="px-6 py-4 font-bold tracking-wider text-right w-32">Aksi</th>
@@ -110,13 +109,6 @@
                             <td class="px-6 py-4">
                                 <div class="font-semibold text-gray-900">{{ $u->name }}</div>
                                 <div class="text-xs text-gray-500">{{ $u->email }}</div>
-                            </td>
-                            <td class="px-6 py-4">
-                                @if($u->role === 'admin')
-                                    <span class="px-2.5 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-semibold uppercase tracking-wider">Admin</span>
-                                @else
-                                    <span class="px-2.5 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-semibold uppercase tracking-wider">POPT</span>
-                                @endif
                             </td>
                             <td class="px-6 py-4 text-gray-500">
                                 {{ $u->role === 'admin' ? 'Semua Wilayah' : ($u->uppt->nama_uppt ?? 'Belum Ditugaskan') }}
