@@ -16,11 +16,7 @@ class KomoditasController extends Controller
         }
         $query = Komoditas::query();
         
-        if ($search = request('search')) {
-            $query->where('nama_komoditas', 'like', "%{$search}%");
-        }
-        
-        $komoditas = $query->orderBy('nama_komoditas')->paginate(10)->withQueryString();
+        $komoditas = $query->latest()->get();
         return view('master.komoditas.index', compact('komoditas'));
     }
 

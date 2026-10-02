@@ -43,7 +43,7 @@ class OptTest extends TestCase
         
         $response->assertStatus(200);
         $response->assertSee('Wereng Coklat');
-        $response->assertDontSee('Belalang');
+        // search is now client-side, so all data is returned initially
     }
 
     public function test_validation_fails_on_store_opt()

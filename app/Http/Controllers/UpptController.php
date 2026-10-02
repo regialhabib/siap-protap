@@ -19,14 +19,7 @@ class UpptController extends Controller
         // Mengambil data UPPT beserta relasi ke Kabupaten dan Kecamatans
         $query = Uppt::with(['kabupaten', 'kecamatans']);
         
-        if ($search = request('search')) {
-            $query->where('nama_uppt', 'like', "%{$search}%")
-                  ->orWhereHas('kabupaten', function($q) use ($search) {
-                      $q->where('nama_kabupaten', 'like', "%{$search}%");
-                  });
-        }
-
-        $uppts = $query->orderBy('nama_uppt')->paginate(10)->withQueryString();
+        $uppts = $query->latest()->get();
         
         // Mengambil daftar Kabupaten untuk opsi dropdown di Modal
         $kabupatens = Kabupaten::orderBy('nama_kabupaten')->get();

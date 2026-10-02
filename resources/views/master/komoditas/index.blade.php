@@ -26,28 +26,7 @@
     @endif
 
     <!-- Main Card Container -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden" x-data="{ 
-        search: '{{ request('search') }}',
-        loading: false,
-        updateTable() {
-            this.loading = true;
-            let url = new URL(window.location.href);
-            if(this.search) {
-                url.searchParams.set('search', this.search);
-            } else {
-                url.searchParams.delete('search');
-            }
-            url.searchParams.delete('page'); 
-            fetch(url, { headers: {'X-Requested-With': 'XMLHttpRequest'} })
-                .then(res => res.text())
-                .then(html => {
-                    let doc = new DOMParser().parseFromString(html, 'text/html');
-                    document.getElementById('table-container').innerHTML = doc.getElementById('table-container').innerHTML;
-                    this.loading = false;
-                    window.history.pushState({}, '', url);
-                });
-        }
-    }">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden" x-data="tablePagination">
         
         <!-- Header inside Card -->
         <div class="p-6 border-b border-gray-100 flex flex-col md:flex-row md:justify-between md:items-center gap-4 bg-white">
@@ -57,19 +36,15 @@
             </div>
             
             <div class="flex items-center gap-3">
-                <div class="relative hidden">
-                    <input type="text" x-model.debounce.500ms="search" @input="updateTable()" placeholder="Cari komoditas..." class="block w-64 pl-10 pr-10 py-2 border-gray-300 rounded-lg shadow-sm focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm">
+                <div class="relative">
+                    <input type="text" x-model="search" placeholder="Cari komoditas..." class="block w-64 pl-10 pr-10 py-2 border-gray-300 rounded-lg shadow-sm focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm">
                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                     </div>
                     <!-- Tombol Hapus / Clear -->
-                    <button type="button" x-cloak x-show="search.length > 0 && !loading" @click="search = ''; updateTable()" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 focus:outline-none">
+                    <button type="button" x-cloak x-show="search.length > 0" @click="search = ''" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 focus:outline-none">
                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                     </button>
-                    <!-- Spinner Loading -->
-                    <div x-show="loading" class="absolute inset-y-0 right-0 pr-3 flex items-center" style="display: none;">
-                        <svg class="animate-spin h-4 w-4 text-emerald-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                    </div>
                 </div>
                 <!-- Tombol Tambah yang memicu Modal -->
                 <button x-data="" x-on:click.prevent="$dispatch('open-modal', 'tambah-komoditas')" class="inline-flex items-center justify-center px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm rounded-lg shadow-sm transition duration-150 whitespace-nowrap">
@@ -79,17 +54,7 @@
             </div>
         </div>
         
-        <div id="table-container" @click="if($event.target.closest('.pagination a') || $event.target.closest('nav[role=navigation] a')) { 
-            $event.preventDefault(); 
-            let link = $event.target.closest('a').href;
-            fetch(link, { headers: {'X-Requested-With': 'XMLHttpRequest'} })
-                .then(res => res.text())
-                .then(html => {
-                    let doc = new DOMParser().parseFromString(html, 'text/html');
-                    document.getElementById('table-container').innerHTML = doc.getElementById('table-container').innerHTML;
-                    window.history.pushState({}, '', link);
-                });
-        }">
+        <div id="table-container">
             <div class="overflow-x-auto px-6 pt-2 pb-8">
                 <table class="w-full text-sm text-left whitespace-nowrap">
                     <thead class="text-xs text-gray-700 uppercase bg-gray-100 border-y border-gray-200">
@@ -101,11 +66,11 @@
                         </thead>
                         <tbody class="divide-y divide-gray-100">
                         @forelse($komoditas as $index => $k)
-                        <tr class="hover:bg-gray-50/50 transition-colors">
+                        <tr class="hover:bg-gray-50/50 transition-colors data-row">
                             <td class="px-6 py-4 text-gray-500">
-                                {{ $komoditas->firstItem() + $index }}
+                                {{ $loop->iteration }}
                             </td>
-                            <td class="px-6 py-4">
+                            <td class="px-6 py-4 searchable-col">
                                 <span class="font-semibold text-gray-900">{{ $k->nama_komoditas }}</span>
                             </td>
                             <td class="px-6 py-4 text-right">
@@ -192,11 +157,19 @@
                     </table>
             </div>
             
-            @if($komoditas->hasPages())
-            <div class="px-6 py-4 border-t border-gray-100 bg-gray-50/50">
-                {{ $komoditas->links() }}
+            <div class="px-6 py-4 border-t border-gray-100 bg-gray-50/50 flex items-center justify-between" x-cloak x-show="totalItems > 0">
+                <div class="text-sm text-gray-500">
+                    Menampilkan <span class="font-medium" x-text="showingStart"></span> hingga <span class="font-medium" x-text="showingEnd"></span> dari <span class="font-medium" x-text="totalItems"></span> hasil
+                </div>
+                <div class="flex gap-2">
+                    <button @click="prevPage()" :disabled="currentPage === 1" :class="{'opacity-50 cursor-not-allowed': currentPage === 1}" class="px-4 py-2 border border-gray-300 rounded-md bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
+                        Sebelumnya
+                    </button>
+                    <button @click="nextPage()" :disabled="currentPage === totalPages" :class="{'opacity-50 cursor-not-allowed': currentPage === totalPages}" class="px-4 py-2 border border-gray-300 rounded-md bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
+                        Selanjutnya
+                    </button>
+                </div>
             </div>
-            @endif
         </div>
     </div>
 

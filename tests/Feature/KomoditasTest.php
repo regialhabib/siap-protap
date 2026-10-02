@@ -43,7 +43,7 @@ class KomoditasTest extends TestCase
         
         $response->assertStatus(200);
         $response->assertSee('Padi Sawah');
-        $response->assertDontSee('Jagung');
+        // search is now client-side, so all data is returned initially
     }
 
     public function test_validation_fails_on_store_komoditas()

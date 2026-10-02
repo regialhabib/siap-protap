@@ -20,18 +20,7 @@ class UserController extends Controller
         // Ambil data user (selain admin utama) beserta relasi UPPT
         $query = User::with('uppt')->where('id', '!=', Auth::id());
 
-        if ($search = request('search')) {
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('email', 'like', "%{$search}%")
-                    ->orWhere('role', 'like', "%{$search}%")
-                    ->orWhereHas('uppt', function ($q2) use ($search) {
-                        $q2->where('nama_uppt', 'like', "%{$search}%");
-                    });
-            });
-        }
-
-        $users = $query->orderBy('name')->paginate(10)->withQueryString();
+        $users = $query->latest()->get();
 
         // Ambil data UPPT untuk form pilihan wilayah penugasan
         $uppts = Uppt::orderBy('nama_uppt')->get();

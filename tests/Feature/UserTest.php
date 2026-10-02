@@ -110,6 +110,7 @@ class UserTest extends TestCase
             'name' => 'User Update',
             'email' => 'update@example.com',
             'role' => 'popt',
+            'status' => 'aktif',
             'uppt_id' => $this->uppt->id,
             'password' => '', // kosong, tidak diupdate
             'password_confirmation' => ''

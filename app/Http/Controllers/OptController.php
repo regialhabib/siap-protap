@@ -16,11 +16,7 @@ class OptController extends Controller
         }
         $query = Opt::query();
         
-        if ($search = request('search')) {
-            $query->where('nama_opt', 'like', "%{$search}%");
-        }
-
-        $opts = $query->orderBy('nama_opt')->paginate(10)->withQueryString();
+        $opts = $query->latest()->get();
         return view('master.opt.index', compact('opts'));
     }
 
