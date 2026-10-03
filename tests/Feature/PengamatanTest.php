@@ -2,13 +2,14 @@
 
 namespace Tests\Feature;
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
-use Tests\TestCase;
-use App\Models\User;
+use App\Models\Kabupaten;
+use App\Models\Kecamatan;
 use App\Models\Komoditas;
 use App\Models\Opt;
 use App\Models\Uppt;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class PengamatanTest extends TestCase
 {
@@ -17,9 +18,9 @@ class PengamatanTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         // Buat data master yang dibutuhkan untuk pengamatan
-        $kabupaten = \App\Models\Kabupaten::create(['nama_kabupaten' => 'Kab Test']);
+        $kabupaten = Kabupaten::create(['nama_kabupaten' => 'Kab Test']);
         $this->uppt = Uppt::create(['nama_uppt' => 'UPPT Test', 'kabupaten_id' => $kabupaten->id]);
         $this->komoditas = Komoditas::create(['nama_komoditas' => 'Padi Test']);
         $this->opt = Opt::create(['nama_opt' => 'Wereng Test']);
@@ -57,7 +58,7 @@ class PengamatanTest extends TestCase
             'tanggal_pengamatan',
             'komoditas_id',
             'opt_id',
-            'luas_komoditi_ha'
+            'luas_komoditi_ha',
         ]);
     }
 
@@ -91,5 +92,38 @@ class PengamatanTest extends TestCase
             'serangan_berat' => 0.5,
             'serangan_jumlah' => 3.5, // 2 + 1 + 0.5
         ]);
+    }
+
+    public function test_validation_fails_when_kecamatan_is_required_but_missing()
+    {
+        // Berikan kecamatan pada UPPT test
+        Kecamatan::create(['nama_kecamatan' => 'Kecamatan Test', 'uppt_id' => $this->uppt->id]);
+
+        $payload = [
+            'tanggal_pengamatan' => '2026-09-22',
+            'komoditas_id' => $this->komoditas->id,
+            'opt_id' => $this->opt->id,
+            'luas_komoditi_ha' => 10.5,
+        ];
+
+        $response = $this->actingAs($this->userPopt)->post('/pengamatan', $payload);
+        $response->assertSessionHasErrors(['kecamatan_id']);
+    }
+
+    public function test_validation_succeeds_when_kecamatan_is_provided()
+    {
+        $kec = Kecamatan::create(['nama_kecamatan' => 'Kecamatan Test', 'uppt_id' => $this->uppt->id]);
+
+        $payload = [
+            'tanggal_pengamatan' => '2026-09-22',
+            'komoditas_id' => $this->komoditas->id,
+            'opt_id' => $this->opt->id,
+            'luas_komoditi_ha' => 10.5,
+            'kecamatan_id' => $kec->id,
+        ];
+
+        $response = $this->actingAs($this->userPopt)->post('/pengamatan', $payload);
+        $response->assertSessionHasNoErrors();
+        $this->assertDatabaseHas('pengamatans', ['kecamatan_id' => $kec->id]);
     }
 }

@@ -22,6 +22,7 @@ This project has domain-specific skills available in `**/skills/**`. You MUST ac
 - You must follow all existing code conventions used in this application. When creating or editing a file, check sibling files for the correct structure, approach, and naming.
 - Use descriptive names for variables and methods. For example, `isRegisteredForDiscounts`, not `discount()`.
 - Check for existing components to reuse before writing a new one.
+- **NEVER ASSUME**: If there is any unclear requirement, missing context, or undefined behavior, explicitly ask the user for clarification before proceeding with a plan or code changes. Do not make assumptions on behalf of the user.
 
 ## Verification Scripts
 

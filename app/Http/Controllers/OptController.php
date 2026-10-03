@@ -5,18 +5,14 @@ namespace App\Http\Controllers;
 use App\Models\Opt;
 use Illuminate\Http\Request;
 
-use Illuminate\Support\Facades\Auth;
-
 class OptController extends Controller
 {
     public function index()
     {
-        if(Auth::user()->role !== 'admin') {
-            abort(403, 'Hanya Admin yang dapat mengakses Master Data.');
-        }
         $query = Opt::query();
-        
+
         $opts = $query->latest()->get();
+
         return view('master.opt.index', compact('opts'));
     }
 
@@ -28,29 +24,33 @@ class OptController extends Controller
 
         try {
             Opt::create([
-                'nama_opt' => $request->nama_opt
+                'nama_opt' => $request->nama_opt,
             ]);
 
             return redirect()->route('opt.index')->with('success', 'OPT berhasil ditambahkan!');
-        } catch (\Exception $e) {
-            return redirect()->back()->withInput()->with('error', 'Terjadi kesalahan saat menyimpan data: ' . $e->getMessage());
+        } catch (\Throwable $e) {
+            report($e);
+
+            return back()->withInput()->with('error', 'Terjadi kesalahan saat menyimpan data. Silakan coba lagi.');
         }
     }
 
     public function update(Request $request, Opt $opt)
     {
         $request->validate([
-            'nama_opt' => 'required|string|max:255|unique:opts,nama_opt,' . $opt->id,
+            'nama_opt' => 'required|string|max:255|unique:opts,nama_opt,'.$opt->id,
         ]);
 
         try {
             $opt->update([
-                'nama_opt' => $request->nama_opt
+                'nama_opt' => $request->nama_opt,
             ]);
 
             return redirect()->route('opt.index')->with('success', 'OPT berhasil diperbarui!');
-        } catch (\Exception $e) {
-            return redirect()->back()->withInput()->with('error', 'Terjadi kesalahan saat memperbarui data: ' . $e->getMessage());
+        } catch (\Throwable $e) {
+            report($e);
+
+            return back()->withInput()->with('error', 'Terjadi kesalahan saat memperbarui data. Silakan coba lagi.');
         }
     }
 
@@ -58,9 +58,12 @@ class OptController extends Controller
     {
         try {
             $opt->delete();
+
             return redirect()->route('opt.index')->with('success', 'OPT berhasil dihapus!');
-        } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Terjadi kesalahan saat menghapus data: ' . $e->getMessage());
+        } catch (\Throwable $e) {
+            report($e);
+
+            return back()->with('error', 'Terjadi kesalahan saat menghapus data. Silakan coba lagi.');
         }
     }
 }

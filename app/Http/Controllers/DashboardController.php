@@ -2,27 +2,34 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Pengamatan;
 use App\Models\Uppt;
-use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
 {
     public function index()
     {
         $user = Auth::user();
-        
+
+        $currentMonth = now()->month;
+        $currentYear = now()->year;
+
         $query = Pengamatan::with(['komoditas', 'opt', 'uppt', 'kecamatan'])
-            ->orderBy('tanggal_pengamatan', 'desc');
+            ->latest('tanggal_pengamatan');
 
         if ($user->role === 'popt') {
             $query->where('uppt_id', $user->uppt_id);
         }
 
+        $pengamatans = $query->paginate(5);
+
         // Clone query for stats calculation
         $baseQuery = clone $query;
+        $baseQuery->whereMonth('tanggal_pengamatan', $currentMonth)
+            ->whereYear('tanggal_pengamatan', $currentYear);
 
         // Simple statistics
         $stats = [
@@ -32,9 +39,6 @@ class DashboardController extends Controller
         ];
 
         // Hitung Kepatuhan UPPT (Bulan Ini)
-        $currentMonth = Carbon::now()->month;
-        $currentYear = Carbon::now()->year;
-
         $allUppt = Uppt::orderBy('nama_uppt', 'asc')->get();
         $allUpptCount = $allUppt->count();
         
@@ -61,9 +65,9 @@ class DashboardController extends Controller
             'persentase_sudah' => $persentaseSudah,
             'persentase_belum' => $persentaseBelum,
             'total' => $allUpptCount,
-            'bulan_ini' => Carbon::now()->isoFormat('MMMM Y')
+            'bulan_ini' => now()->isoFormat('MMMM Y')
         ];
 
-        return view('dashboard', compact('stats', 'chartData'));
+        return view('dashboard', compact('stats', 'chartData', 'pengamatans'));
     }
 }

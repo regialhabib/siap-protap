@@ -11,12 +11,12 @@
         <!-- Dynamic Area Breadcrumbs -->
         <div class="hidden lg:flex items-center space-x-2 text-sm font-medium text-gray-500">
             <span>Aplikasi SIAP-PROTAP</span>
-            @if(Auth::user()->role !== 'admin')
+            @cannot('admin')
                 <span>/</span>
                 <span class="text-emerald-600">
                     {{ Auth::user()->uppt->nama_uppt ?? 'Wilayah Tidak Diketahui' }}
                 </span>
-            @endif
+            @endcannot
         </div>
 
         <!-- Right Side User Menu -->

@@ -17,6 +17,7 @@ Route::get('/', function () {
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/api/uppt/{uppt}/kecamatans', [UpptController::class, 'getKecamatans'])->name('api.uppt.kecamatans');
 
     // Fitur Pengamatan (Input Data)
     Route::get('/pengamatan/create', [PengamatanController::class, 'create'])->name('pengamatan.create');

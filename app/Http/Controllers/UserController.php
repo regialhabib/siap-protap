@@ -13,10 +13,6 @@ class UserController extends Controller
 {
     public function index()
     {
-        if (Auth::user()->role !== 'admin') {
-            abort(403, 'Hanya Admin yang dapat mengakses Manajemen Pengguna.');
-        }
-
         // Ambil data user (selain admin utama) beserta relasi UPPT
         $query = User::with('uppt')->where('id', '!=', Auth::id());
 
@@ -51,8 +47,10 @@ class UserController extends Controller
             ]);
 
             return redirect()->route('pengguna.index')->with('success', 'Akun petugas berhasil dibuat!');
-        } catch (\Exception $e) {
-            return redirect()->back()->withInput()->with('error', 'Terjadi kesalahan saat menyimpan data: '.$e->getMessage());
+        } catch (\Throwable $e) {
+            report($e);
+
+            return back()->withInput()->with('error', 'Terjadi kesalahan saat menyimpan data. Silakan coba lagi.');
         }
     }
 
@@ -84,8 +82,10 @@ class UserController extends Controller
             $pengguna->update($data);
 
             return redirect()->route('pengguna.index')->with('success', 'Akun petugas berhasil diperbarui!');
-        } catch (\Exception $e) {
-            return redirect()->back()->withInput()->with('error', 'Terjadi kesalahan saat memperbarui data: '.$e->getMessage());
+        } catch (\Throwable $e) {
+            report($e);
+
+            return back()->withInput()->with('error', 'Terjadi kesalahan saat memperbarui data. Silakan coba lagi.');
         }
     }
 
@@ -100,8 +100,10 @@ class UserController extends Controller
             $pengguna->delete();
 
             return redirect()->route('pengguna.index')->with('success', 'Akun petugas berhasil dihapus!');
-        } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Terjadi kesalahan saat menghapus data: '.$e->getMessage());
+        } catch (\Throwable $e) {
+            report($e);
+
+            return back()->with('error', 'Terjadi kesalahan saat menghapus data. Silakan coba lagi.');
         }
     }
 
@@ -115,8 +117,10 @@ class UserController extends Controller
             $pengguna->update(['status' => $request->status]);
 
             return back()->with('success', 'Status akun berhasil diperbarui menjadi '.ucfirst($request->status).'!');
-        } catch (\Exception $e) {
-            return back()->with('error', 'Terjadi kesalahan saat memperbarui status: '.$e->getMessage());
+        } catch (\Throwable $e) {
+            report($e);
+
+            return back()->with('error', 'Terjadi kesalahan saat memperbarui status. Silakan coba lagi.');
         }
     }
 }

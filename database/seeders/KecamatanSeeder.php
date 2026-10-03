@@ -2,9 +2,9 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
-use App\Models\Uppt;
 use App\Models\Kecamatan;
+use App\Models\Uppt;
+use Illuminate\Database\Seeder;
 
 class KecamatanSeeder extends Seeder
 {
@@ -33,17 +33,17 @@ class KecamatanSeeder extends Seeder
             'UPPT Sabak' => ['Dendang', 'Geragai', 'Kuala Jambi', 'Mendahara', 'Mendahara Ulu', 'Muara Sabak Timur', 'Muara Sabak Barat'],
             'UPPT Nipah Panjang' => ['Nipah Panjang', 'Rantau Rasau', 'Sadu', 'Berbak'],
             'UPPT Tungkal Ilir' => ['Tungkal Ilir', 'Betara', 'Kuala Betara', 'Bram Itam', 'Seberang Kota'],
-            'UPPT Tungkal Ulu' => ['Merlung', 'Tebing Tinggi', 'Tungkal Ulu', 'Batang Asam', 'Muara Papalik', 'Pangabuan', 'Renah Mandaluh', 'Senyerang']
+            'UPPT Tungkal Ulu' => ['Merlung', 'Tebing Tinggi', 'Tungkal Ulu', 'Batang Asam', 'Muara Papalik', 'Pangabuan', 'Renah Mandaluh', 'Senyerang'],
         ];
 
         foreach ($data as $upptName => $kecamatanList) {
             $uppt = Uppt::where('nama_uppt', $upptName)->first();
-            
+
             if ($uppt) {
                 foreach ($kecamatanList as $namaKecamatan) {
                     Kecamatan::firstOrCreate([
                         'uppt_id' => $uppt->id,
-                        'nama_kecamatan' => $namaKecamatan
+                        'nama_kecamatan' => $namaKecamatan,
                     ]);
                 }
             } else {

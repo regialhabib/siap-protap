@@ -2,6 +2,8 @@
 
 namespace Tests\Feature\Auth;
 
+use App\Models\Kabupaten;
+use App\Models\Uppt;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -18,8 +20,8 @@ class RegistrationTest extends TestCase
 
     public function test_new_users_can_register(): void
     {
-        $kabupaten = \App\Models\Kabupaten::create(['nama_kabupaten' => 'Test Kab']);
-        $uppt = \App\Models\Uppt::create(['nama_uppt' => 'Test Uppt', 'kabupaten_id' => $kabupaten->id]);
+        $kabupaten = Kabupaten::create(['nama_kabupaten' => 'Test Kab']);
+        $uppt = Uppt::create(['nama_uppt' => 'Test Uppt', 'kabupaten_id' => $kabupaten->id]);
 
         $response = $this->post('/register', [
             'name' => 'Test User',

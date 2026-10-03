@@ -5,6 +5,8 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -50,12 +52,12 @@ class User extends Authenticatable
         ];
     }
 
-    public function uppt()
+    public function uppt(): BelongsTo
     {
         return $this->belongsTo(Uppt::class);
     }
 
-    public function pengamatans()
+    public function pengamatans(): HasMany
     {
         return $this->hasMany(Pengamatan::class);
     }

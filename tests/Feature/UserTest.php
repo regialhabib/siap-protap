@@ -2,19 +2,21 @@
 
 namespace Tests\Feature;
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\TestCase;
-use App\Models\User;
-use App\Models\Uppt;
 use App\Models\Kabupaten;
+use App\Models\Uppt;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
+use Tests\TestCase;
 
 class UserTest extends TestCase
 {
     use RefreshDatabase;
 
     protected $admin;
+
     protected $popt;
+
     protected $uppt;
 
     protected function setUp(): void
@@ -48,7 +50,7 @@ class UserTest extends TestCase
             'role' => 'popt',
             // uppt_id tidak diisi padahal role = popt
         ]);
-        
+
         $response->assertSessionHasErrors(['name', 'email', 'password', 'uppt_id']);
     }
 
@@ -60,17 +62,17 @@ class UserTest extends TestCase
             'password' => 'password123',
             'password_confirmation' => 'password123',
             'role' => 'popt',
-            'uppt_id' => $this->uppt->id
+            'uppt_id' => $this->uppt->id,
         ]);
 
         $response->assertRedirect(route('pengguna.index'));
         $response->assertSessionHas('success');
-        
+
         $this->assertDatabaseHas('users', [
             'email' => 'poptbaru@example.com',
             'role' => 'popt',
             'uppt_id' => $this->uppt->id,
-            'status' => 'aktif'
+            'status' => 'aktif',
         ]);
     }
 
@@ -82,17 +84,17 @@ class UserTest extends TestCase
             'password' => 'password123',
             'password_confirmation' => 'password123',
             'role' => 'admin',
-            'uppt_id' => $this->uppt->id // ini harusnya diabaikan oleh controller
+            'uppt_id' => $this->uppt->id, // ini harusnya diabaikan oleh controller
         ]);
 
         $response->assertRedirect(route('pengguna.index'));
         $response->assertSessionHas('success');
-        
+
         $this->assertDatabaseHas('users', [
             'email' => 'adminbaru@example.com',
             'role' => 'admin',
             'uppt_id' => null, // dipastikan null oleh controller
-            'status' => 'aktif'
+            'status' => 'aktif',
         ]);
     }
 
@@ -103,7 +105,7 @@ class UserTest extends TestCase
             'email' => 'lama@example.com',
             'role' => 'popt',
             'uppt_id' => $this->uppt->id,
-            'password' => Hash::make('password_lama')
+            'password' => Hash::make('password_lama'),
         ]);
 
         $response = $this->actingAs($this->admin)->put("/pengguna/{$userTarget->id}", [
@@ -113,16 +115,16 @@ class UserTest extends TestCase
             'status' => 'aktif',
             'uppt_id' => $this->uppt->id,
             'password' => '', // kosong, tidak diupdate
-            'password_confirmation' => ''
+            'password_confirmation' => '',
         ]);
 
         $response->assertRedirect(route('pengguna.index'));
         $response->assertSessionHas('success');
-        
+
         $this->assertDatabaseHas('users', [
             'id' => $userTarget->id,
             'name' => 'User Update',
-            'email' => 'update@example.com'
+            'email' => 'update@example.com',
         ]);
 
         // Verifikasi password lama masih berlaku
@@ -136,9 +138,9 @@ class UserTest extends TestCase
 
         $response->assertRedirect(route('pengguna.index'));
         $response->assertSessionHas('error');
-        
+
         $this->assertDatabaseHas('users', [
-            'id' => $this->admin->id
+            'id' => $this->admin->id,
         ]);
     }
 
@@ -150,9 +152,9 @@ class UserTest extends TestCase
 
         $response->assertRedirect(route('pengguna.index'));
         $response->assertSessionHas('success');
-        
+
         $this->assertDatabaseMissing('users', [
-            'id' => $userTarget->id
+            'id' => $userTarget->id,
         ]);
     }
 
@@ -161,13 +163,13 @@ class UserTest extends TestCase
         $userTarget = User::factory()->create(['status' => 'nonaktif']);
 
         $response = $this->actingAs($this->admin)->patch("/pengguna/{$userTarget->id}/status", [
-            'status' => 'aktif'
+            'status' => 'aktif',
         ]);
 
         $response->assertSessionHas('success');
         $this->assertDatabaseHas('users', [
             'id' => $userTarget->id,
-            'status' => 'aktif'
+            'status' => 'aktif',
         ]);
     }
 }

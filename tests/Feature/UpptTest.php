@@ -2,18 +2,20 @@
 
 namespace Tests\Feature;
 
+use App\Models\Kabupaten;
+use App\Models\Uppt;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
-use App\Models\User;
-use App\Models\Uppt;
-use App\Models\Kabupaten;
 
 class UpptTest extends TestCase
 {
     use RefreshDatabase;
 
     protected $admin;
+
     protected $popt;
+
     protected $kabupaten;
 
     protected function setUp(): void
@@ -40,7 +42,7 @@ class UpptTest extends TestCase
     public function test_validation_fails_on_store_uppt()
     {
         $response = $this->actingAs($this->admin)->post('/uppt', []);
-        
+
         $response->assertSessionHasErrors(['nama_uppt', 'kabupaten_id']);
     }
 
@@ -49,28 +51,28 @@ class UpptTest extends TestCase
         $response = $this->actingAs($this->admin)->post('/uppt', [
             'nama_uppt' => 'UPPT Wilayah I',
             'kabupaten_id' => $this->kabupaten->id,
-            'kecamatans' => ['Kecamatan A', 'Kecamatan B', null, ''] // Menguji array_filter
+            'kecamatans' => ['Kecamatan A', 'Kecamatan B', null, ''], // Menguji array_filter
         ]);
 
         $response->assertRedirect(route('uppt.index'));
         $response->assertSessionHas('success');
-        
+
         $this->assertDatabaseHas('uppts', [
             'nama_uppt' => 'UPPT Wilayah I',
             'kabupaten_id' => $this->kabupaten->id,
         ]);
 
         $uppt = Uppt::where('nama_uppt', 'UPPT Wilayah I')->first();
-        
+
         $this->assertDatabaseHas('kecamatans', [
             'uppt_id' => $uppt->id,
-            'nama_kecamatan' => 'Kecamatan A'
+            'nama_kecamatan' => 'Kecamatan A',
         ]);
         $this->assertDatabaseHas('kecamatans', [
             'uppt_id' => $uppt->id,
-            'nama_kecamatan' => 'Kecamatan B'
+            'nama_kecamatan' => 'Kecamatan B',
         ]);
-        
+
         // Memastikan yang kosong tidak tersimpan
         $this->assertEquals(2, $uppt->kecamatans()->count());
     }
@@ -79,7 +81,7 @@ class UpptTest extends TestCase
     {
         $uppt = Uppt::create([
             'nama_uppt' => 'UPPT Lama',
-            'kabupaten_id' => $this->kabupaten->id
+            'kabupaten_id' => $this->kabupaten->id,
         ]);
         $uppt->kecamatans()->create(['nama_kecamatan' => 'Kecamatan Lama 1']);
 
@@ -88,12 +90,12 @@ class UpptTest extends TestCase
         $response = $this->actingAs($this->admin)->put("/uppt/{$uppt->id}", [
             'nama_uppt' => 'UPPT Baru',
             'kabupaten_id' => $kabupatenBaru->id,
-            'kecamatans' => ['Kecamatan Baru 1', 'Kecamatan Baru 2']
+            'kecamatans' => ['Kecamatan Baru 1', 'Kecamatan Baru 2'],
         ]);
 
         $response->assertRedirect(route('uppt.index'));
         $response->assertSessionHas('success');
-        
+
         $this->assertDatabaseHas('uppts', [
             'id' => $uppt->id,
             'nama_uppt' => 'UPPT Baru',
@@ -102,11 +104,11 @@ class UpptTest extends TestCase
 
         $this->assertDatabaseMissing('kecamatans', [
             'uppt_id' => $uppt->id,
-            'nama_kecamatan' => 'Kecamatan Lama 1'
+            'nama_kecamatan' => 'Kecamatan Lama 1',
         ]);
         $this->assertDatabaseHas('kecamatans', [
             'uppt_id' => $uppt->id,
-            'nama_kecamatan' => 'Kecamatan Baru 1'
+            'nama_kecamatan' => 'Kecamatan Baru 1',
         ]);
     }
 
@@ -114,7 +116,7 @@ class UpptTest extends TestCase
     {
         $uppt = Uppt::create([
             'nama_uppt' => 'UPPT Hapus',
-            'kabupaten_id' => $this->kabupaten->id
+            'kabupaten_id' => $this->kabupaten->id,
         ]);
         $uppt->kecamatans()->create(['nama_kecamatan' => 'Kec Hapus']);
 
@@ -122,9 +124,9 @@ class UpptTest extends TestCase
 
         $response->assertRedirect(route('uppt.index'));
         $response->assertSessionHas('success');
-        
+
         $this->assertDatabaseMissing('uppts', [
-            'id' => $uppt->id
+            'id' => $uppt->id,
         ]);
         // Asumsi cascading delete diatur di database, atau Eloquent boot method.
         // Jika tidak, test ini mungkin gagal. Tapi secara default kita uji uppt-nya hilang.

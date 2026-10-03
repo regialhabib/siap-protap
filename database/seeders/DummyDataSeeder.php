@@ -2,15 +2,15 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
-use App\Models\User;
-use App\Models\Uppt;
 use App\Models\Komoditas;
 use App\Models\Opt;
 use App\Models\Pengamatan;
+use App\Models\Uppt;
+use App\Models\User;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 
 class DummyDataSeeder extends Seeder
 {
@@ -54,7 +54,7 @@ class DummyDataSeeder extends Seeder
                 [
                     'name' => "Petugas POPT {$i}",
                     'role' => 'popt',
-                    'password' => Hash::make('password')
+                    'password' => Hash::make('password'),
                 ]
             );
 
@@ -62,7 +62,7 @@ class DummyDataSeeder extends Seeder
             for ($j = 0; $j < 10; $j++) {
                 // Tanggal acak dalam 3 bulan terakhir
                 $tanggal = Carbon::now()->subDays(rand(0, 90));
-                
+
                 // Nilai serangan acak
                 $ringan = rand(0, 50) / 10;
                 $sedang = rand(0, 30) / 10;
@@ -75,20 +75,20 @@ class DummyDataSeeder extends Seeder
                     'komoditas_id' => $komoditas->random()->id,
                     'opt_id' => $opts->random()->id,
                     'tanggal_pengamatan' => $tanggal->format('Y-m-d'),
-                    
-                    'luas_komoditi_ha' => rand(10, 100) + (rand(0,9)/10),
-                    
+
+                    'luas_komoditi_ha' => rand(10, 100) + (rand(0, 9) / 10),
+
                     'serangan_ringan' => $ringan,
                     'serangan_sedang' => $sedang,
                     'serangan_berat' => $berat,
                     'serangan_jumlah' => $jumlah,
-                    
+
                     'kendali_apbd_kab' => rand(0, 10) / 10,
                     'kendali_apbd_prov' => rand(0, 10) / 10,
                     'kendali_masyarakat' => rand(0, 5) / 10,
                     'kendali_apbn' => 0,
-                    
-                    'kondisi_serangan' => $kondisiOptions[array_rand($kondisiOptions)]
+
+                    'kondisi_serangan' => $kondisiOptions[array_rand($kondisiOptions)],
                 ]);
             }
         }

@@ -7,8 +7,29 @@
             </h2>
         </div>
         <div class="p-6">
-            <form method="GET" action="{{ route('laporan.index') }}" class="grid grid-cols-1 md:grid-cols-5 gap-4" x-data="{ jenis: '{{ $jenis }}' }">
-            
+            <form id="filterForm" method="GET" action="{{ route('laporan.index') }}" class="grid grid-cols-1 md:grid-cols-6 gap-4" 
+                  x-data="{ 
+                      jenis: '{{ $jenis }}', 
+                      uppt_id: '{{ $uppt_id }}', 
+                      kecamatans: {{ Js::from($kecamatans) }}, 
+                      kecamatan_id: '{{ request('kecamatan_id') }}',
+                      fetchKecamatans() {
+                          if(!this.uppt_id) {
+                              this.kecamatans = [];
+                              this.kecamatan_id = '';
+                              return;
+                          }
+                          fetch(`/api/uppt/${this.uppt_id}/kecamatans`)
+                              .then(res => res.json())
+                              .then(data => {
+                                  this.kecamatans = data;
+                                  // if currently selected kecamatan_id is not in new list, reset it
+                                  if(!data.find(k => k.id == this.kecamatan_id)) {
+                                      this.kecamatan_id = '';
+                                  }
+                              });
+                      }
+                  }">
             <!-- Jenis Laporan -->
             <div>
                 <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Jenis Laporan</label>
@@ -55,10 +76,21 @@
             <!-- Filter UPPT -->
             <div>
                 <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Wilayah / UPPT</label>
-                <select name="uppt_id" class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 text-sm">
+                <select name="uppt_id" x-model="uppt_id" @change="kecamatan_id = ''; fetchKecamatans()" class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 text-sm">
                     @foreach($uppts as $u)
-                        <option value="{{ $u->id }}" {{ $uppt_id == $u->id ? 'selected' : '' }}>{{ $u->nama_uppt }}</option>
+                        <option value="{{ $u->id }}">{{ $u->nama_uppt }}</option>
                     @endforeach
+                </select>
+            </div>
+
+            <!-- Filter Kecamatan (Dynamic) -->
+            <div x-show="kecamatans.length > 0" x-cloak>
+                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Kecamatan</label>
+                <select name="kecamatan_id" x-model="kecamatan_id" class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 text-sm">
+                    <option value="">-- Semua Kecamatan --</option>
+                    <template x-for="kec in kecamatans" :key="kec.id">
+                        <option :value="kec.id" x-text="kec.nama_kecamatan"></option>
+                    </template>
                 </select>
             </div>
 
@@ -147,7 +179,7 @@
                 <thead class="text-xs text-gray-700 uppercase bg-gray-100/50 border-b border-gray-200">
                     <tr>
                         <th rowspan="2" class="px-4 py-3 border-r border-gray-200">No</th>
-                        <th rowspan="2" class="px-4 py-3 border-r border-gray-200">Wilayah / UPPT</th>
+                        <th rowspan="2" class="px-4 py-3 border-r border-gray-200">Wilayah Pengamatan / Kecamatan</th>
                         <th rowspan="2" class="px-4 py-3 border-r border-gray-200">Komoditas</th>
                         <th rowspan="2" class="px-4 py-3 border-r border-gray-200">OPT</th>
                         <th rowspan="2" class="px-4 py-3 border-r border-gray-200">Luas (Ha)</th>
@@ -171,7 +203,7 @@
                     @forelse($data as $d)
                         <tr class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
                             <td class="px-4 py-3 border-r border-gray-100 text-center">{{ $loop->iteration }}</td>
-                            <td class="px-4 py-3 border-r border-gray-100 font-medium text-gray-900">{{ $d->uppt->nama_uppt ?? '-' }}</td>
+                            <td class="px-4 py-3 border-r border-gray-100 font-medium text-gray-900">{{ $d->uppt->nama_uppt ?? '-' }}{{ $d->kecamatan ? ' / ' . $d->kecamatan->nama_kecamatan : '' }}</td>
                             <td class="px-4 py-3 border-r border-gray-100">{{ $d->komoditas->nama_komoditas ?? '-' }}</td>
                             <td class="px-4 py-3 border-r border-gray-100">{{ $d->opt->nama_opt ?? '-' }}</td>
                             <td class="px-4 py-3 border-r border-gray-100 font-bold text-center">{{ floatval($d->luas_komoditi_ha) }}</td>

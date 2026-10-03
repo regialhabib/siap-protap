@@ -2,16 +2,17 @@
 
 namespace Tests\Feature;
 
+use App\Models\Opt;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
-use App\Models\User;
-use App\Models\Opt;
 
 class OptTest extends TestCase
 {
     use RefreshDatabase;
 
     protected $admin;
+
     protected $popt;
 
     protected function setUp(): void
@@ -40,7 +41,7 @@ class OptTest extends TestCase
         Opt::create(['nama_opt' => 'Belalang']);
 
         $response = $this->actingAs($this->admin)->get('/opt?search=Wereng');
-        
+
         $response->assertStatus(200);
         $response->assertSee('Wereng Coklat');
         // search is now client-side, so all data is returned initially
@@ -56,7 +57,7 @@ class OptTest extends TestCase
 
         // Test validasi unik
         $responseDuplicate = $this->actingAs($this->admin)->post('/opt', [
-            'nama_opt' => 'Penggerek Batang'
+            'nama_opt' => 'Penggerek Batang',
         ]);
         $responseDuplicate->assertSessionHasErrors(['nama_opt']);
     }
@@ -64,14 +65,14 @@ class OptTest extends TestCase
     public function test_admin_can_store_opt()
     {
         $response = $this->actingAs($this->admin)->post('/opt', [
-            'nama_opt' => 'Keong Mas'
+            'nama_opt' => 'Keong Mas',
         ]);
 
         $response->assertRedirect(route('opt.index'));
         $response->assertSessionHas('success');
-        
+
         $this->assertDatabaseHas('opts', [
-            'nama_opt' => 'Keong Mas'
+            'nama_opt' => 'Keong Mas',
         ]);
     }
 
@@ -80,15 +81,15 @@ class OptTest extends TestCase
         $opt = Opt::create(['nama_opt' => 'Ulat Grayak']);
 
         $response = $this->actingAs($this->admin)->put("/opt/{$opt->id}", [
-            'nama_opt' => 'Walang Sangit'
+            'nama_opt' => 'Walang Sangit',
         ]);
 
         $response->assertRedirect(route('opt.index'));
         $response->assertSessionHas('success');
-        
+
         $this->assertDatabaseHas('opts', [
             'id' => $opt->id,
-            'nama_opt' => 'Walang Sangit'
+            'nama_opt' => 'Walang Sangit',
         ]);
     }
 
@@ -100,9 +101,9 @@ class OptTest extends TestCase
 
         $response->assertRedirect(route('opt.index'));
         $response->assertSessionHas('success');
-        
+
         $this->assertDatabaseMissing('opts', [
-            'id' => $opt->id
+            'id' => $opt->id,
         ]);
     }
 }

@@ -4,19 +4,15 @@ namespace App\Http\Controllers;
 
 use App\Models\Komoditas;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 
 class KomoditasController extends Controller
 {
     public function index()
     {
-        // Hanya Admin yang boleh akses ini nanti (bisa ditambahkan middleware)
-        if(Auth::user()->role !== 'admin') {
-            abort(403, 'Hanya Admin yang dapat mengakses Master Data.');
-        }
         $query = Komoditas::query();
-        
+
         $komoditas = $query->latest()->get();
+
         return view('master.komoditas.index', compact('komoditas'));
     }
 
@@ -28,29 +24,33 @@ class KomoditasController extends Controller
 
         try {
             Komoditas::create([
-                'nama_komoditas' => $request->nama_komoditas
+                'nama_komoditas' => $request->nama_komoditas,
             ]);
 
             return redirect()->route('komoditas.index')->with('success', 'Komoditas berhasil ditambahkan!');
-        } catch (\Exception $e) {
-            return redirect()->back()->withInput()->with('error', 'Terjadi kesalahan saat menyimpan data: ' . $e->getMessage());
+        } catch (\Throwable $e) {
+            report($e);
+
+            return back()->withInput()->with('error', 'Terjadi kesalahan saat menyimpan data. Silakan coba lagi.');
         }
     }
 
     public function update(Request $request, Komoditas $komodita)
     {
         $request->validate([
-            'nama_komoditas' => 'required|string|max:255|unique:komoditas,nama_komoditas,' . $komodita->id,
+            'nama_komoditas' => 'required|string|max:255|unique:komoditas,nama_komoditas,'.$komodita->id,
         ]);
 
         try {
             $komodita->update([
-                'nama_komoditas' => $request->nama_komoditas
+                'nama_komoditas' => $request->nama_komoditas,
             ]);
 
             return redirect()->route('komoditas.index')->with('success', 'Komoditas berhasil diperbarui!');
-        } catch (\Exception $e) {
-            return redirect()->back()->withInput()->with('error', 'Terjadi kesalahan saat memperbarui data: ' . $e->getMessage());
+        } catch (\Throwable $e) {
+            report($e);
+
+            return back()->withInput()->with('error', 'Terjadi kesalahan saat memperbarui data. Silakan coba lagi.');
         }
     }
 
@@ -58,9 +58,12 @@ class KomoditasController extends Controller
     {
         try {
             $komodita->delete();
+
             return redirect()->route('komoditas.index')->with('success', 'Komoditas berhasil dihapus!');
-        } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Terjadi kesalahan saat menghapus data: ' . $e->getMessage());
+        } catch (\Throwable $e) {
+            report($e);
+
+            return back()->with('error', 'Terjadi kesalahan saat menghapus data. Silakan coba lagi.');
         }
     }
 }

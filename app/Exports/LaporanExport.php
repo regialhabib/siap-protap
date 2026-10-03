@@ -4,20 +4,22 @@ namespace App\Exports;
 
 use Illuminate\Contracts\View\View;
 use Maatwebsite\Excel\Concerns\FromView;
-use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Concerns\WithColumnWidths;
+use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Events\AfterSheet;
-use PhpOffice\PhpSpreadsheet\Style\Alignment;
-use PhpOffice\PhpSpreadsheet\Style\Border;
-use PhpOffice\PhpSpreadsheet\Style\Fill;
 
 class LaporanExport implements FromView, WithColumnWidths, WithEvents
 {
     protected $data;
+
     protected $jenis;
+
     protected $tahun;
+
     protected $bulan;
+
     protected $triwulan;
+
     protected $uppt_id;
 
     public function __construct($data, $jenis, $tahun, $bulan, $triwulan, $uppt_id)
@@ -38,7 +40,7 @@ class LaporanExport implements FromView, WithColumnWidths, WithEvents
             'tahun' => $this->tahun,
             'bulan' => $this->bulan,
             'triwulan' => $this->triwulan,
-            'uppt_id' => $this->uppt_id
+            'uppt_id' => $this->uppt_id,
         ]);
     }
 
@@ -66,7 +68,7 @@ class LaporanExport implements FromView, WithColumnWidths, WithEvents
     public function registerEvents(): array
     {
         return [
-            AfterSheet::class => function(AfterSheet $event) {
+            AfterSheet::class => function (AfterSheet $event) {
                 // Formatting tambahan yang tidak bisa di-handle HTML
                 // Pastikan gridlines tidak hilang sepenuhnya jika mau, atau biarkan default
             },

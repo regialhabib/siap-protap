@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Auth;
 
 class PengamatanRequest extends FormRequest
 {
@@ -19,11 +20,11 @@ class PengamatanRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
-        return [
+        $rules = [
             'tanggal_pengamatan' => 'required|date',
             'komoditas_id' => 'required|exists:komoditas,id',
             'opt_id' => 'required|exists:opts,id',
@@ -37,5 +38,14 @@ class PengamatanRequest extends FormRequest
             'kendali_masyarakat' => 'nullable|numeric|min:0',
             'kondisi_serangan' => 'nullable|string|max:255',
         ];
+
+        $user = Auth::user();
+        if ($user && $user->uppt_id && $user->uppt->kecamatans()->count() > 0) {
+            $rules['kecamatan_id'] = 'required|exists:kecamatans,id';
+        } else {
+            $rules['kecamatan_id'] = 'nullable';
+        }
+
+        return $rules;
     }
 }

@@ -21,6 +21,23 @@
     </style>
 </head>
 <body>
+    @php
+        $pengamatan = $data->last();
+        $kabupaten_nama = 'Rokan Hilir';
+        
+        if ($pengamatan && $pengamatan->uppt && $pengamatan->uppt->kabupaten) {
+            $kabupaten_nama = $pengamatan->uppt->kabupaten->nama_kabupaten;
+        } elseif ($data->isEmpty() && !empty($uppt_id)) {
+            $uppt = \App\Models\Uppt::with('kabupaten')->find($uppt_id);
+            if ($uppt && $uppt->kabupaten) {
+                $kabupaten_nama = $uppt->kabupaten->nama_kabupaten;
+            }
+        }
+        
+        $petugas_nama = $pengamatan->user->name ?? Auth::user()->name;
+        $tanggal_pengamatan = $pengamatan && $pengamatan->tanggal_pengamatan ? \Carbon\Carbon::parse($pengamatan->tanggal_pengamatan)->translatedFormat('d F Y') : now()->translatedFormat('d F Y');
+    @endphp
+
     <div class="header">
         <h3>LAPORAN {{ strtoupper($jenis) }} SERANGAN OPT TANAMAN PERKEBUNAN</h3>
     </div>
@@ -34,7 +51,7 @@
         <tr>
             <td>Kabupaten</td>
             <td>:</td>
-            <td>Rokan Hilir</td>
+            <td>{{ $kabupaten_nama }}</td>
         </tr>
         <tr>
             <td>Periode Laporan</td>
@@ -55,7 +72,7 @@
         <thead>
             <tr>
                 <th rowspan="2">No</th>
-                <th rowspan="2">Wilayah / UPPT</th>
+                <th rowspan="2">Wilayah Pengamatan / Kecamatan</th>
                 <th rowspan="2">Jenis Komoditas</th>
                 <th rowspan="2">Luas Komoditi (Ha)</th>
                 <th rowspan="2">Jenis OPT</th>
@@ -78,7 +95,7 @@
             @foreach($data as $d)
             <tr>
                 <td>{{ $loop->iteration }}</td>
-                <td class="left">{{ $d->uppt->nama_uppt ?? '-' }}</td>
+                <td class="left">{{ $d->uppt->nama_uppt ?? '-' }}{{ $d->kecamatan ? ' / ' . $d->kecamatan->nama_kecamatan : '' }}</td>
                 <td class="left">{{ $d->komoditas->nama_komoditas ?? '-' }}</td>
                 <td>{{ floatval($d->luas_komoditi_ha) }}</td>
                 <td class="left">{{ $d->opt->nama_opt ?? '-' }}</td>
@@ -109,7 +126,7 @@
         <table class="footer-table">
             <tr>
                 <td></td>
-                <td>..................., .................. 20....<br><br>Petugas Pengamat,<br><br><br><br><br>( ................................................. )</td>
+                <td>{{ $kabupaten_nama }}, {{ $tanggal_pengamatan }}<br><br>Petugas Pengamat,<br><br><br><br><br>( {{ $petugas_nama }} )</td>
             </tr>
         </table>
     </div>

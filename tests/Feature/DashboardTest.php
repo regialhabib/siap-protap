@@ -2,14 +2,15 @@
 
 namespace Tests\Feature;
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\TestCase;
-use App\Models\User;
-use App\Models\Uppt;
 use App\Models\Komoditas;
 use App\Models\Opt;
 use App\Models\Pengamatan;
+use App\Models\Uppt;
+use App\Models\User;
+use Carbon\Carbon;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Tests\TestCase;
 
 class DashboardTest extends TestCase
 {
@@ -18,7 +19,7 @@ class DashboardTest extends TestCase
     public function test_dashboard_stats_are_calculated_correctly()
     {
         $admin = User::factory()->create(['role' => 'admin']);
-        
+
         DB::table('kabupatens')->insert(['id' => 1, 'nama_kabupaten' => 'Test Kab']);
         $uppt = Uppt::create(['nama_uppt' => 'Test UPPT', 'kabupaten_id' => 1]);
         $komoditas1 = Komoditas::create(['nama_komoditas' => 'Karet']);
@@ -47,9 +48,9 @@ class DashboardTest extends TestCase
         }
 
         $response = $this->actingAs($admin)->get('/dashboard');
-        
+
         $response->assertStatus(200);
-        
+
         // Assert that sum of serangan_jumlah is 15 * 6 = 90
         $response->assertSee('90.00');
         // Assert that distinct komoditas is 2
@@ -61,14 +62,14 @@ class DashboardTest extends TestCase
     public function test_dashboard_uppt_chart_data_calculated_correctly()
     {
         $admin = User::factory()->create(['role' => 'admin']);
-        
+
         DB::table('kabupatens')->insert(['id' => 1, 'nama_kabupaten' => 'Test Kab']);
-        
+
         // Buat 3 UPPT (Total UPPT = 3)
         $uppt1 = Uppt::create(['nama_uppt' => 'UPPT A', 'kabupaten_id' => 1]);
         $uppt2 = Uppt::create(['nama_uppt' => 'UPPT B', 'kabupaten_id' => 1]);
         $uppt3 = Uppt::create(['nama_uppt' => 'UPPT C', 'kabupaten_id' => 1]);
-        
+
         $komoditas = Komoditas::create(['nama_komoditas' => 'Padi']);
         $opt = Opt::create(['nama_opt' => 'Wereng']);
 
@@ -83,29 +84,29 @@ class DashboardTest extends TestCase
             'serangan_ringan' => 0, 'serangan_sedang' => 0, 'serangan_berat' => 0, 'serangan_jumlah' => 0,
             'kendali_apbd_kab' => 0, 'kendali_apbd_prov' => 0, 'kendali_masyarakat' => 0, 'kendali_apbn' => 0,
         ]);
-        
+
         // UPPT 2 melakukan pengamatan bulan lalu (harus masuk hitungan "belum" untuk bulan ini)
         Pengamatan::create([
             'user_id' => $admin->id,
             'uppt_id' => $uppt2->id,
             'komoditas_id' => $komoditas->id,
             'opt_id' => $opt->id,
-            'tanggal_pengamatan' => \Carbon\Carbon::now()->subMonths(1)->format('Y-m-d'), // bulan lalu
+            'tanggal_pengamatan' => Carbon::now()->subMonths(1)->format('Y-m-d'), // bulan lalu
             'luas_komoditi_ha' => 10,
             'serangan_ringan' => 0, 'serangan_sedang' => 0, 'serangan_berat' => 0, 'serangan_jumlah' => 0,
             'kendali_apbd_kab' => 0, 'kendali_apbd_prov' => 0, 'kendali_masyarakat' => 0, 'kendali_apbn' => 0,
         ]);
 
         $response = $this->actingAs($admin)->get('/dashboard');
-        
+
         $response->assertStatus(200);
         $response->assertViewHas('chartData');
-        
+
         $chartData = $response->viewData('chartData');
-        
+
         $this->assertEquals(1, $chartData['sudah']->count());
         $this->assertEquals(2, $chartData['belum']->count());
-        
+
         $this->assertEquals(33.3, $chartData['persentase_sudah']);
         $this->assertEquals(66.7, $chartData['persentase_belum']);
     }

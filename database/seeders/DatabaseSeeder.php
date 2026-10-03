@@ -2,11 +2,11 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
 use App\Models\Kabupaten;
-use App\Models\Uppt;
 use App\Models\Komoditas;
 use App\Models\Opt;
+use App\Models\Uppt;
+use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
@@ -32,7 +32,7 @@ class DatabaseSeeder extends Seeder
             foreach ($uppts as $namaUppt) {
                 Uppt::create([
                     'kabupaten_id' => $kabupaten->id,
-                    'nama_uppt' => $namaUppt
+                    'nama_uppt' => $namaUppt,
                 ]);
             }
         }

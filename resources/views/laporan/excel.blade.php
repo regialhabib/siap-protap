@@ -1,3 +1,20 @@
+@php
+    $pengamatan = $data->last();
+    $kabupaten_nama = 'Rokan Hilir';
+    
+    if ($pengamatan && $pengamatan->uppt && $pengamatan->uppt->kabupaten) {
+        $kabupaten_nama = $pengamatan->uppt->kabupaten->nama_kabupaten;
+    } elseif ($data->isEmpty() && !empty($uppt_id)) {
+        $uppt = \App\Models\Uppt::with('kabupaten')->find($uppt_id);
+        if ($uppt && $uppt->kabupaten) {
+            $kabupaten_nama = $uppt->kabupaten->nama_kabupaten;
+        }
+    }
+    
+    $petugas_nama = $pengamatan->user->name ?? Auth::user()->name;
+    $tanggal_pengamatan = $pengamatan && $pengamatan->tanggal_pengamatan ? \Carbon\Carbon::parse($pengamatan->tanggal_pengamatan)->translatedFormat('d F Y') : now()->translatedFormat('d F Y');
+@endphp
+
 <table>
     <!-- Bantalan atas agar mulai dari A3 -->
     <tr><td colspan="15"></td></tr>
@@ -16,7 +33,7 @@
     <tr>
         <td></td> <!-- A3 -->
         <td colspan="2">Kabupaten</td> <!-- B3:C3 -->
-        <td colspan="12">: Rokan Hilir</td> <!-- D3:O3 -->
+        <td colspan="12">: {{ $kabupaten_nama }}</td> <!-- D3:O3 -->
     </tr>
     <tr>
         <td></td> <!-- A4 -->
@@ -38,7 +55,7 @@
     <tr>
         <td></td> <!-- A6 -->
         <td rowspan="2" style="font-weight: bold; text-align: center; vertical-align: middle; border: 1px solid #000000; background-color: #f2f2f2;">No</td> <!-- B6 -->
-        <td rowspan="2" style="font-weight: bold; text-align: center; vertical-align: middle; border: 1px solid #000000; background-color: #f2f2f2;">Wilayah Pengamatan/Kecamatan</td> <!-- C6 -->
+        <td rowspan="2" style="font-weight: bold; text-align: center; vertical-align: middle; border: 1px solid #000000; background-color: #f2f2f2;">Wilayah Pengamatan / Kecamatan</td> <!-- C6 -->
         <td rowspan="2" style="font-weight: bold; text-align: center; vertical-align: middle; border: 1px solid #000000; background-color: #f2f2f2;">Jenis Komodtas</td> <!-- D6 -->
         <td rowspan="2" style="font-weight: bold; text-align: center; vertical-align: middle; border: 1px solid #000000; background-color: #f2f2f2;">Luas Komoditi (Ha)</td> <!-- E6 -->
         <td rowspan="2" style="font-weight: bold; text-align: center; vertical-align: middle; border: 1px solid #000000; background-color: #f2f2f2;">Jenis OPT</td> <!-- F6 -->
@@ -63,7 +80,7 @@
     <tr>
         <td></td> <!-- A -->
         <td style="text-align: center; vertical-align: middle; border: 1px solid #000000;">{{ $loop->iteration }}</td> <!-- B -->
-        <td style="vertical-align: middle; border: 1px solid #000000;">{{ $d->uppt->nama_uppt ?? '-' }}</td> <!-- C -->
+        <td style="vertical-align: middle; border: 1px solid #000000;">{{ $d->uppt->nama_uppt ?? '-' }}{{ $d->kecamatan ? ' / ' . $d->kecamatan->nama_kecamatan : '' }}</td> <!-- C -->
         <td style="vertical-align: middle; border: 1px solid #000000;">{{ $d->komoditas->nama_komoditas ?? '-' }}</td> <!-- D -->
         <td style="text-align: center; vertical-align: middle; border: 1px solid #000000;">{{ floatval($d->luas_komoditi_ha) }}</td> <!-- E -->
         <td style="vertical-align: middle; border: 1px solid #000000;">{{ $d->opt->nama_opt ?? '-' }}</td> <!-- F -->
@@ -99,7 +116,7 @@
     <!-- Footer Signatures -->
     <tr>
         <td colspan="11"></td>
-        <td colspan="4" style="text-align: center;">..........., .......... 20....</td>
+        <td colspan="4" style="text-align: center;">{{ $kabupaten_nama }}, {{ $tanggal_pengamatan }}</td>
     </tr>
     <tr>
         <td colspan="11"></td>
@@ -110,7 +127,7 @@
     <tr><td colspan="15"></td></tr>
     <tr>
         <td colspan="11"></td>
-        <td colspan="4" style="text-align: center;">( ................................................. )</td>
+        <td colspan="4" style="text-align: center;">( {{ $petugas_nama }} )</td>
     </tr>
     <tr>
         <td colspan="2" style="font-weight: bold;">Catatan :</td>

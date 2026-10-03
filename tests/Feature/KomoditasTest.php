@@ -2,16 +2,17 @@
 
 namespace Tests\Feature;
 
+use App\Models\Komoditas;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
-use App\Models\User;
-use App\Models\Komoditas;
 
 class KomoditasTest extends TestCase
 {
     use RefreshDatabase;
 
     protected $admin;
+
     protected $popt;
 
     protected function setUp(): void
@@ -40,7 +41,7 @@ class KomoditasTest extends TestCase
         Komoditas::create(['nama_komoditas' => 'Jagung']);
 
         $response = $this->actingAs($this->admin)->get('/komoditas?search=Padi');
-        
+
         $response->assertStatus(200);
         $response->assertSee('Padi Sawah');
         // search is now client-side, so all data is returned initially
@@ -56,7 +57,7 @@ class KomoditasTest extends TestCase
 
         // Test validasi unik
         $responseDuplicate = $this->actingAs($this->admin)->post('/komoditas', [
-            'nama_komoditas' => 'Kedelai'
+            'nama_komoditas' => 'Kedelai',
         ]);
         $responseDuplicate->assertSessionHasErrors(['nama_komoditas']);
     }
@@ -64,14 +65,14 @@ class KomoditasTest extends TestCase
     public function test_admin_can_store_komoditas()
     {
         $response = $this->actingAs($this->admin)->post('/komoditas', [
-            'nama_komoditas' => 'Padi Gogo'
+            'nama_komoditas' => 'Padi Gogo',
         ]);
 
         $response->assertRedirect(route('komoditas.index'));
         $response->assertSessionHas('success');
-        
+
         $this->assertDatabaseHas('komoditas', [
-            'nama_komoditas' => 'Padi Gogo'
+            'nama_komoditas' => 'Padi Gogo',
         ]);
     }
 
@@ -80,15 +81,15 @@ class KomoditasTest extends TestCase
         $komoditas = Komoditas::create(['nama_komoditas' => 'Bawang Merah']);
 
         $response = $this->actingAs($this->admin)->put("/komoditas/{$komoditas->id}", [
-            'nama_komoditas' => 'Bawang Putih'
+            'nama_komoditas' => 'Bawang Putih',
         ]);
 
         $response->assertRedirect(route('komoditas.index'));
         $response->assertSessionHas('success');
-        
+
         $this->assertDatabaseHas('komoditas', [
             'id' => $komoditas->id,
-            'nama_komoditas' => 'Bawang Putih'
+            'nama_komoditas' => 'Bawang Putih',
         ]);
     }
 
@@ -100,9 +101,9 @@ class KomoditasTest extends TestCase
 
         $response->assertRedirect(route('komoditas.index'));
         $response->assertSessionHas('success');
-        
+
         $this->assertDatabaseMissing('komoditas', [
-            'id' => $komoditas->id
+            'id' => $komoditas->id,
         ]);
     }
 }

@@ -2,13 +2,15 @@
 
 namespace Tests\Feature;
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\TestCase;
-use App\Models\User;
-use App\Models\Uppt;
+use App\Models\Kecamatan;
 use App\Models\Komoditas;
 use App\Models\Opt;
 use App\Models\Pengamatan;
+use App\Models\Uppt;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
+use Tests\TestCase;
 
 class LaporanTest extends TestCase
 {
@@ -16,7 +18,8 @@ class LaporanTest extends TestCase
 
     private function createUppt()
     {
-        \Illuminate\Support\Facades\DB::table('kabupatens')->insert(['id' => 1, 'nama_kabupaten' => 'Test Kab']);
+        DB::table('kabupatens')->insert(['id' => 1, 'nama_kabupaten' => 'Test Kab']);
+
         return Uppt::create(['nama_uppt' => 'Test UPPT', 'kabupaten_id' => 1]);
     }
 
@@ -26,7 +29,7 @@ class LaporanTest extends TestCase
         $this->createUppt();
 
         $response = $this->actingAs($admin)->get('/laporan');
-        
+
         $response->assertStatus(200);
         $response->assertSee('Export Laporan');
     }
@@ -34,9 +37,9 @@ class LaporanTest extends TestCase
     public function test_popt_cannot_access_laporan_page()
     {
         $popt = User::factory()->create(['role' => 'popt']);
-        
+
         $response = $this->actingAs($popt)->get('/laporan');
-        
+
         $response->assertStatus(403);
     }
 
@@ -45,19 +48,19 @@ class LaporanTest extends TestCase
         $admin = User::factory()->create(['role' => 'admin']);
         $uppt1 = $this->createUppt();
         $uppt2 = Uppt::create(['nama_uppt' => 'UPPT Lain', 'kabupaten_id' => 1]);
-        
+
         $komoditas = Komoditas::create(['nama_komoditas' => 'Padi']);
         $opt = Opt::create(['nama_opt' => 'Wereng']);
 
         $commonData = [
             'user_id' => $admin->id, 'komoditas_id' => $komoditas->id, 'opt_id' => $opt->id,
             'luas_komoditi_ha' => 10, 'serangan_ringan' => 0, 'serangan_sedang' => 0, 'serangan_berat' => 0,
-            'serangan_jumlah' => 0, 'kondisi_serangan' => 'Aman'
+            'serangan_jumlah' => 0, 'kondisi_serangan' => 'Aman',
         ];
 
         // Data 1: UPPT 1, Jan 2026 (Triwulan 1, 2026)
         Pengamatan::create(array_merge($commonData, ['uppt_id' => $uppt1->id, 'tanggal_pengamatan' => '2026-01-15']));
-        
+
         // Data 2: UPPT 2, Apr 2026 (Triwulan 2, 2026)
         Pengamatan::create(array_merge($commonData, ['uppt_id' => $uppt2->id, 'tanggal_pengamatan' => '2026-04-10']));
 
@@ -98,5 +101,45 @@ class LaporanTest extends TestCase
         $resPdf = $this->actingAs($admin)->get("/laporan/export/pdf?jenis=bulanan&bulan=12&tahun=2025&uppt_id={$uppt1->id}");
         $resPdf->assertStatus(200);
         $resPdf->assertHeader('content-type', 'application/pdf');
+    }
+
+    public function test_api_returns_kecamatans_for_uppt()
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $uppt1 = $this->createUppt();
+        $kec = Kecamatan::create(['nama_kecamatan' => 'Kec Test', 'uppt_id' => $uppt1->id]);
+
+        $response = $this->actingAs($admin)->getJson("/api/uppt/{$uppt1->id}/kecamatans");
+
+        $response->assertStatus(200);
+        $response->assertJsonFragment(['nama_kecamatan' => 'Kec Test']);
+    }
+
+    public function test_laporan_filters_by_kecamatan()
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $uppt1 = $this->createUppt();
+        $kec1 = Kecamatan::create(['nama_kecamatan' => 'Kec 1', 'uppt_id' => $uppt1->id]);
+        $kec2 = Kecamatan::create(['nama_kecamatan' => 'Kec 2', 'uppt_id' => $uppt1->id]);
+
+        $komoditas = Komoditas::create(['nama_komoditas' => 'Padi']);
+        $opt = Opt::create(['nama_opt' => 'Wereng']);
+
+        Pengamatan::create([
+            'user_id' => $admin->id, 'komoditas_id' => $komoditas->id, 'opt_id' => $opt->id,
+            'luas_komoditi_ha' => 10, 'serangan_jumlah' => 0,
+            'uppt_id' => $uppt1->id, 'kecamatan_id' => $kec1->id, 'tanggal_pengamatan' => '2026-01-15',
+        ]);
+
+        Pengamatan::create([
+            'user_id' => $admin->id, 'komoditas_id' => $komoditas->id, 'opt_id' => $opt->id,
+            'luas_komoditi_ha' => 10, 'serangan_jumlah' => 0,
+            'uppt_id' => $uppt1->id, 'kecamatan_id' => $kec2->id, 'tanggal_pengamatan' => '2026-01-15',
+        ]);
+
+        $res = $this->actingAs($admin)->get("/laporan?jenis=tahunan&tahun=2026&uppt_id={$uppt1->id}&kecamatan_id={$kec1->id}");
+        $res->assertViewHas('data', function ($data) use ($kec1) {
+            return $data->count() === 1 && $data->first()->kecamatan_id === $kec1->id;
+        });
     }
 }
