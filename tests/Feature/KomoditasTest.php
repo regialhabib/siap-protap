@@ -11,97 +11,97 @@ class KomoditasTest extends TestCase
 {
     use RefreshDatabase;
 
-    protected $admin;
-
-    protected $popt;
-
-    protected function setUp(): void
+    private function createAdmin(): User
     {
-        parent::setUp();
-
-        $this->admin = User::factory()->create(['role' => 'admin']);
-        $this->popt = User::factory()->create(['role' => 'popt']);
+        return User::factory()->create(['role' => 'admin']);
     }
 
-    public function test_only_admin_can_access_komoditas_index()
+    private function createPopt(): User
     {
-        // POPT tidak bisa akses
-        $responsePopt = $this->actingAs($this->popt)->get('/komoditas');
-        $responsePopt->assertStatus(403);
-
-        // Admin bisa akses
-        $responseAdmin = $this->actingAs($this->admin)->get('/komoditas');
-        $responseAdmin->assertStatus(200);
-        $responseAdmin->assertViewIs('master.komoditas.index');
+        return User::factory()->create(['role' => 'popt']);
     }
 
-    public function test_admin_can_search_komoditas()
+    public function test_forbids_popt_from_accessing_index(): void
+    {
+        $response = $this->actingAs($this->createPopt())->get('/komoditas');
+        
+        $response->assertForbidden();
+    }
+
+    public function test_renders_index_for_admin(): void
+    {
+        $response = $this->actingAs($this->createAdmin())->get('/komoditas');
+        
+        $response->assertOk();
+        $response->assertViewIs('master.komoditas.index');
+    }
+
+    public function test_renders_filtered_index_based_on_search(): void
     {
         Komoditas::create(['nama_komoditas' => 'Padi Sawah']);
         Komoditas::create(['nama_komoditas' => 'Jagung']);
 
-        $response = $this->actingAs($this->admin)->get('/komoditas?search=Padi');
+        $response = $this->actingAs($this->createAdmin())->get('/komoditas?search=Padi');
 
-        $response->assertStatus(200);
+        $response->assertOk();
         $response->assertSee('Padi Sawah');
-        // search is now client-side, so all data is returned initially
     }
 
-    public function test_validation_fails_on_store_komoditas()
+    public function test_rejects_creation_when_nama_komoditas_is_empty(): void
+    {
+        $response = $this->actingAs($this->createAdmin())->post('/komoditas', []);
+        
+        $response->assertSessionHasErrors(['nama_komoditas']);
+    }
+
+    public function test_rejects_creation_when_nama_komoditas_is_duplicate(): void
     {
         Komoditas::create(['nama_komoditas' => 'Kedelai']);
 
-        // Test validasi kosong
-        $responseEmpty = $this->actingAs($this->admin)->post('/komoditas', []);
-        $responseEmpty->assertSessionHasErrors(['nama_komoditas']);
-
-        // Test validasi unik
-        $responseDuplicate = $this->actingAs($this->admin)->post('/komoditas', [
+        $response = $this->actingAs($this->createAdmin())->post('/komoditas', [
             'nama_komoditas' => 'Kedelai',
         ]);
-        $responseDuplicate->assertSessionHasErrors(['nama_komoditas']);
+        
+        $response->assertSessionHasErrors(['nama_komoditas']);
     }
 
-    public function test_admin_can_store_komoditas()
+    public function test_creates_komoditas_and_redirects(): void
     {
-        $response = $this->actingAs($this->admin)->post('/komoditas', [
+        $response = $this->actingAs($this->createAdmin())->post('/komoditas', [
             'nama_komoditas' => 'Padi Gogo',
         ]);
 
         $response->assertRedirect(route('komoditas.index'));
         $response->assertSessionHas('success');
-
         $this->assertDatabaseHas('komoditas', [
             'nama_komoditas' => 'Padi Gogo',
         ]);
     }
 
-    public function test_admin_can_update_komoditas()
+    public function test_updates_komoditas_and_redirects(): void
     {
         $komoditas = Komoditas::create(['nama_komoditas' => 'Bawang Merah']);
 
-        $response = $this->actingAs($this->admin)->put("/komoditas/{$komoditas->id}", [
+        $response = $this->actingAs($this->createAdmin())->put("/komoditas/{$komoditas->id}", [
             'nama_komoditas' => 'Bawang Putih',
         ]);
 
         $response->assertRedirect(route('komoditas.index'));
         $response->assertSessionHas('success');
-
         $this->assertDatabaseHas('komoditas', [
             'id' => $komoditas->id,
             'nama_komoditas' => 'Bawang Putih',
         ]);
     }
 
-    public function test_admin_can_delete_komoditas()
+    public function test_deletes_komoditas_and_redirects(): void
     {
         $komoditas = Komoditas::create(['nama_komoditas' => 'Cabai']);
 
-        $response = $this->actingAs($this->admin)->delete("/komoditas/{$komoditas->id}");
+        $response = $this->actingAs($this->createAdmin())->delete("/komoditas/{$komoditas->id}");
 
         $response->assertRedirect(route('komoditas.index'));
         $response->assertSessionHas('success');
-
         $this->assertDatabaseMissing('komoditas', [
             'id' => $komoditas->id,
         ]);

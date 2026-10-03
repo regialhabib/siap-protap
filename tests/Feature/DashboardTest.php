@@ -16,7 +16,7 @@ class DashboardTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_dashboard_stats_are_calculated_correctly()
+    public function test_calculates_dashboard_stats()
     {
         $admin = User::factory()->create(['role' => 'admin']);
 
@@ -49,7 +49,7 @@ class DashboardTest extends TestCase
 
         $response = $this->actingAs($admin)->get('/dashboard');
 
-        $response->assertStatus(200);
+        $response->assertOk();
 
         // Assert that sum of serangan_jumlah is 15 * 6 = 90
         $response->assertSee('90.00');
@@ -59,7 +59,7 @@ class DashboardTest extends TestCase
         $response->assertSee('15');
     }
 
-    public function test_dashboard_uppt_chart_data_calculated_correctly()
+    public function test_calculates_dashboard_uppt_chart_data()
     {
         $admin = User::factory()->create(['role' => 'admin']);
 
@@ -99,7 +99,7 @@ class DashboardTest extends TestCase
 
         $response = $this->actingAs($admin)->get('/dashboard');
 
-        $response->assertStatus(200);
+        $response->assertOk();
         $response->assertViewHas('chartData');
 
         $chartData = $response->viewData('chartData');

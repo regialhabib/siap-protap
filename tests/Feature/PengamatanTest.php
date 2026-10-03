@@ -15,45 +15,43 @@ class PengamatanTest extends TestCase
 {
     use RefreshDatabase;
 
-    protected function setUp(): void
+    private function createAdmin(): User
     {
-        parent::setUp();
+        return User::factory()->create(['role' => 'admin']);
+    }
 
-        // Buat data master yang dibutuhkan untuk pengamatan
-        $kabupaten = Kabupaten::create(['nama_kabupaten' => 'Kab Test']);
-        $this->uppt = Uppt::create(['nama_uppt' => 'UPPT Test', 'kabupaten_id' => $kabupaten->id]);
-        $this->komoditas = Komoditas::create(['nama_komoditas' => 'Padi Test']);
-        $this->opt = Opt::create(['nama_opt' => 'Wereng Test']);
-
-        // Buat user dengan role 'popt'
-        $this->userPopt = User::factory()->create([
+    private function createPopt(Uppt $uppt): User
+    {
+        return User::factory()->create([
             'role' => 'popt',
-            'uppt_id' => $this->uppt->id,
-        ]);
-
-        // Buat user dengan role 'admin'
-        $this->userAdmin = User::factory()->create([
-            'role' => 'admin',
+            'uppt_id' => $uppt->id,
         ]);
     }
 
-    public function test_only_popt_can_access_create_page()
+    private function createUppt(): Uppt
     {
-        // Admin mencoba akses (harus gagal / 403)
-        $responseAdmin = $this->actingAs($this->userAdmin)->get('/pengamatan/create');
-        $responseAdmin->assertStatus(403);
-
-        // POPT mencoba akses (harus sukses)
-        $responsePopt = $this->actingAs($this->userPopt)->get('/pengamatan/create');
-        $responsePopt->assertStatus(200);
+        $kabupaten = Kabupaten::create(['nama_kabupaten' => 'Kab Test']);
+        return Uppt::create(['nama_uppt' => 'UPPT Test', 'kabupaten_id' => $kabupaten->id]);
     }
 
-    public function test_validation_fails_when_required_fields_are_missing()
+    public function test_forbids_admin_from_accessing_create_page(): void
     {
-        // Mengirim data kosong
-        $response = $this->actingAs($this->userPopt)->post('/pengamatan', []);
+        $response = $this->actingAs($this->createAdmin())->get('/pengamatan/create');
+        
+        $response->assertForbidden();
+    }
 
-        // Harus dikembalikan karena validasi gagal
+    public function test_renders_create_page_for_popt(): void
+    {
+        $response = $this->actingAs($this->createPopt($this->createUppt()))->get('/pengamatan/create');
+        
+        $response->assertOk();
+    }
+
+    public function test_rejects_creation_when_required_fields_are_missing(): void
+    {
+        $response = $this->actingAs($this->createPopt($this->createUppt()))->post('/pengamatan', []);
+
         $response->assertSessionHasErrors([
             'tanggal_pengamatan',
             'komoditas_id',
@@ -62,12 +60,17 @@ class PengamatanTest extends TestCase
         ]);
     }
 
-    public function test_popt_can_store_pengamatan_successfully()
+    public function test_creates_pengamatan_and_redirects(): void
     {
+        $uppt = $this->createUppt();
+        $popt = $this->createPopt($uppt);
+        $komoditas = Komoditas::create(['nama_komoditas' => 'Padi Test']);
+        $opt = Opt::create(['nama_opt' => 'Wereng Test']);
+
         $payload = [
             'tanggal_pengamatan' => '2026-09-22',
-            'komoditas_id' => $this->komoditas->id,
-            'opt_id' => $this->opt->id,
+            'komoditas_id' => $komoditas->id,
+            'opt_id' => $opt->id,
             'luas_komoditi_ha' => 10.5,
             'serangan_ringan' => 2,
             'serangan_sedang' => 1,
@@ -75,54 +78,60 @@ class PengamatanTest extends TestCase
             'kondisi_serangan' => 'Terkendali',
         ];
 
-        $response = $this->actingAs($this->userPopt)->post('/pengamatan', $payload);
+        $response = $this->actingAs($popt)->post('/pengamatan', $payload);
 
-        // Pastikan redirect ke dashboard dengan pesan sukses
         $response->assertRedirect(route('dashboard'));
         $response->assertSessionHas('success');
-
-        // Pastikan data tersimpan di database dan dijumlahkan dengan benar
         $this->assertDatabaseHas('pengamatans', [
-            'user_id' => $this->userPopt->id,
-            'komoditas_id' => $this->komoditas->id,
-            'opt_id' => $this->opt->id,
+            'user_id' => $popt->id,
+            'komoditas_id' => $komoditas->id,
+            'opt_id' => $opt->id,
             'luas_komoditi_ha' => 10.5,
             'serangan_ringan' => 2,
             'serangan_sedang' => 1,
             'serangan_berat' => 0.5,
-            'serangan_jumlah' => 3.5, // 2 + 1 + 0.5
+            'serangan_jumlah' => 3.5,
         ]);
     }
 
-    public function test_validation_fails_when_kecamatan_is_required_but_missing()
+    public function test_rejects_creation_when_kecamatan_is_required_but_missing(): void
     {
-        // Berikan kecamatan pada UPPT test
-        Kecamatan::create(['nama_kecamatan' => 'Kecamatan Test', 'uppt_id' => $this->uppt->id]);
+        $uppt = $this->createUppt();
+        $popt = $this->createPopt($uppt);
+        $komoditas = Komoditas::create(['nama_komoditas' => 'Padi Test']);
+        $opt = Opt::create(['nama_opt' => 'Wereng Test']);
+        Kecamatan::create(['nama_kecamatan' => 'Kecamatan Test', 'uppt_id' => $uppt->id]);
 
         $payload = [
             'tanggal_pengamatan' => '2026-09-22',
-            'komoditas_id' => $this->komoditas->id,
-            'opt_id' => $this->opt->id,
+            'komoditas_id' => $komoditas->id,
+            'opt_id' => $opt->id,
             'luas_komoditi_ha' => 10.5,
         ];
 
-        $response = $this->actingAs($this->userPopt)->post('/pengamatan', $payload);
+        $response = $this->actingAs($popt)->post('/pengamatan', $payload);
+        
         $response->assertSessionHasErrors(['kecamatan_id']);
     }
 
-    public function test_validation_succeeds_when_kecamatan_is_provided()
+    public function test_creates_pengamatan_with_kecamatan_provided(): void
     {
-        $kec = Kecamatan::create(['nama_kecamatan' => 'Kecamatan Test', 'uppt_id' => $this->uppt->id]);
+        $uppt = $this->createUppt();
+        $popt = $this->createPopt($uppt);
+        $komoditas = Komoditas::create(['nama_komoditas' => 'Padi Test']);
+        $opt = Opt::create(['nama_opt' => 'Wereng Test']);
+        $kec = Kecamatan::create(['nama_kecamatan' => 'Kecamatan Test', 'uppt_id' => $uppt->id]);
 
         $payload = [
             'tanggal_pengamatan' => '2026-09-22',
-            'komoditas_id' => $this->komoditas->id,
-            'opt_id' => $this->opt->id,
+            'komoditas_id' => $komoditas->id,
+            'opt_id' => $opt->id,
             'luas_komoditi_ha' => 10.5,
             'kecamatan_id' => $kec->id,
         ];
 
-        $response = $this->actingAs($this->userPopt)->post('/pengamatan', $payload);
+        $response = $this->actingAs($popt)->post('/pengamatan', $payload);
+        
         $response->assertSessionHasNoErrors();
         $this->assertDatabaseHas('pengamatans', ['kecamatan_id' => $kec->id]);
     }

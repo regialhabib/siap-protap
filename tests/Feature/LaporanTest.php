@@ -23,27 +23,27 @@ class LaporanTest extends TestCase
         return Uppt::create(['nama_uppt' => 'Test UPPT', 'kabupaten_id' => 1]);
     }
 
-    public function test_admin_can_access_laporan_page()
+    public function test_renders_laporan_page_for_admin()
     {
         $admin = User::factory()->create(['role' => 'admin']);
         $this->createUppt();
 
         $response = $this->actingAs($admin)->get('/laporan');
 
-        $response->assertStatus(200);
+        $response->assertOk();
         $response->assertSee('Export Laporan');
     }
 
-    public function test_popt_cannot_access_laporan_page()
+    public function test_forbids_popt_from_accessing_laporan_page()
     {
         $popt = User::factory()->create(['role' => 'popt']);
 
         $response = $this->actingAs($popt)->get('/laporan');
 
-        $response->assertStatus(403);
+        $response->assertForbidden();
     }
 
-    public function test_laporan_time_filters_and_export_works()
+    public function test_filters_and_exports_laporan_by_time()
     {
         $admin = User::factory()->create(['role' => 'admin']);
         $uppt1 = $this->createUppt();
@@ -93,17 +93,17 @@ class LaporanTest extends TestCase
 
         // 5. Uji Export Excel (Filter Triwulan 1 2026, Semua UPPT)
         $resExcel = $this->actingAs($admin)->get('/laporan/export/excel?jenis=triwulan&triwulan=1&tahun=2026&uppt_id=');
-        $resExcel->assertStatus(200);
+        $resExcel->assertOk();
         $resExcel->assertHeader('content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         $resExcel->assertHeader('content-disposition', 'attachment; filename=Laporan_Triwulan_1_2026.xlsx');
 
         // 6. Uji Export PDF (Filter Bulanan Des 2025, UPPT 1)
         $resPdf = $this->actingAs($admin)->get("/laporan/export/pdf?jenis=bulanan&bulan=12&tahun=2025&uppt_id={$uppt1->id}");
-        $resPdf->assertStatus(200);
+        $resPdf->assertOk();
         $resPdf->assertHeader('content-type', 'application/pdf');
     }
 
-    public function test_api_returns_kecamatans_for_uppt()
+    public function test_returns_kecamatans_for_uppt()
     {
         $admin = User::factory()->create(['role' => 'admin']);
         $uppt1 = $this->createUppt();
@@ -111,11 +111,11 @@ class LaporanTest extends TestCase
 
         $response = $this->actingAs($admin)->getJson("/api/uppt/{$uppt1->id}/kecamatans");
 
-        $response->assertStatus(200);
+        $response->assertOk();
         $response->assertJsonFragment(['nama_kecamatan' => 'Kec Test']);
     }
 
-    public function test_laporan_filters_by_kecamatan()
+    public function test_filters_laporan_by_kecamatan()
     {
         $admin = User::factory()->create(['role' => 'admin']);
         $uppt1 = $this->createUppt();
