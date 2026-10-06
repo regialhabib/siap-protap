@@ -170,9 +170,46 @@
                         </div>
                     </div>
 
+                    @php
+                        $kondisiStatus = '';
+                        $kondisiLuas = '';
+                        if ($pengamatan->kondisi_serangan) {
+                            if ($pengamatan->kondisi_serangan === 'Tetap') {
+                                $kondisiStatus = 'Tetap';
+                            } else {
+                                // Ekstrak "Bertambah 2.5 Ha" menjadi status dan angka
+                                $parts = explode(' ', $pengamatan->kondisi_serangan);
+                                if (count($parts) >= 2) {
+                                    $kondisiStatus = $parts[0];
+                                    $kondisiLuas = $parts[1];
+                                }
+                            }
+                        }
+                    @endphp
                     <div class="bg-gray-50/50 p-6 md:p-8 rounded-xl border border-gray-100">
-                        <label class="block text-sm font-bold text-gray-700 mb-3">Kondisi Serangan</label>
-                        <input type="text" name="kondisi_serangan" value="{{ old('kondisi_serangan', $pengamatan->kondisi_serangan) }}" class="block w-full px-4 py-3 rounded-lg border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm transition-colors" placeholder="Contoh: Terkendali, Aman, Waspada, Eksplosif...">
+                        <label class="block text-sm font-bold text-gray-700 mb-3">Kondisi Serangan (Perkembangan Luas)</label>
+                        <div class="flex gap-4">
+                            <!-- Dropdown Status -->
+                            <div class="w-1/2">
+                                <select name="kondisi_status" id="kondisi_status" class="block w-full px-4 py-3 rounded-lg border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm transition-colors cursor-pointer">
+                                    <option value="">-- Pilih Status --</option>
+                                    <option value="Bertambah" {{ old('kondisi_status', $kondisiStatus) == 'Bertambah' ? 'selected' : '' }}>Bertambah</option>
+                                    <option value="Tetap" {{ old('kondisi_status', $kondisiStatus) == 'Tetap' ? 'selected' : '' }}>Tetap</option>
+                                    <option value="Berkurang" {{ old('kondisi_status', $kondisiStatus) == 'Berkurang' ? 'selected' : '' }}>Berkurang</option>
+                                </select>
+                                <x-input-error :messages="$errors->get('kondisi_status')" class="mt-2" />
+                            </div>
+                            
+                            <!-- Input Luas (Ha) -->
+                            <div class="w-1/2 relative" id="kondisi_luas_container">
+                                <input type="number" step="0.01" min="0" name="kondisi_luas" id="kondisi_luas" value="{{ old('kondisi_luas', $kondisiLuas) }}" class="block w-full pl-4 pr-12 py-3 rounded-lg border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm transition-colors" placeholder="0.00">
+                                <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+                                    <span class="text-gray-500 font-bold text-sm">Ha</span>
+                                </div>
+                                <x-input-error :messages="$errors->get('kondisi_luas')" class="mt-2" />
+                            </div>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-3 font-medium">Berdasarkan pantauan, pilih apakah luas serangan Bertambah/Berkurang/Tetap, lalu masukkan angkanya (kecuali jika Tetap).</p>
                     </div>
                 </div>
 

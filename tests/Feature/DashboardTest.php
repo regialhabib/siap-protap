@@ -110,4 +110,38 @@ class DashboardTest extends TestCase
         $this->assertEquals(33.3, $chartData['persentase_sudah']);
         $this->assertEquals(66.7, $chartData['persentase_belum']);
     }
+    public function test_admin_dashboard_shows_uppt_status_and_filter()
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        
+        $response = $this->actingAs($admin)->get('/dashboard');
+        
+        $response->assertOk();
+        
+        // Assert admin sees filter and UPPT status section
+        $response->assertSee('x-model="bulan"', false);
+        $response->assertSee('x-model="tahun"', false);
+        $response->assertSee('Status Pengamatan UPPT');
+        
+        // Assert admin does NOT see the pengamatan table
+        $response->assertDontSee('Riwayat Pengamatan Terbaru');
+    }
+
+    public function test_popt_dashboard_shows_riwayat_pengamatan()
+    {
+        DB::table('kabupatens')->insertOrIgnore(['id' => 1, 'nama_kabupaten' => 'Test Kab']);
+        $uppt = Uppt::firstOrCreate(['nama_uppt' => 'Test UPPT', 'kabupaten_id' => 1]);
+        $popt = User::factory()->create(['role' => 'popt', 'uppt_id' => $uppt->id]);
+        
+        $response = $this->actingAs($popt)->get('/dashboard');
+        
+        $response->assertOk();
+        
+        // Assert popt sees the pengamatan table
+        $response->assertSee('Riwayat Pengamatan Terbaru');
+        
+        // Assert popt does NOT see the filter or UPPT status section
+        $response->assertDontSee('x-model="bulan"', false);
+        $response->assertDontSee('Status Pengamatan UPPT');
+    }
 }

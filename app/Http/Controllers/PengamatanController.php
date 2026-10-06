@@ -43,6 +43,16 @@ class PengamatanController extends Controller
             $berat = $request->serangan_berat ?? 0;
             $jumlah_serangan = $ringan + $sedang + $berat;
 
+            $kondisi_serangan = null;
+            if ($request->kondisi_status) {
+                if ($request->kondisi_status === 'Tetap') {
+                    $kondisi_serangan = 'Tetap';
+                } else {
+                    $luas = $request->kondisi_luas ?? 0;
+                    $kondisi_serangan = $request->kondisi_status . ' ' . $luas . ' Ha';
+                }
+            }
+
             Pengamatan::create([
                 'user_id' => $user->id,
                 'uppt_id' => $user->uppt_id,
@@ -59,7 +69,7 @@ class PengamatanController extends Controller
                 'kendali_apbd_prov' => $request->kendali_apbd_prov ?? 0,
                 'kendali_apbn' => $request->kendali_apbn ?? 0,
                 'kendali_masyarakat' => $request->kendali_masyarakat ?? 0,
-                'kondisi_serangan' => $request->kondisi_serangan,
+                'kondisi_serangan' => $kondisi_serangan,
             ]);
 
             return redirect()->route('dashboard')->with('success', 'Data pengamatan lapangan berhasil dikirim dan disimpan!');
@@ -94,6 +104,16 @@ class PengamatanController extends Controller
             $berat = $request->serangan_berat ?? 0;
             $jumlah_serangan = $ringan + $sedang + $berat;
 
+            $kondisi_serangan = null;
+            if ($request->kondisi_status) {
+                if ($request->kondisi_status === 'Tetap') {
+                    $kondisi_serangan = 'Tetap';
+                } else {
+                    $luas = $request->kondisi_luas ?? 0;
+                    $kondisi_serangan = $request->kondisi_status . ' ' . $luas . ' Ha';
+                }
+            }
+
             $pengamatan->update([
                 'tanggal_pengamatan' => $request->tanggal_pengamatan,
                 'komoditas_id' => $request->komoditas_id,
@@ -108,7 +128,7 @@ class PengamatanController extends Controller
                 'kendali_apbd_prov' => $request->kendali_apbd_prov ?? 0,
                 'kendali_apbn' => $request->kendali_apbn ?? 0,
                 'kendali_masyarakat' => $request->kendali_masyarakat ?? 0,
-                'kondisi_serangan' => $request->kondisi_serangan,
+                'kondisi_serangan' => $kondisi_serangan,
             ]);
 
             return redirect()->route('dashboard')->with('success', 'Data pengamatan berhasil diperbarui!');

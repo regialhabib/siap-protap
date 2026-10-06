@@ -28,3 +28,12 @@ Thumbs.db
 boost.json
 
 boost_mcp.bat
+
+# Agent & temporary files
+/docs/
+/core_skill.txt
+/DESIGN.md
+/encoded2.txt
+/encoded_design.txt
+/replace_table.py
+/temp_skill_output.txt

@@ -36,7 +36,8 @@ class PengamatanRequest extends FormRequest
             'kendali_apbd_prov' => 'nullable|numeric|min:0',
             'kendali_apbn' => 'nullable|numeric|min:0',
             'kendali_masyarakat' => 'nullable|numeric|min:0',
-            'kondisi_serangan' => 'nullable|string|max:255',
+            'kondisi_status' => 'nullable|string|in:Bertambah,Tetap,Berkurang',
+            'kondisi_luas' => 'nullable|numeric|min:0',
         ];
 
         $user = Auth::user();

@@ -1,16 +1,47 @@
 <x-app-layout>
+    <div x-data="dashboardFilter()" x-init="initChart()">
     <!-- Header / Title -->
-    <div class="mb-6 flex justify-between items-center">
+    <div class="mb-6 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
             <h1 class="text-2xl font-bold text-gray-900">Overview</h1>
             <p class="text-sm text-gray-500 mt-1">Pantau statistik dan riwayat data pengamatan lapangan.</p>
         </div>
-        @can('popt')
-            <a href="{{ route('pengamatan.create') }}" class="inline-flex items-center justify-center px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-lg shadow-sm transition duration-150">
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                Input Data
-            </a>
-        @endcan
+        <div class="flex items-center space-x-3">
+            @can('admin')
+            <div class="flex items-center space-x-2 bg-white p-1.5 rounded-lg border border-gray-200 shadow-sm">
+                <select x-model="bulan" @change="fetchData()" :disabled="isLoading" class="text-sm border-transparent focus:border-emerald-500 focus:ring focus:ring-emerald-200 rounded-md py-1.5 pl-3 pr-8">
+                    <option value="1">Januari</option>
+                    <option value="2">Februari</option>
+                    <option value="3">Maret</option>
+                    <option value="4">April</option>
+                    <option value="5">Mei</option>
+                    <option value="6">Juni</option>
+                    <option value="7">Juli</option>
+                    <option value="8">Agustus</option>
+                    <option value="9">September</option>
+                    <option value="10">Oktober</option>
+                    <option value="11">November</option>
+                    <option value="12">Desember</option>
+                </select>
+                <div class="h-4 w-px bg-gray-300"></div>
+                <select x-model="tahun" @change="fetchData()" :disabled="isLoading" class="text-sm border-transparent focus:border-emerald-500 focus:ring focus:ring-emerald-200 rounded-md py-1.5 pl-3 pr-8">
+                    @for($i = date('Y'); $i >= 2020; $i--)
+                        <option value="{{ $i }}">{{ $i }}</option>
+                    @endfor
+                </select>
+                <div class="px-2" x-show="isLoading" x-cloak>
+                    <svg class="animate-spin w-4 h-4 text-emerald-600" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
+                </div>
+            </div>
+            @endcan
+
+            @can('popt')
+                <a href="{{ route('pengamatan.create') }}" class="inline-flex items-center justify-center px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-lg shadow-sm transition duration-150">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                    Input Data
+                </a>
+            @endcan
+        </div>
     </div>
 
     <!-- Stats Cards (Solid Background Accents) -->
@@ -23,7 +54,7 @@
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                 </div>
             </div>
-            <div class="text-3xl font-bold relative z-10">{{ $stats['total_pengamatan'] }}</div>
+            <div class="text-3xl font-bold relative z-10" x-text="stats.total_pengamatan">{{ $stats['total_pengamatan'] }}</div>
             <p class="text-xs text-emerald-100 mt-1 relative z-10">Data terkumpul bulan ini</p>
             
             <!-- Decorative circle -->
@@ -38,7 +69,7 @@
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
                 </div>
             </div>
-            <div class="text-3xl font-bold relative z-10">{{ number_format($stats['total_luas_serangan'], 2) }}</div>
+            <div class="text-3xl font-bold relative z-10" x-text="formatNumber(stats.total_luas_serangan)">{{ number_format($stats['total_luas_serangan'], 2) }}</div>
             <p class="text-xs text-red-100 mt-1 font-medium flex items-center relative z-10">
                 <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
                 Total luasan terdampak
@@ -56,7 +87,7 @@
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
                 </div>
             </div>
-            <div class="text-3xl font-bold relative z-10">{{ $stats['komoditas_terdampak'] }}</div>
+            <div class="text-3xl font-bold relative z-10" x-text="stats.komoditas_terdampak">{{ $stats['komoditas_terdampak'] }}</div>
             <p class="text-xs text-amber-100 mt-1 relative z-10">Jenis tanaman terserang</p>
             
             <!-- Decorative circle -->
@@ -66,31 +97,9 @@
 
     <!-- UPPT Compliance Section -->
     @can('admin')
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden p-6 mb-8"
-        x-data="{
-            sudahList: {{ Js::from($chartData['sudah']) }},
-            belumList: {{ Js::from($chartData['belum']) }},
-            sudahPage: 1,
-            belumPage: 1,
-            perPage: 5,
-            
-            get pagedSudah() {
-                let start = (this.sudahPage - 1) * this.perPage;
-                return this.sudahList.slice(start, start + this.perPage);
-            },
-            get totalSudahPages() {
-                return Math.ceil(this.sudahList.length / this.perPage) || 1;
-            },
-            get pagedBelum() {
-                let start = (this.belumPage - 1) * this.perPage;
-                return this.belumList.slice(start, start + this.perPage);
-            },
-            get totalBelumPages() {
-                return Math.ceil(this.belumList.length / this.perPage) || 1;
-            }
-        }"
-    >
-        <h3 class="text-lg font-bold text-gray-900 mb-6">Status Pengamatan UPPT ({{ $chartData['bulan_ini'] }})</h3>
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden p-6 mb-8 relative">
+        <div x-show="isLoading" class="absolute inset-0 bg-white/50 z-20 flex items-center justify-center backdrop-blur-[1px]" x-cloak></div>
+        <h3 class="text-lg font-bold text-gray-900 mb-6">Status Pengamatan UPPT (<span x-text="chartData.bulan_ini">{{ $chartData['bulan_ini'] }}</span>)</h3>
         
         <div class="grid grid-cols-1 md:grid-cols-12 gap-8">
             <!-- Chart Container -->
@@ -98,18 +107,18 @@
                 <div class="relative w-full max-w-[250px] aspect-square">
                     <canvas id="upptChart"></canvas>
                     <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                        <span class="text-3xl font-bold text-gray-800">{{ $chartData['persentase_sudah'] }}%</span>
+                        <span class="text-3xl font-bold text-gray-800"><span x-text="chartData.persentase_sudah">{{ $chartData['persentase_sudah'] }}</span>%</span>
                         <span class="text-xs font-medium text-gray-500 uppercase tracking-wider">Sudah Lapor</span>
                     </div>
                 </div>
                 <div class="mt-6 flex justify-center space-x-6 w-full">
                     <div class="flex items-center">
                         <div class="w-3 h-3 rounded-full bg-emerald-500 mr-2"></div>
-                        <span class="text-sm font-medium text-gray-700">Sudah ({{ $chartData['total_sudah'] }})</span>
+                        <span class="text-sm font-medium text-gray-700">Sudah (<span x-text="chartData.total_sudah">{{ $chartData['total_sudah'] }}</span>)</span>
                     </div>
                     <div class="flex items-center">
                         <div class="w-3 h-3 rounded-full bg-gray-200 mr-2"></div>
-                        <span class="text-sm font-medium text-gray-700">Belum ({{ $chartData['total_belum'] }})</span>
+                        <span class="text-sm font-medium text-gray-700">Belum (<span x-text="chartData.total_belum">{{ $chartData['total_belum'] }}</span>)</span>
                     </div>
                 </div>
             </div>
@@ -182,10 +191,18 @@
 
     @can('popt')
     <div x-data="{ showModal: false, modalData: {} }">
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-8">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-8 relative min-h-[200px]">
+            <div x-show="isLoading" class="absolute inset-0 bg-white/50 z-20 flex items-center justify-center backdrop-blur-[1px]" x-cloak></div>
             <div class="p-6 border-b border-gray-100 bg-white">
                 <h3 class="text-lg font-bold text-gray-900">Riwayat Pengamatan Terbaru</h3>
             </div>
+            
+            <div id="table-container">
+                @include('partials.dashboard-table')
+            </div>
+            
+            <!-- Hide old static table instead of deleting to keep file safe -->
+            <div class="hidden">
             <div class="overflow-x-auto">
                 <table class="w-full text-sm text-left">
                     <thead class="text-[11px] font-bold text-gray-400 uppercase bg-gray-50/50 border-b border-gray-100 tracking-wider">
@@ -301,11 +318,7 @@
                     </tbody>
                 </table>
             </div>
-            @if($pengamatans->hasPages())
-            <div class="p-4 border-t border-gray-100 bg-white">
-                {{ $pengamatans->links() }}
-            </div>
-            @endif
+            </div><!-- end hidden block -->
         </div>
 
         <!-- Modal -->
@@ -417,49 +430,159 @@
     <!-- Load Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const ctx = document.getElementById('upptChart');
-            if (ctx) {
-                new Chart(ctx, {
-                    type: 'doughnut',
-                    data: {
-                        labels: ['Sudah Pengamatan', 'Belum Pengamatan'],
-                        datasets: [{
-                            data: [{{ $chartData['total_sudah'] }}, {{ $chartData['total_belum'] }}],
-                            backgroundColor: [
-                                '#10b981', // emerald-500
-                                '#e5e7eb'  // gray-200
-                            ],
-                            borderWidth: 0,
-                            hoverOffset: 4
-                        }]
-                    },
-                    options: {
-                        cutout: '75%',
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: {
-                                display: false
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('dashboardFilter', () => ({
+                isLoading: false,
+                bulan: '{{ request("bulan", now()->month) }}',
+                tahun: '{{ request("tahun", now()->year) }}',
+                stats: {
+                    total_pengamatan: {{ $stats['total_pengamatan'] }},
+                    total_luas_serangan: {{ $stats['total_luas_serangan'] }},
+                    komoditas_terdampak: {{ $stats['komoditas_terdampak'] }}
+                },
+                
+                chartData: @json($chartData),
+                sudahList: @json($chartData['sudah'] ?? []),
+                belumList: @json($chartData['belum'] ?? []),
+                sudahPage: 1,
+                belumPage: 1,
+                perPage: 5,
+                chartInstance: null,
+                
+                tableHtml: '',
+
+                initChart() {
+                    const ctx = document.getElementById('upptChart');
+                    if (ctx && !this.chartInstance) {
+                        this.chartInstance = new Chart(ctx, {
+                            type: 'doughnut',
+                            data: {
+                                labels: ['Sudah Pengamatan', 'Belum Pengamatan'],
+                                datasets: [{
+                                    data: [this.chartData.total_sudah, this.chartData.total_belum],
+                                    backgroundColor: ['#10b981', '#e5e7eb'],
+                                    borderWidth: 0,
+                                    hoverOffset: 4
+                                }]
                             },
-                            tooltip: {
-                                callbacks: {
-                                    label: function(context) {
-                                        let label = context.label || '';
-                                        if (label) {
-                                            label += ': ';
+                            options: {
+                                cutout: '75%',
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: {
+                                    legend: { display: false },
+                                    tooltip: {
+                                        callbacks: {
+                                            label: function(context) {
+                                                return (context.label ? context.label + ': ' : '') + context.parsed + ' UPPT';
+                                            }
                                         }
-                                        if (context.parsed !== null) {
-                                            label += context.parsed + ' UPPT';
-                                        }
-                                        return label;
                                     }
                                 }
                             }
-                        }
+                        });
                     }
-                });
-            }
+                    this.$nextTick(() => {
+                        this.attachPaginationListeners();
+                    });
+                },
+
+                updateChart(newData) {
+                    if (this.chartInstance) {
+                        this.chartInstance.data.datasets[0].data = [newData.total_sudah, newData.total_belum];
+                        this.chartInstance.update();
+                    }
+                },
+                
+                get pagedSudah() {
+                    let start = (this.sudahPage - 1) * this.perPage;
+                    return this.sudahList.slice(start, start + this.perPage);
+                },
+                get totalSudahPages() {
+                    return Math.ceil(this.sudahList.length / this.perPage) || 1;
+                },
+                get pagedBelum() {
+                    let start = (this.belumPage - 1) * this.perPage;
+                    return this.belumList.slice(start, start + this.perPage);
+                },
+                get totalBelumPages() {
+                    return Math.ceil(this.belumList.length / this.perPage) || 1;
+                },
+
+                formatNumber(num) {
+                    return parseFloat(num).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                },
+
+                async fetchData(url = null) {
+                    this.isLoading = true;
+                    try {
+                        let fetchUrl = url;
+                        if (!fetchUrl) {
+                            fetchUrl = new URL(window.location.href);
+                            fetchUrl.searchParams.set('bulan', this.bulan);
+                            fetchUrl.searchParams.set('tahun', this.tahun);
+                        } else {
+                            const parsedUrl = new URL(url);
+                            this.bulan = parsedUrl.searchParams.get('bulan') || this.bulan;
+                            this.tahun = parsedUrl.searchParams.get('tahun') || this.tahun;
+                        }
+
+                        const response = await fetch(fetchUrl, {
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'Accept': 'application/json'
+                            }
+                        });
+                        
+                        const data = await response.json();
+                        
+                        this.stats = data.stats;
+                        if (data.table_html) {
+                            const container = document.getElementById('table-container');
+                            if (container) {
+                                container.innerHTML = data.table_html;
+                            }
+                            this.$nextTick(() => {
+                                this.attachPaginationListeners();
+                            });
+                        }
+                        
+                        if (data.chartData) {
+                            this.chartData = data.chartData;
+                            this.sudahList = data.chartData.sudah;
+                            this.belumList = data.chartData.belum;
+                            this.sudahPage = 1;
+                            this.belumPage = 1;
+                            this.updateChart(data.chartData);
+                        }
+                        
+                        // Update URL without reload
+                        window.history.pushState({}, '', fetchUrl);
+                        
+                    } catch (error) {
+                        console.error("Gagal mengambil data", error);
+                    } finally {
+                        this.isLoading = false;
+                    }
+                },
+
+                attachPaginationListeners() {
+                    const container = document.getElementById('table-container');
+                    if (!container) return;
+                    
+                    const links = container.querySelectorAll('nav[role="navigation"] a');
+                    links.forEach(link => {
+                        // avoid multiple listeners
+                        const newLink = link.cloneNode(true);
+                        link.parentNode.replaceChild(newLink, link);
+                        newLink.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            this.fetchData(newLink.href);
+                        });
+                    });
+                }
+            }))
         });
     </script>
+    </div>
 </x-app-layout>
