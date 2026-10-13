@@ -61,18 +61,25 @@
                 Manajemen Petugas
             </a>
         @endcan
+
+        <!-- Menu Pengaturan / Akun -->
+        <div class="pt-6 pb-2">
+            <p class="px-4 text-[11px] font-bold text-gray-500 uppercase tracking-widest">Pengaturan</p>
+        </div>
+        <a href="{{ route('profile.edit') }}" class="flex items-center px-4 py-3 rounded-lg transition-all duration-200 {{ request()->routeIs('profile.*') ? 'bg-emerald-600 text-white font-medium shadow-md shadow-emerald-900/20' : 'text-gray-400 hover:bg-gray-800 hover:text-gray-100 font-medium' }}">
+            <svg class="w-5 h-5 mr-3 {{ request()->routeIs('profile.*') ? 'text-white' : 'text-gray-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+            Profile
+        </a>
     </nav>
 
     <!-- User Profile Snippet at bottom -->
-    <div class="p-5 border-t border-gray-800 bg-[#0b1221]">
-        <div class="flex items-center">
-            <div class="w-10 h-10 rounded-full bg-emerald-600/20 border border-emerald-600/30 text-emerald-500 flex items-center justify-center font-bold">
-                {{ substr(Auth::user()->name, 0, 1) }}
-            </div>
-            <div class="ml-3">
-                <p class="text-sm font-semibold text-gray-200 truncate w-40">{{ Auth::user()->name }}</p>
-                <p class="text-xs text-gray-500 capitalize font-medium">{{ Auth::user()->role }}</p>
-            </div>
+    <a href="{{ route('profile.edit') }}" class="p-5 border-t border-gray-800 bg-[#0b1221] flex items-center hover:bg-gray-800/60 transition-colors duration-200 group">
+        <div class="w-10 h-10 rounded-full bg-emerald-600/20 border border-emerald-600/30 text-emerald-500 flex items-center justify-center font-bold group-hover:border-emerald-500 transition-colors">
+            {{ substr(Auth::user()->name, 0, 1) }}
         </div>
-    </div>
+        <div class="ml-3">
+            <p class="text-sm font-semibold text-gray-200 truncate w-40 group-hover:text-emerald-400 transition-colors">{{ Auth::user()->name }}</p>
+            <p class="text-xs text-gray-500 capitalize font-medium">{{ Auth::user()->role }}</p>
+        </div>
+    </a>
 </aside>

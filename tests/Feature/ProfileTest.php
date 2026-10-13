@@ -21,6 +21,19 @@ class ProfileTest extends TestCase
         $response->assertOk();
     }
 
+    public function test_sidebar_contains_profile_menu(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this
+            ->actingAs($user)
+            ->get('/profile');
+
+        $response->assertOk();
+        $response->assertSee(route('profile.edit'));
+        $response->assertSee('Profile');
+    }
+
     public function test_profile_information_can_be_updated(): void
     {
         $user = User::factory()->create();
