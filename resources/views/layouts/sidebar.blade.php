@@ -71,15 +71,4 @@
             Profile
         </a>
     </nav>
-
-    <!-- User Profile Snippet at bottom -->
-    <a href="{{ route('profile.edit') }}" class="p-5 border-t border-gray-800 bg-[#0b1221] flex items-center hover:bg-gray-800/60 transition-colors duration-200 group">
-        <div class="w-10 h-10 rounded-full bg-emerald-600/20 border border-emerald-600/30 text-emerald-500 flex items-center justify-center font-bold group-hover:border-emerald-500 transition-colors">
-            {{ substr(Auth::user()->name, 0, 1) }}
-        </div>
-        <div class="ml-3">
-            <p class="text-sm font-semibold text-gray-200 truncate w-40 group-hover:text-emerald-400 transition-colors">{{ Auth::user()->name }}</p>
-            <p class="text-xs text-gray-500 capitalize font-medium">{{ Auth::user()->role }}</p>
-        </div>
-    </a>
 </aside>
