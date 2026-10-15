@@ -81,7 +81,7 @@
 
                         @if (Route::has('password.request'))
                             <a class="text-sm font-medium text-emerald-500 hover:text-emerald-600" href="{{ route('password.request') }}">
-                                Forgot Password?
+                                Lupa Password?
                             </a>
                         @endif
                     </div>
@@ -91,6 +91,14 @@
                             Login
                         </button>
                     </div>
+
+                    @if (Route::has('register'))
+                        <div>
+                            <a href="{{ route('register') }}" class="w-full flex justify-center py-3 px-4 border border-emerald-600 rounded-md text-sm font-bold text-emerald-600 hover:bg-emerald-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition duration-150 ease-in-out">
+                                Register
+                            </a>
+                        </div>
+                    @endif
                 </form>
 
             </div>

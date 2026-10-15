@@ -123,8 +123,25 @@
                                 </button>
     
                                 <!-- Modal Edit Pengguna -->
-                                <x-modal name="edit-pengguna-{{ $u->id }}" focusable>
-                                    <form method="post" action="{{ route('pengguna.update', $u->id) }}" class="p-6 text-left whitespace-normal">
+                                <x-modal name="edit-pengguna-{{ $u->id }}" focusable :overflow-visible="true">
+                                    <form method="post" action="{{ route('pengguna.update', $u->id) }}" class="p-6 text-left whitespace-normal" autocomplete="off"
+                                        x-data="{
+                                            role: @js(old('role', $u->role)),
+                                            openUpptOptions: false,
+                                            upptSearch: '',
+                                            selectedUpptId: @js((string) old('uppt_id', $u->uppt_id ?? '')),
+                                            upptOptions: @js($uppts->map(fn ($uppt) => ['id' => (string) $uppt->id, 'name' => $uppt->nama_uppt])->values()),
+                                            get filteredUpptOptions() {
+                                                return this.upptOptions.filter(option => option.name.toLowerCase().includes(this.upptSearch.toLowerCase()));
+                                            },
+                                            selectUppt(option) {
+                                                this.selectedUpptId = option.id;
+                                                this.upptSearch = option.name;
+                                                this.openUpptOptions = false;
+                                            }
+                                        }"
+                                        x-init="upptSearch = upptOptions.find(option => option.id === selectedUpptId)?.name ?? ''"
+                                        @submit="if (role === 'popt' && !selectedUpptId) { $event.preventDefault(); $refs.upptSearch.setCustomValidity('Pilih wilayah UPPT dari daftar.'); $refs.upptSearch.reportValidity(); }">
                                         @csrf
                                         @method('put')
     
@@ -141,7 +158,7 @@
                                                 <input name="email" type="email" value="{{ old('email', $u->email) }}" class="block w-full px-4 py-2 rounded-md border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm" required>
                                             </div>
                                             
-                                            <div x-data="{ role: '{{ old('role', $u->role) }}' }" class="grid grid-cols-2 gap-4">
+                                            <div class="grid grid-cols-2 gap-4">
                                                 <div class="col-span-2 sm:col-span-1">
                                                     <label class="block text-sm font-semibold text-gray-700 mb-1">Peran (Role)</label>
                                                     <select x-model="role" name="role" class="block w-full px-4 py-2 rounded-md border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm" required>
@@ -150,13 +167,29 @@
                                                     </select>
                                                 </div>
                                                 <div class="col-span-2 sm:col-span-1" x-show="role === 'popt'">
-                                                    <label class="block text-sm font-semibold text-gray-700 mb-1">Wilayah (UPPT)</label>
-                                                    <select name="uppt_id" class="block w-full px-4 py-2 rounded-md border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm" :required="role === 'popt'">
-                                                        <option value="">-- Pilih UPPT --</option>
-                                                        @foreach($uppts as $uppt)
-                                                            <option value="{{ $uppt->id }}" {{ old('uppt_id', $u->uppt_id) == $uppt->id ? 'selected' : '' }}>{{ $uppt->nama_uppt }}</option>
-                                                        @endforeach
-                                                    </select>
+                                                    <label for="edit-user-uppt-search-{{ $u->id }}" class="block text-sm font-semibold text-gray-700 mb-1">Wilayah (UPPT)</label>
+                                                    <div class="relative" @click.outside="openUpptOptions = false">
+                                                        <input id="edit-user-uppt-search-{{ $u->id }}" x-ref="upptSearch" type="text" x-model="upptSearch"
+                                                            @focus="openUpptOptions = true"
+                                                            @input="selectedUpptId = ''; $refs.upptSearch.setCustomValidity('')"
+                                                            @keydown.escape="openUpptOptions = false"
+                                                            role="combobox" aria-autocomplete="list" aria-controls="edit-user-uppt-options-{{ $u->id }}"
+                                                            :aria-expanded="openUpptOptions.toString()" :required="role === 'popt'"
+                                                            autocomplete="off" placeholder="Cari atau pilih wilayah UPPT"
+                                                            class="block w-full px-4 py-2 rounded-md border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm">
+                                                        <input type="hidden" name="uppt_id" :value="selectedUpptId">
+
+                                                        <div id="edit-user-uppt-options-{{ $u->id }}" x-cloak x-show="openUpptOptions" role="listbox"
+                                                            class="absolute z-30 mt-1 max-h-56 w-full overflow-auto rounded-md border border-gray-200 bg-white py-1 shadow-lg">
+                                                            <template x-for="option in filteredUpptOptions" :key="option.id">
+                                                                <button type="button" role="option" :aria-selected="selectedUpptId === option.id"
+                                                                    @click="selectUppt(option)"
+                                                                    class="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-emerald-50 hover:text-emerald-700 focus:bg-emerald-50 focus:outline-none"
+                                                                    x-text="option.name"></button>
+                                                            </template>
+                                                            <p x-show="filteredUpptOptions.length === 0" class="px-4 py-2 text-sm text-gray-500">Wilayah UPPT tidak ditemukan.</p>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                                 <div class="col-span-2">
                                                     <label class="block text-sm font-semibold text-gray-700 mb-1">Status</label>
@@ -235,8 +268,25 @@
     </div>
 
     <!-- Modal Tambah Pengguna -->
-    <x-modal name="tambah-pengguna" focusable>
-        <form method="post" action="{{ route('pengguna.store') }}" class="p-6 text-left whitespace-normal">
+    <x-modal name="tambah-pengguna" focusable :overflow-visible="true">
+        <form method="post" action="{{ route('pengguna.store') }}" class="p-6 text-left whitespace-normal" autocomplete="off"
+            x-data="{
+                role: @js(old('role', 'popt')),
+                openUpptOptions: false,
+                upptSearch: '',
+                selectedUpptId: @js((string) old('uppt_id', '')),
+                upptOptions: @js($uppts->map(fn ($uppt) => ['id' => (string) $uppt->id, 'name' => $uppt->nama_uppt])->values()),
+                get filteredUpptOptions() {
+                    return this.upptOptions.filter(option => option.name.toLowerCase().includes(this.upptSearch.toLowerCase()));
+                },
+                selectUppt(option) {
+                    this.selectedUpptId = option.id;
+                    this.upptSearch = option.name;
+                    this.openUpptOptions = false;
+                }
+            }"
+            x-init="upptSearch = upptOptions.find(option => option.id === selectedUpptId)?.name ?? ''"
+            @submit="if (role === 'popt' && !selectedUpptId) { $event.preventDefault(); $refs.upptSearch.setCustomValidity('Pilih wilayah UPPT dari daftar.'); $refs.upptSearch.reportValidity(); }">
             @csrf
             <h2 class="text-lg font-bold text-gray-900">Tambah Petugas Baru</h2>
             <p class="text-sm text-gray-500 mb-6">Buat akun untuk petugas lapangan POPT.</p>
@@ -244,17 +294,17 @@
             <div class="space-y-4">
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-1">Nama Lengkap</label>
-                    <input name="name" type="text" value="{{ old('name') }}" class="block w-full px-4 py-2 rounded-md border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm" required>
+                    <input name="name" type="text" value="{{ old('name') }}" autocomplete="off" class="block w-full px-4 py-2 rounded-md border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm" required>
                     <x-input-error :messages="$errors->get('name')" class="mt-2" />
                 </div>
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-1">Email</label>
-                    <input name="email" type="email" value="{{ old('email') }}" class="block w-full px-4 py-2 rounded-md border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm" required>
+                    <input name="email" type="email" value="{{ old('email') }}" autocomplete="off" class="block w-full px-4 py-2 rounded-md border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm" required>
                     <x-input-error :messages="$errors->get('email')" class="mt-2" />
                 </div>
                 
                 <!-- Kombinasi Alpine untuk menyembunyikan UPPT jika role = Admin -->
-                <div x-data="{ role: '{{ old('role', 'popt') }}' }" class="grid grid-cols-2 gap-4">
+                <div class="grid grid-cols-2 gap-4">
                     <div class="col-span-2 sm:col-span-1">
                         <label class="block text-sm font-semibold text-gray-700 mb-1">Peran (Role)</label>
                         <select x-model="role" name="role" class="block w-full px-4 py-2 rounded-md border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm" required>
@@ -265,13 +315,31 @@
                     </div>
                     
                     <div class="col-span-2 sm:col-span-1" x-show="role === 'popt'">
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">Wilayah (UPPT)</label>
-                        <select name="uppt_id" class="block w-full px-4 py-2 rounded-md border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm" :required="role === 'popt'">
-                            <option value="">-- Pilih UPPT --</option>
-                            @foreach($uppts as $uppt)
-                                <option value="{{ $uppt->id }}" {{ old('uppt_id') == $uppt->id ? 'selected' : '' }}>{{ $uppt->nama_uppt }}</option>
-                            @endforeach
-                        </select>
+                        <label for="new-user-uppt-search" class="block text-sm font-semibold text-gray-700 mb-1">Wilayah (UPPT)</label>
+                        <div class="relative" @click.outside="openUpptOptions = false">
+                            <input id="new-user-uppt-search" x-ref="upptSearch" type="text" x-model="upptSearch"
+                                @focus="openUpptOptions = true"
+                                @input="selectedUpptId = ''; $refs.upptSearch.setCustomValidity('')"
+                                @keydown.escape="openUpptOptions = false"
+                                role="combobox" aria-autocomplete="list" aria-controls="new-user-uppt-options"
+                                :aria-expanded="openUpptOptions.toString()" :required="role === 'popt'"
+                                autocomplete="off" placeholder="Cari atau pilih wilayah UPPT"
+                                class="block w-full px-4 py-2 rounded-md border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm">
+                            <input type="hidden" name="uppt_id" :value="selectedUpptId">
+
+                            <div id="new-user-uppt-options" x-cloak x-show="openUpptOptions" role="listbox"
+                                class="absolute z-30 mt-1 max-h-56 w-full overflow-auto rounded-md border border-gray-200 bg-white py-1 shadow-lg">
+                                <template x-for="option in filteredUpptOptions" :key="option.id">
+                                    <button type="button" role="option" :aria-selected="selectedUpptId === option.id"
+                                        @click="selectUppt(option)"
+                                        class="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-emerald-50 hover:text-emerald-700 focus:bg-emerald-50 focus:outline-none"
+                                        x-text="option.name"></button>
+                                </template>
+                                <p x-show="filteredUpptOptions.length === 0" class="px-4 py-2 text-sm text-gray-500">
+                                    Wilayah UPPT tidak ditemukan.
+                                </p>
+                            </div>
+                        </div>
                         <x-input-error :messages="$errors->get('uppt_id')" class="mt-2" />
                     </div>
                 </div>
@@ -279,12 +347,12 @@
                 <div class="grid grid-cols-2 gap-4">
                     <div class="col-span-2 sm:col-span-1">
                         <label class="block text-sm font-semibold text-gray-700 mb-1">Password</label>
-                        <input name="password" type="password" class="block w-full px-4 py-2 rounded-md border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm" required>
+                        <input name="password" type="password" autocomplete="off" class="block w-full px-4 py-2 rounded-md border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm" required>
                         <x-input-error :messages="$errors->get('password')" class="mt-2" />
                     </div>
                     <div class="col-span-2 sm:col-span-1">
                         <label class="block text-sm font-semibold text-gray-700 mb-1">Konfirmasi Password</label>
-                        <input name="password_confirmation" type="password" class="block w-full px-4 py-2 rounded-md border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm" required>
+                        <input name="password_confirmation" type="password" autocomplete="off" class="block w-full px-4 py-2 rounded-md border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm" required>
                     </div>
                 </div>
             </div>

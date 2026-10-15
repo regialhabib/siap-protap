@@ -1,18 +1,31 @@
 <x-app-layout>
     <!-- Filter Form -->
-    <div class="mb-6 bg-white rounded-xl border border-gray-200 shadow-sm mt-6 overflow-hidden">
-        <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+    <div class="mb-6 bg-white rounded-xl border border-gray-200 shadow-sm mt-6 overflow-visible">
+        <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50 rounded-t-xl">
             <h2 class="font-bold text-xl text-gray-800 leading-tight tracking-tight">
                 Export Laporan
             </h2>
         </div>
         <div class="p-6">
-            <form id="filterForm" method="GET" action="{{ route('laporan.index') }}" class="grid grid-cols-1 md:grid-cols-6 gap-4" 
+            <form id="filterForm" method="GET" action="{{ route('laporan.index') }}" class="grid grid-cols-1 md:grid-cols-6 gap-4" autocomplete="off"
                   x-data="{ 
                       jenis: '{{ $jenis }}', 
-                      uppt_id: '{{ $uppt_id }}', 
+                      uppt_id: @js((string) $uppt_id),
+                      openUpptOptions: false,
+                      upptSearch: '',
+                      upptOptions: @js($uppts->map(fn ($uppt) => ['id' => (string) $uppt->id, 'name' => $uppt->nama_uppt])->values()),
                       kecamatans: {{ Js::from($kecamatans) }}, 
                       kecamatan_id: '{{ request('kecamatan_id') }}',
+                      get filteredUpptOptions() {
+                          return this.upptOptions.filter(option => option.name.toLowerCase().includes(this.upptSearch.toLowerCase()));
+                      },
+                      selectUppt(option) {
+                          this.uppt_id = option.id;
+                          this.upptSearch = option.name;
+                          this.openUpptOptions = false;
+                          this.kecamatan_id = '';
+                          this.fetchKecamatans();
+                      },
                       fetchKecamatans() {
                           if(!this.uppt_id) {
                               this.kecamatans = [];
@@ -29,7 +42,9 @@
                                   }
                               });
                       }
-                  }">
+                  }"
+                  x-init="upptSearch = upptOptions.find(option => option.id === uppt_id)?.name ?? ''"
+                  @submit="if (!uppt_id) { $event.preventDefault(); $refs.upptSearch.setCustomValidity('Pilih wilayah UPPT dari daftar.'); $refs.upptSearch.reportValidity(); }">
             <!-- Jenis Laporan -->
             <div>
                 <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Jenis Laporan</label>
@@ -76,11 +91,30 @@
             <!-- Filter UPPT -->
             <div>
                 <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Wilayah / UPPT</label>
-                <select name="uppt_id" x-model="uppt_id" @change="kecamatan_id = ''; fetchKecamatans()" class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 text-sm">
-                    @foreach($uppts as $u)
-                        <option value="{{ $u->id }}">{{ $u->nama_uppt }}</option>
-                    @endforeach
-                </select>
+                <div class="relative" @click.outside="openUpptOptions = false">
+                    <input id="report-uppt-search" x-ref="upptSearch" type="text" x-model="upptSearch"
+                        @focus="openUpptOptions = true"
+                        @input="uppt_id = ''; $refs.upptSearch.setCustomValidity('')"
+                        @keydown.escape="openUpptOptions = false"
+                        role="combobox" aria-autocomplete="list" aria-controls="report-uppt-options"
+                        :aria-expanded="openUpptOptions.toString()" required autocomplete="off"
+                        placeholder="Cari atau pilih wilayah UPPT"
+                        class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 text-sm">
+                    <input type="hidden" name="uppt_id" :value="uppt_id">
+
+                    <div id="report-uppt-options" x-cloak x-show="openUpptOptions" role="listbox"
+                        class="absolute z-30 mt-1 max-h-56 w-full overflow-auto rounded-md border border-gray-200 bg-white py-1 shadow-lg">
+                        <template x-for="option in filteredUpptOptions" :key="option.id">
+                            <button type="button" role="option" :aria-selected="uppt_id === option.id"
+                                @click="selectUppt(option)"
+                                class="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-emerald-50 hover:text-emerald-700 focus:bg-emerald-50 focus:outline-none"
+                                x-text="option.name"></button>
+                        </template>
+                        <p x-show="filteredUpptOptions.length === 0" class="px-4 py-2 text-sm text-gray-500">
+                            Wilayah UPPT tidak ditemukan.
+                        </p>
+                    </div>
+                </div>
             </div>
 
             <!-- Filter Kecamatan (Dynamic) -->
