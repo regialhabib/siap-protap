@@ -23,7 +23,7 @@
                                 <td class="px-6 py-4">
                                     <div class="flex items-center space-x-2">
                                         <span class="bg-emerald-50 text-emerald-600 px-2 py-1 rounded text-xs font-medium">{{ $item->komoditas->nama_komoditas ?? '-' }}</span>
-                                        <span class="bg-red-50 text-red-500 px-2 py-1 rounded text-xs font-medium">{{ $item->opt->nama_opt ?? '-' }}</span>
+                                        <span class="bg-red-50 text-red-500 px-2 py-1 rounded text-xs font-medium">{{ $item->opt->nama_opt ?? '-' }}{{ $item->jenisOpt ? ' — '.$item->jenisOpt->nama_jenis_opt : '' }}</span>
                                     </div>
                                 </td>
                                 <td class="px-6 py-4 text-center font-medium">
@@ -47,7 +47,7 @@
                                                 'uppt' => $item->uppt->nama_uppt ?? '-',
                                                 'kecamatan' => $item->kecamatan->nama_kecamatan ?? '-',
                                                 'komoditas' => $item->komoditas->nama_komoditas ?? '-',
-                                                'opt' => $item->opt->nama_opt ?? '-',
+                                                'opt' => ($item->opt->nama_opt ?? '-').($item->jenisOpt ? ' — '.$item->jenisOpt->nama_jenis_opt : ''),
                                                 'luas_komoditi_num' => number_format($item->luas_komoditi_ha, 2),
                                                 'kondisi' => $item->kondisi_serangan,
                                                 'serangan_ringan_num' => number_format($item->serangan_ringan, 2),

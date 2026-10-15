@@ -98,7 +98,7 @@
                 <td class="left">{{ $d->uppt->nama_uppt ?? '-' }}{{ $d->kecamatan ? ' / ' . $d->kecamatan->nama_kecamatan : '' }}</td>
                 <td class="left">{{ $d->komoditas->nama_komoditas ?? '-' }}</td>
                 <td>{{ floatval($d->luas_komoditi_ha) }}</td>
-                <td class="left">{{ $d->opt->nama_opt ?? '-' }}</td>
+                <td class="left">{{ $d->opt->nama_opt ?? '-' }}{{ $d->jenisOpt ? ' — '.$d->jenisOpt->nama_jenis_opt : '' }}</td>
                 
                 <td>{{ floatval($d->serangan_ringan) }}</td>
                 <td>{{ floatval($d->serangan_sedang) }}</td>

@@ -81,13 +81,23 @@
                         </div>
                         <div>
                             <label class="block text-sm font-bold text-gray-700 mb-2">Jenis OPT <span class="text-red-500">*</span></label>
-                            <select name="opt_id" class="block w-full px-4 py-3 rounded-lg border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm transition-colors cursor-pointer" required>
+                            <select id="opt_id" name="opt_id" onchange="filterJenisOpt()" class="block w-full px-4 py-3 rounded-lg border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm transition-colors cursor-pointer" required>
                                 <option value="">-- Pilih OPT --</option>
                                 @foreach($opts as $o)
                                     <option value="{{ $o->id }}" {{ old('opt_id') == $o->id ? 'selected' : '' }}>{{ $o->nama_opt }}</option>
                                 @endforeach
                             </select>
                             <x-input-error :messages="$errors->get('opt_id')" class="mt-2" />
+                            <label for="jenis_opt_id" class="block text-sm font-bold text-gray-700 mt-4 mb-2">Jenis Turunan <span class="text-red-500">*</span></label>
+                            <select id="jenis_opt_id" name="jenis_opt_id" class="block w-full px-4 py-3 rounded-lg border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm" data-selected="{{ old('jenis_opt_id') }}">
+                                <option value="">-- Pilih jenis turunan jika tersedia --</option>
+                                @foreach($opts as $o)
+                                    @foreach($o->jenisOpts as $jenis)
+                                        <option value="{{ $jenis->id }}" data-opt="{{ $o->id }}" {{ old('jenis_opt_id') == $jenis->id ? 'selected' : '' }}>{{ $jenis->nama_jenis_opt }}</option>
+                                    @endforeach
+                                @endforeach
+                            </select>
+                            <x-input-error :messages="$errors->get('jenis_opt_id')" class="mt-2" />
                         </div>
                     </div>
                 </div>
@@ -209,4 +219,16 @@
             </form>
         </div>
     </div>
+<script>
+    function filterJenisOpt() {
+        const parent = document.getElementById('opt_id').value;
+        const child = document.getElementById('jenis_opt_id');
+        [...child.options].forEach(option => {
+            if (option.dataset.opt) option.hidden = option.dataset.opt !== parent;
+        });
+        if (child.selectedOptions[0]?.dataset.opt !== parent) child.value = '';
+        child.required = [...child.options].some(option => option.dataset.opt === parent);
+    }
+    document.addEventListener('DOMContentLoaded', filterJenisOpt);
+</script>
 </x-app-layout>

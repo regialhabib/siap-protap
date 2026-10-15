@@ -13,4 +13,9 @@ class Opt extends Model
     {
         return $this->hasMany(Pengamatan::class);
     }
+
+    public function jenisOpts(): HasMany
+    {
+        return $this->hasMany(JenisOpt::class);
+    }
 }

@@ -30,5 +30,9 @@ class AppServiceProvider extends ServiceProvider
         Gate::define('popt', function ($user) {
             return $user->role === 'popt';
         });
+
+        Gate::define('manage-opt', function ($user) {
+            return $user->role === 'admin' || $user->role === 'popt';
+        });
     }
 }

@@ -239,7 +239,7 @@
                             <td class="px-4 py-3 border-r border-gray-100 text-center">{{ $loop->iteration }}</td>
                             <td class="px-4 py-3 border-r border-gray-100 font-medium text-gray-900">{{ $d->uppt->nama_uppt ?? '-' }}{{ $d->kecamatan ? ' / ' . $d->kecamatan->nama_kecamatan : '' }}</td>
                             <td class="px-4 py-3 border-r border-gray-100">{{ $d->komoditas->nama_komoditas ?? '-' }}</td>
-                            <td class="px-4 py-3 border-r border-gray-100">{{ $d->opt->nama_opt ?? '-' }}</td>
+                            <td class="px-4 py-3 border-r border-gray-100">{{ $d->opt->nama_opt ?? '-' }}{{ $d->jenisOpt ? ' — '.$d->jenisOpt->nama_jenis_opt : '' }}</td>
                             <td class="px-4 py-3 border-r border-gray-100 font-bold text-center">{{ floatval($d->luas_komoditi_ha) }}</td>
                             
                             <td class="px-3 py-3 border-r border-gray-100 text-center">{{ floatval($d->serangan_ringan) }}</td>

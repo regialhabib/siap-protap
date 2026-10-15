@@ -46,10 +46,12 @@
                     </button>
                 </div>
                 <!-- Tombol Tambah yang memicu Modal -->
-                <button x-data="" x-on:click.prevent="$dispatch('open-modal', 'tambah-opt')" class="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm rounded-lg shadow-sm transition duration-150 whitespace-nowrap">
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                    Tambah OPT
-                </button>
+                @can('manage-opt')
+                    <button x-data="" x-on:click.prevent="$dispatch('open-modal', 'tambah-opt')" class="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm rounded-lg shadow-sm transition duration-150 whitespace-nowrap">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                        Tambah OPT
+                    </button>
+                @endcan
             </div>
         </div>
         
@@ -60,7 +62,9 @@
                         <tr>
                             <th class="px-6 py-4 font-bold tracking-wider w-16">No</th>
                             <th class="px-6 py-4 font-bold tracking-wider">Nama OPT (Hama/Penyakit)</th>
-                            <th class="px-6 py-4 font-bold tracking-wider text-right w-32">Aksi</th>
+                            @can('manage-opt')
+                                <th class="px-6 py-4 font-bold tracking-wider text-right w-32">Aksi</th>
+                            @endcan
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">
@@ -70,8 +74,17 @@
                                 {{ $loop->iteration }}
                             </td>
                             <td class="px-6 py-4 searchable-col">
-                                <span class="font-semibold text-gray-900">{{ $k->nama_opt }}</span>
+                                <div class="flex items-center gap-2">
+                                    <span class="font-semibold text-gray-900">{{ $k->nama_opt }}</span>
+                                    <span class="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
+                                        {{ $k->jenisOpts->count() }} jenis
+                                    </span>
+                                </div>
+                                @if($k->jenisOpts->isNotEmpty())
+                                    <p class="mt-1 truncate text-xs text-gray-500">{{ $k->jenisOpts->pluck('nama_jenis_opt')->join(', ') }}</p>
+                                @endif
                             </td>
+                            @can('manage-opt')
                             <td class="px-6 py-4 text-right">
                                 <!-- Edit Button (Triggers Modal) -->
                                 <button type="button" x-data="" x-on:click.prevent="$dispatch('open-modal', 'edit-opt-{{ $k->id }}')" class="inline-flex items-center text-white font-medium text-xs px-3 py-1.5 bg-blue-500 hover:bg-blue-600 rounded shadow-sm transition mr-2">
@@ -80,28 +93,46 @@
                                 </button>
     
                                 <!-- Modal Edit OPT -->
-                                <x-modal name="edit-opt-{{ $k->id }}" focusable>
-                                    <form method="post" action="{{ route('opt.update', $k->id) }}" class="p-6 text-left whitespace-normal">
+                                <x-modal name="edit-opt-{{ $k->id }}" focusable maxWidth="2xl">
+                                    <form method="post" action="{{ route('opt.update', $k->id) }}" class="p-6 text-left whitespace-normal" x-data="{ jenisOpts: @js($k->jenisOpts->map(fn ($jenis) => ['id' => $jenis->id, 'nama_jenis_opt' => $jenis->nama_jenis_opt])->values()) }">
                                         @csrf
                                         @method('put')
-    
-                                        <h2 class="text-lg font-bold text-gray-900">
-                                            Edit OPT
-                                        </h2>
-    
+                                        <input type="hidden" name="jenis_opts_present" value="1">
+
+                                        <h2 class="text-lg font-bold text-gray-900">Edit OPT</h2>
+
                                         <div class="mt-6">
                                             <label for="nama_opt_{{ $k->id }}" class="block text-sm font-semibold text-gray-700 mb-1">Nama OPT</label>
-                                            <input id="nama_opt_{{ $k->id }}" name="nama_opt" type="text" value="{{ $k->nama_opt }}" class="block w-full px-4 py-3 rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm" required>
+                                            <input id="nama_opt_{{ $k->id }}" name="nama_opt" type="text" value="{{ $k->nama_opt }}" class="block w-full px-4 py-3 rounded-md border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm" required>
                                         </div>
-    
-                                        <div class="mt-6 flex justify-end">
-                                            <button type="button" x-on:click="$dispatch('close')" class="px-4 py-2 bg-white border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest shadow-sm hover:bg-gray-50 transition ease-in-out duration-150 mr-3">
-                                                Batal
-                                            </button>
-    
-                                            <button type="submit" class="px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700 shadow-sm transition ease-in-out duration-150">
-                                                Simpan Perubahan
-                                            </button>
+
+                                        <div class="mt-6 border-t border-gray-100 pt-5">
+                                            <div class="flex items-start justify-between gap-4">
+                                                <div>
+                                                    <h3 class="text-sm font-semibold text-gray-800">Jenis turunan</h3>
+                                                    <p class="mt-1 text-xs text-gray-500">Opsional. Tambahkan atau hapus jenis turunan untuk OPT ini.</p>
+                                                </div>
+                                                <button type="button" x-on:click="jenisOpts.push({ id: null, nama_jenis_opt: '' })" class="shrink-0 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700 hover:bg-emerald-100">
+                                                    + Tambah input
+                                                </button>
+                                            </div>
+
+                                            <div class="mt-3 space-y-2">
+                                                <template x-for="(jenisOpt, index) in jenisOpts" :key="jenisOpt.id ?? `baru-${index}`">
+                                                    <div class="flex items-center gap-2">
+                                                        <input type="hidden" x-bind:name="`jenis_opts[${index}][id]`" x-bind:value="jenisOpt.id ?? ''">
+                                                        <input type="text" x-model="jenisOpt.nama_jenis_opt" x-bind:name="`jenis_opts[${index}][nama_jenis_opt]`" class="block min-w-0 flex-1 rounded-lg border-gray-300 text-sm shadow-sm focus:border-emerald-500 focus:ring-emerald-500" placeholder="Contoh: Corynespora cassiicola">
+                                                        <button type="button" x-on:click="jenisOpts.splice(index, 1)" class="rounded-lg p-2 text-gray-400 hover:bg-red-50 hover:text-red-600" aria-label="Hapus input jenis turunan">
+                                                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                                        </button>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </div>
+
+                                        <div class="mt-6 flex justify-end gap-3 border-t border-gray-100 pt-5">
+                                            <button type="button" x-on:click="$dispatch('close')" class="px-4 py-2 bg-white border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest shadow-sm hover:bg-gray-50">Batal</button>
+                                            <button type="submit" class="px-4 py-2 bg-emerald-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-emerald-700 shadow-sm">Simpan Perubahan</button>
                                         </div>
                                     </form>
                                 </x-modal>
@@ -138,17 +169,18 @@
                                     </form>
                                 </x-modal>
                             </td>
+                            @endcan
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="3" class="px-6 py-12 text-center">
+                            <td colspan="{{ auth()->user()->can('manage-opt') ? 3 : 2 }}" class="px-6 py-12 text-center">
                                 <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-50 mb-4">
                                     <svg class="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
                                     </svg>
                                 </div>
                                 <h3 class="text-sm font-semibold text-gray-900">Belum ada OPT</h3>
-                                <p class="text-xs text-gray-500 mt-1">Silakan tambah data OPT baru.</p>
+                                <p class="text-xs text-gray-500 mt-1">{{ auth()->user()->can('manage-opt') ? 'Silakan tambah data OPT baru.' : 'Data OPT akan ditampilkan di sini.' }}</p>
                             </td>
                         </tr>
                         @endforelse
@@ -172,9 +204,14 @@
         </div>
     </div>
 
+    @can('manage-opt')
+    @php
+        $showAddOptModal = $errors->has('nama_opt') || collect($errors->keys())->contains(fn ($key) => str_starts_with($key, 'jenis_opts'));
+    @endphp
+
     <!-- Modal Tambah OPT -->
-    <x-modal name="tambah-opt" focusable>
-        <form method="post" action="{{ route('opt.store') }}" class="p-6 text-left whitespace-normal">
+    <x-modal name="tambah-opt" focusable :show="$showAddOptModal">
+        <form method="post" action="{{ route('opt.store') }}" class="p-6 text-left whitespace-normal" x-data="{ jenisOpts: @js(old('jenis_opts', [])) }">
             @csrf
 
             <h2 class="text-lg font-bold text-gray-900">
@@ -187,8 +224,37 @@
 
             <div class="mt-6">
                 <label for="nama_opt" class="block text-sm font-semibold text-gray-700 mb-1">Nama OPT</label>
-                <input id="nama_opt" name="nama_opt" type="text" class="block w-full px-4 py-3 rounded-md border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm" placeholder="Contoh: Tikus / Wereng" required>
+                <input id="nama_opt" name="nama_opt" type="text" value="{{ old('nama_opt') }}" class="block w-full px-4 py-3 rounded-md border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm" placeholder="Contoh: Tikus / Wereng" required>
                 <x-input-error :messages="$errors->get('nama_opt')" class="mt-2" />
+            </div>
+
+            <div class="mt-6 border-t border-gray-100 pt-5">
+                <div class="flex items-start justify-between gap-4">
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-800">Jenis turunan</h3>
+                        <p class="mt-1 text-xs text-gray-500">Opsional. Tambahkan satu atau beberapa jenis turunan untuk OPT ini.</p>
+                    </div>
+                    <button type="button" x-on:click="jenisOpts.push('')" class="shrink-0 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700 hover:bg-emerald-100">
+                        + Tambah input
+                    </button>
+                </div>
+
+                <div class="mt-3 space-y-2">
+                    <template x-for="(jenisOpt, index) in jenisOpts" :key="index">
+                        <div class="flex items-center gap-2">
+                            <input type="text" x-model="jenisOpts[index]" x-bind:name="`jenis_opts[${index}]`" x-bind:id="`jenis_opt_${index}`" class="block min-w-0 flex-1 rounded-lg border-gray-300 text-sm shadow-sm focus:border-emerald-500 focus:ring-emerald-500" placeholder="Contoh: Corynespora cassiicola">
+                            <button type="button" x-on:click="jenisOpts.splice(index, 1)" class="rounded-lg p-2 text-gray-400 hover:bg-red-50 hover:text-red-600" aria-label="Hapus input jenis turunan">
+                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                            </button>
+                        </div>
+                    </template>
+                </div>
+                <x-input-error :messages="$errors->get('jenis_opts')" class="mt-2" />
+                @foreach($errors->getMessages() as $field => $messages)
+                    @if(str_starts_with($field, 'jenis_opts.'))
+                        <p class="mt-2 text-sm text-red-600">{{ implode(' ', $messages) }}</p>
+                    @endif
+                @endforeach
             </div>
 
             <div class="mt-6 flex justify-end">
@@ -202,5 +268,6 @@
             </div>
         </form>
     </x-modal>
+    @endcan
 
 </x-app-layout>

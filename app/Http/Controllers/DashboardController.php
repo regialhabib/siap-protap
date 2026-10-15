@@ -5,12 +5,12 @@ namespace App\Http\Controllers;
 use App\Models\Pengamatan;
 use App\Models\Uppt;
 use Carbon\Carbon;
-use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
 {
-    public function index(\Illuminate\Http\Request $request)
+    public function index(Request $request)
     {
         $user = Auth::user();
 
@@ -31,14 +31,14 @@ class DashboardController extends Controller
         ];
 
         // Table Query
-        $tableQuery = Pengamatan::with(['komoditas', 'opt', 'uppt', 'kecamatan'])
+        $tableQuery = Pengamatan::with(['komoditas', 'opt', 'jenisOpt', 'uppt', 'kecamatan'])
             ->latest('tanggal_pengamatan');
 
         if ($user->role === 'popt') {
             $tableQuery->where('uppt_id', $user->uppt_id);
         } else {
             $tableQuery->whereMonth('tanggal_pengamatan', $currentMonth)
-                       ->whereYear('tanggal_pengamatan', $currentYear);
+                ->whereYear('tanggal_pengamatan', $currentYear);
         }
 
         $pengamatans = $tableQuery->paginate(5)->withQueryString();
@@ -46,7 +46,7 @@ class DashboardController extends Controller
         // Hitung Kepatuhan UPPT (Bulan Ini)
         $allUppt = Uppt::orderBy('nama_uppt', 'asc')->get();
         $allUpptCount = $allUppt->count();
-        
+
         $upptIdsWithPengamatan = Pengamatan::whereMonth('tanggal_pengamatan', $currentMonth)
             ->whereYear('tanggal_pengamatan', $currentYear)
             ->distinct('uppt_id')
@@ -70,7 +70,7 @@ class DashboardController extends Controller
             'persentase_sudah' => $persentaseSudah,
             'persentase_belum' => $persentaseBelum,
             'total' => $allUpptCount,
-            'bulan_ini' => Carbon::createFromDate($currentYear, $currentMonth, 1)->isoFormat('MMMM Y')
+            'bulan_ini' => Carbon::createFromDate($currentYear, $currentMonth, 1)->isoFormat('MMMM Y'),
         ];
 
         if ($request->ajax() || $request->wantsJson()) {

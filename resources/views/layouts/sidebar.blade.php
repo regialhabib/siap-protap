@@ -29,6 +29,10 @@
                 <svg class="w-5 h-5 mr-3 {{ request()->routeIs('pengamatan.create') ? 'text-white' : 'text-gray-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                 Input Pengamatan
             </a>
+            <a href="{{ route('opt.index') }}" class="flex items-center px-4 py-3 rounded-lg transition-all duration-200 {{ request()->routeIs('opt.*') ? 'bg-emerald-600 text-white font-medium shadow-md shadow-emerald-900/20' : 'text-gray-400 hover:bg-gray-800 hover:text-gray-100 font-medium' }}">
+                <svg class="w-5 h-5 mr-3 {{ request()->routeIs('opt.*') ? 'text-white' : 'text-gray-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                Master OPT
+            </a>
         @endcan
 
         @can('admin')

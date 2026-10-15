@@ -18,7 +18,7 @@ class PengamatanController extends Controller
 
         // Ambil master data untuk dropdown
         $komoditas = Komoditas::orderBy('nama_komoditas')->get();
-        $opts = Opt::orderBy('nama_opt')->get();
+        $opts = Opt::with('jenisOpts')->orderBy('nama_opt')->get();
 
         $user = Auth::user();
         $user->loadMissing('uppt.kecamatans');
@@ -49,7 +49,7 @@ class PengamatanController extends Controller
                     $kondisi_serangan = 'Tetap';
                 } else {
                     $luas = $request->kondisi_luas ?? 0;
-                    $kondisi_serangan = $request->kondisi_status . ' ' . $luas . ' Ha';
+                    $kondisi_serangan = $request->kondisi_status.' '.$luas.' Ha';
                 }
             }
 
@@ -59,6 +59,7 @@ class PengamatanController extends Controller
                 'tanggal_pengamatan' => $request->tanggal_pengamatan,
                 'komoditas_id' => $request->komoditas_id,
                 'opt_id' => $request->opt_id,
+                'jenis_opt_id' => $request->jenis_opt_id,
                 'luas_komoditi_ha' => $request->luas_komoditi_ha,
                 'serangan_ringan' => $ringan,
                 'serangan_sedang' => $sedang,
@@ -85,7 +86,7 @@ class PengamatanController extends Controller
         Gate::authorize('update', $pengamatan);
 
         $komoditas = Komoditas::orderBy('nama_komoditas')->get();
-        $opts = Opt::orderBy('nama_opt')->get();
+        $opts = Opt::with('jenisOpts')->orderBy('nama_opt')->get();
 
         $user = Auth::user();
         $user->loadMissing('uppt.kecamatans');
@@ -110,7 +111,7 @@ class PengamatanController extends Controller
                     $kondisi_serangan = 'Tetap';
                 } else {
                     $luas = $request->kondisi_luas ?? 0;
-                    $kondisi_serangan = $request->kondisi_status . ' ' . $luas . ' Ha';
+                    $kondisi_serangan = $request->kondisi_status.' '.$luas.' Ha';
                 }
             }
 
@@ -118,6 +119,7 @@ class PengamatanController extends Controller
                 'tanggal_pengamatan' => $request->tanggal_pengamatan,
                 'komoditas_id' => $request->komoditas_id,
                 'opt_id' => $request->opt_id,
+                'jenis_opt_id' => $request->jenis_opt_id,
                 'luas_komoditi_ha' => $request->luas_komoditi_ha,
                 'serangan_ringan' => $ringan,
                 'serangan_sedang' => $sedang,

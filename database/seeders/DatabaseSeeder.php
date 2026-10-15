@@ -48,6 +48,7 @@ class DatabaseSeeder extends Seeder
         foreach ($opts as $o) {
             Opt::create(['nama_opt' => $o]);
         }
+        $this->call(OptSeeder::class);
 
         // 4. Akun Admin (UPTD BPTP Provinsi)
         User::create([

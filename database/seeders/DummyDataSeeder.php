@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\JenisOpt;
 use App\Models\Komoditas;
 use App\Models\Opt;
 use App\Models\Pengamatan;
@@ -40,10 +41,21 @@ class DummyDataSeeder extends Seeder
 
         $opts = Opt::all();
         if ($opts->isEmpty()) {
-            Opt::create(['nama_opt' => 'Gugur Daun Karet (Corynespora)']);
-            Opt::create(['nama_opt' => 'Kumbang Tanduk (Oryctes)']);
-            $opts = Opt::all();
+            Opt::create(['nama_opt' => 'Gugur Daun']);
+            Opt::create(['nama_opt' => 'Kumbang Tanduk']);
         }
+
+        $gugurDaun = Opt::firstOrCreate(['nama_opt' => 'Gugur Daun']);
+        JenisOpt::firstOrCreate([
+            'opt_id' => $gugurDaun->id,
+            'nama_jenis_opt' => 'Corynespora cassiicola',
+        ]);
+        $kumbangTanduk = Opt::firstOrCreate(['nama_opt' => 'Kumbang Tanduk']);
+        JenisOpt::firstOrCreate([
+            'opt_id' => $kumbangTanduk->id,
+            'nama_jenis_opt' => 'Oryctes rhinoceros',
+        ]);
+        $opts = Opt::all();
 
         $kondisiOptions = ['Aman', 'Terkendali', 'Waspada', 'Eradikasi'];
 

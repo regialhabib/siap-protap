@@ -41,7 +41,7 @@ class LaporanController extends Controller
     {
         abort_if(Auth::user()->role !== 'admin', 403, 'Akses ditolak.');
 
-        $query = Pengamatan::with(['komoditas', 'opt', 'uppt.kabupaten', 'kecamatan', 'user']);
+        $query = Pengamatan::with(['komoditas', 'opt', 'jenisOpt', 'uppt.kabupaten', 'kecamatan', 'user']);
 
         // Filter Tahun
         $query->whereYear('tanggal_pengamatan', $filters['tahun']);
@@ -72,6 +72,8 @@ class LaporanController extends Controller
                     $q2->where('nama_komoditas', 'like', "%{$search}%");
                 })->orWhereHas('opt', function ($q2) use ($search) {
                     $q2->where('nama_opt', 'like', "%{$search}%");
+                })->orWhereHas('jenisOpt', function ($q2) use ($search) {
+                    $q2->where('nama_jenis_opt', 'like', "%{$search}%");
                 });
             });
         }

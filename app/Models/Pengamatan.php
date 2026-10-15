@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class Pengamatan extends Model
 {
     protected $fillable = [
-        'user_id', 'uppt_id', 'komoditas_id', 'opt_id',
+        'user_id', 'uppt_id', 'komoditas_id', 'opt_id', 'jenis_opt_id',
         'tanggal_pengamatan', 'luas_komoditi_ha', 'serangan_ringan',
         'serangan_sedang', 'serangan_berat', 'serangan_jumlah',
         'kendali_apbd_kab', 'kendali_apbd_prov', 'kendali_masyarakat',
@@ -40,6 +40,11 @@ class Pengamatan extends Model
     public function opt(): BelongsTo
     {
         return $this->belongsTo(Opt::class);
+    }
+
+    public function jenisOpt(): BelongsTo
+    {
+        return $this->belongsTo(JenisOpt::class);
     }
 
     public function kecamatan(): BelongsTo

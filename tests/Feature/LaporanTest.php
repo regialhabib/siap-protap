@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\JenisOpt;
 use App\Models\Kecamatan;
 use App\Models\Komoditas;
 use App\Models\Opt;
@@ -32,6 +33,27 @@ class LaporanTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('Export Laporan');
+    }
+
+    public function test_report_shows_parent_and_child_opt_names(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $uppt = $this->createUppt();
+        $komoditas = Komoditas::create(['nama_komoditas' => 'Karet']);
+        $opt = Opt::create(['nama_opt' => 'Gugur Daun']);
+        $jenis = JenisOpt::create(['opt_id' => $opt->id, 'nama_jenis_opt' => 'Corynespora cassiicola']);
+        Pengamatan::create([
+            'user_id' => $admin->id,
+            'uppt_id' => $uppt->id,
+            'komoditas_id' => $komoditas->id,
+            'opt_id' => $opt->id,
+            'jenis_opt_id' => $jenis->id,
+            'tanggal_pengamatan' => now()->toDateString(),
+            'luas_komoditi_ha' => 1,
+            'serangan_jumlah' => 0,
+        ]);
+
+        $this->actingAs($admin)->get('/laporan?jenis=tahunan&tahun='.now()->year)->assertOk()->assertSee('Gugur Daun — Corynespora cassiicola');
     }
 
     public function test_forbids_popt_from_accessing_laporan_page()

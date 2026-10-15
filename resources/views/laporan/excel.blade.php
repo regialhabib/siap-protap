@@ -83,7 +83,7 @@
         <td style="vertical-align: middle; border: 1px solid #000000;">{{ $d->uppt->nama_uppt ?? '-' }}{{ $d->kecamatan ? ' / ' . $d->kecamatan->nama_kecamatan : '' }}</td> <!-- C -->
         <td style="vertical-align: middle; border: 1px solid #000000;">{{ $d->komoditas->nama_komoditas ?? '-' }}</td> <!-- D -->
         <td style="text-align: center; vertical-align: middle; border: 1px solid #000000;">{{ floatval($d->luas_komoditi_ha) }}</td> <!-- E -->
-        <td style="vertical-align: middle; border: 1px solid #000000;">{{ $d->opt->nama_opt ?? '-' }}</td> <!-- F -->
+        <td style="vertical-align: middle; border: 1px solid #000000;">{{ $d->opt->nama_opt ?? '-' }}{{ $d->jenisOpt ? ' — '.$d->jenisOpt->nama_jenis_opt : '' }}</td> <!-- F -->
         
         <td style="text-align: center; vertical-align: middle; border: 1px solid #000000;">{{ floatval($d->serangan_ringan) }}</td> <!-- G -->
         <td style="text-align: center; vertical-align: middle; border: 1px solid #000000;">{{ floatval($d->serangan_sedang) }}</td> <!-- H -->

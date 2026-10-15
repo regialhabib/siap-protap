@@ -18,6 +18,7 @@ Route::get('/', function () {
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/api/uppt/{uppt}/kecamatans', [UpptController::class, 'getKecamatans'])->name('api.uppt.kecamatans');
+    Route::get('/opt', [OptController::class, 'index'])->name('opt.index');
 
     // Fitur Pengamatan (Input Data)
     Route::get('/pengamatan/create', [PengamatanController::class, 'create'])->name('pengamatan.create');
@@ -25,6 +26,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/pengamatan/{pengamatan}/edit', [PengamatanController::class, 'edit'])->name('pengamatan.edit');
     Route::put('/pengamatan/{pengamatan}', [PengamatanController::class, 'update'])->name('pengamatan.update');
     Route::delete('/pengamatan/{pengamatan}', [PengamatanController::class, 'destroy'])->name('pengamatan.destroy');
+
+    Route::middleware('can:manage-opt')->group(function () {
+        Route::resource('opt', OptController::class)->except(['index', 'create', 'show', 'edit']);
+        Route::post('opt/{opt}/jenis', [OptController::class, 'storeJenis'])->name('opt.jenis.store');
+        Route::put('opt/{opt}/jenis/{jenisOpt}', [OptController::class, 'updateJenis'])->name('opt.jenis.update');
+        Route::delete('opt/{opt}/jenis/{jenisOpt}', [OptController::class, 'destroyJenis'])->name('opt.jenis.destroy');
+    });
 
     // Fitur Khusus Admin (Laporan & Master Data)
     Route::middleware([IsAdminMiddleware::class])->group(function () {
@@ -35,7 +43,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         // Master Data
         Route::resource('komoditas', KomoditasController::class)->except(['create', 'show', 'edit']);
-        Route::resource('opt', OptController::class)->except(['create', 'show', 'edit']);
         Route::resource('uppt', UpptController::class)->except(['create', 'show', 'edit']);
         Route::resource('pengguna', UserController::class)->parameters(['pengguna' => 'pengguna'])->except(['create', 'show', 'edit']);
         Route::patch('pengguna/{pengguna}/status', [UserController::class, 'updateStatus'])->name('pengguna.status');

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\JenisOpt;
 use App\Models\Komoditas;
 use App\Models\Opt;
 use App\Models\Pengamatan;
@@ -110,19 +111,20 @@ class DashboardTest extends TestCase
         $this->assertEquals(33.3, $chartData['persentase_sudah']);
         $this->assertEquals(66.7, $chartData['persentase_belum']);
     }
+
     public function test_admin_dashboard_shows_uppt_status_and_filter()
     {
         $admin = User::factory()->create(['role' => 'admin']);
-        
+
         $response = $this->actingAs($admin)->get('/dashboard');
-        
+
         $response->assertOk();
-        
+
         // Assert admin sees filter and UPPT status section
         $response->assertSee('x-model="bulan"', false);
         $response->assertSee('x-model="tahun"', false);
         $response->assertSee('Status Pengamatan UPPT');
-        
+
         // Assert admin does NOT see the pengamatan table
         $response->assertDontSee('Riwayat Pengamatan Terbaru');
     }
@@ -132,16 +134,38 @@ class DashboardTest extends TestCase
         DB::table('kabupatens')->insertOrIgnore(['id' => 1, 'nama_kabupaten' => 'Test Kab']);
         $uppt = Uppt::firstOrCreate(['nama_uppt' => 'Test UPPT', 'kabupaten_id' => 1]);
         $popt = User::factory()->create(['role' => 'popt', 'uppt_id' => $uppt->id]);
-        
+
         $response = $this->actingAs($popt)->get('/dashboard');
-        
+
         $response->assertOk();
-        
+
         // Assert popt sees the pengamatan table
         $response->assertSee('Riwayat Pengamatan Terbaru');
-        
+
         // Assert popt does NOT see the filter or UPPT status section
         $response->assertDontSee('x-model="bulan"', false);
         $response->assertDontSee('Status Pengamatan UPPT');
+    }
+
+    public function test_popt_dashboard_displays_parent_and_child_opt_names(): void
+    {
+        DB::table('kabupatens')->insertOrIgnore(['id' => 1, 'nama_kabupaten' => 'Test Kab']);
+        $uppt = Uppt::firstOrCreate(['nama_uppt' => 'Test UPPT', 'kabupaten_id' => 1]);
+        $popt = User::factory()->create(['role' => 'popt', 'uppt_id' => $uppt->id]);
+        $komoditas = Komoditas::create(['nama_komoditas' => 'Karet']);
+        $opt = Opt::create(['nama_opt' => 'Gugur Daun']);
+        $jenis = JenisOpt::create(['opt_id' => $opt->id, 'nama_jenis_opt' => 'Corynespora cassiicola']);
+        Pengamatan::create([
+            'user_id' => $popt->id,
+            'uppt_id' => $uppt->id,
+            'komoditas_id' => $komoditas->id,
+            'opt_id' => $opt->id,
+            'jenis_opt_id' => $jenis->id,
+            'tanggal_pengamatan' => now()->toDateString(),
+            'luas_komoditi_ha' => 1,
+            'serangan_jumlah' => 0,
+        ]);
+
+        $this->actingAs($popt)->get('/dashboard')->assertOk()->assertSee('Gugur Daun — Corynespora cassiicola');
     }
 }

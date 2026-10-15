@@ -2,9 +2,11 @@
 
 namespace App\Http\Requests;
 
+use App\Models\JenisOpt;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 
 class PengamatanRequest extends FormRequest
 {
@@ -28,6 +30,11 @@ class PengamatanRequest extends FormRequest
             'tanggal_pengamatan' => 'required|date',
             'komoditas_id' => 'required|exists:komoditas,id',
             'opt_id' => 'required|exists:opts,id',
+            'jenis_opt_id' => [
+                Rule::requiredIf(fn () => $this->filled('opt_id') && JenisOpt::where('opt_id', $this->input('opt_id'))->exists()),
+                'nullable',
+                Rule::exists('jenis_opts', 'id')->where('opt_id', $this->input('opt_id')),
+            ],
             'luas_komoditi_ha' => 'required|numeric|min:0',
             'serangan_ringan' => 'nullable|numeric|min:0',
             'serangan_sedang' => 'nullable|numeric|min:0',

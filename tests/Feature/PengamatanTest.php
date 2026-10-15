@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\JenisOpt;
 use App\Models\Kabupaten;
 use App\Models\Kecamatan;
 use App\Models\Komoditas;
@@ -31,20 +32,21 @@ class PengamatanTest extends TestCase
     private function createUppt(): Uppt
     {
         $kabupaten = Kabupaten::create(['nama_kabupaten' => 'Kab Test']);
+
         return Uppt::create(['nama_uppt' => 'UPPT Test', 'kabupaten_id' => $kabupaten->id]);
     }
 
     public function test_forbids_admin_from_accessing_create_page(): void
     {
         $response = $this->actingAs($this->createAdmin())->get('/pengamatan/create');
-        
+
         $response->assertForbidden();
     }
 
     public function test_renders_create_page_for_popt(): void
     {
         $response = $this->actingAs($this->createPopt($this->createUppt()))->get('/pengamatan/create');
-        
+
         $response->assertOk();
     }
 
@@ -94,6 +96,43 @@ class PengamatanTest extends TestCase
         ]);
     }
 
+    public function test_requires_and_saves_a_child_opt_when_parent_has_child_types(): void
+    {
+        $uppt = $this->createUppt();
+        $popt = $this->createPopt($uppt);
+        $komoditas = Komoditas::create(['nama_komoditas' => 'Karet']);
+        $opt = Opt::create(['nama_opt' => 'Gugur Daun']);
+        $jenis = JenisOpt::create(['opt_id' => $opt->id, 'nama_jenis_opt' => 'Corynespora cassiicola']);
+        $payload = [
+            'tanggal_pengamatan' => '2026-09-22',
+            'komoditas_id' => $komoditas->id,
+            'opt_id' => $opt->id,
+            'luas_komoditi_ha' => 10,
+        ];
+
+        $this->actingAs($popt)->post('/pengamatan', $payload)->assertSessionHasErrors(['jenis_opt_id']);
+        $this->actingAs($popt)->post('/pengamatan', $payload + ['jenis_opt_id' => $jenis->id])->assertRedirect(route('dashboard'));
+        $this->assertDatabaseHas('pengamatans', ['opt_id' => $opt->id, 'jenis_opt_id' => $jenis->id]);
+    }
+
+    public function test_rejects_child_opt_that_belongs_to_another_parent(): void
+    {
+        $uppt = $this->createUppt();
+        $popt = $this->createPopt($uppt);
+        $komoditas = Komoditas::create(['nama_komoditas' => 'Karet']);
+        $opt = Opt::create(['nama_opt' => 'Gugur Daun']);
+        $otherOpt = Opt::create(['nama_opt' => 'Jamur Akar']);
+        $jenis = JenisOpt::create(['opt_id' => $otherOpt->id, 'nama_jenis_opt' => 'Jenis Lain']);
+
+        $this->actingAs($popt)->post('/pengamatan', [
+            'tanggal_pengamatan' => '2026-09-22',
+            'komoditas_id' => $komoditas->id,
+            'opt_id' => $opt->id,
+            'jenis_opt_id' => $jenis->id,
+            'luas_komoditi_ha' => 10,
+        ])->assertSessionHasErrors(['jenis_opt_id']);
+    }
+
     public function test_rejects_creation_when_kecamatan_is_required_but_missing(): void
     {
         $uppt = $this->createUppt();
@@ -110,7 +149,7 @@ class PengamatanTest extends TestCase
         ];
 
         $response = $this->actingAs($popt)->post('/pengamatan', $payload);
-        
+
         $response->assertSessionHasErrors(['kecamatan_id']);
     }
 
@@ -131,7 +170,7 @@ class PengamatanTest extends TestCase
         ];
 
         $response = $this->actingAs($popt)->post('/pengamatan', $payload);
-        
+
         $response->assertSessionHasNoErrors();
         $this->assertDatabaseHas('pengamatans', ['kecamatan_id' => $kec->id]);
     }
