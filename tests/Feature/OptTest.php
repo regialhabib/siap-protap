@@ -145,6 +145,61 @@ class OptTest extends TestCase
         $this->assertDatabaseMissing('jenis_opts', ['id' => $jenis->id]);
     }
 
+    public function test_duplicate_child_type_shows_clear_error_when_added_directly(): void
+    {
+        $admin = $this->createAdmin();
+        $opt = Opt::create(['nama_opt' => 'Gugur Daun']);
+        JenisOpt::create(['opt_id' => $opt->id, 'nama_jenis_opt' => 'Corynespora']);
+
+        $response = $this->actingAs($admin)->post(route('opt.jenis.store', $opt), [
+            'nama_jenis_opt' => 'Corynespora',
+        ]);
+
+        $response->assertSessionHasErrors([
+            'nama_jenis_opt' => 'Jenis turunan tersebut sudah terdaftar untuk OPT ini.',
+        ]);
+    }
+
+    public function test_duplicate_child_types_in_new_opt_show_a_clear_error(): void
+    {
+        $admin = $this->createAdmin();
+
+        $response = $this->actingAs($admin)->post(route('opt.store'), [
+            'nama_opt' => 'Gugur Daun',
+            'jenis_opts' => ['Corynespora', 'corynespora'],
+        ]);
+
+        $response->assertSessionHasErrors([
+            'jenis_opts.1' => 'Nama jenis turunan OPT tidak boleh duplikat.',
+        ]);
+
+        $this->get(route('opt.index'))->assertSee('Nama jenis turunan OPT tidak boleh duplikat.');
+    }
+
+    public function test_duplicate_child_type_in_edit_form_displays_the_duplicate_error(): void
+    {
+        $admin = $this->createAdmin();
+        $opt = Opt::create(['nama_opt' => 'Gugur Daun']);
+        $jenisOpt = JenisOpt::create(['opt_id' => $opt->id, 'nama_jenis_opt' => 'Corynespora']);
+
+        $response = $this->from(route('opt.index'))->actingAs($admin)->put(route('opt.update', $opt), [
+            'nama_opt' => 'Gugur Daun',
+            'jenis_opts_present' => '1',
+            '_opt_id' => $opt->id,
+            'jenis_opts' => [
+                ['id' => $jenisOpt->id, 'nama_jenis_opt' => 'Corynespora'],
+                ['id' => '', 'nama_jenis_opt' => 'corynespora'],
+            ],
+        ]);
+
+        $response->assertRedirect(route('opt.index'))
+            ->assertSessionHasErrors([
+                'jenis_opts.1.nama_jenis_opt' => 'Nama jenis turunan OPT tidak boleh duplikat.',
+            ]);
+
+        $this->get(route('opt.index'))->assertSee('Nama jenis turunan OPT tidak boleh duplikat.');
+    }
+
     public function test_updates_opt_and_redirects(): void
     {
         $opt = Opt::create(['nama_opt' => 'Ulat Grayak']);

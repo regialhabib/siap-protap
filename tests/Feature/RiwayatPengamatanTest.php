@@ -29,6 +29,19 @@ class RiwayatPengamatanTest extends TestCase
             ->assertSee('Periode Sekarang (Ha)')
             ->assertSee('Riwayat Pengamatan')
             ->assertViewHas('data', fn ($data): bool => $data->count() === 12 && $data->total() === 12);
+
+        $this->assertSame(1, substr_count($response->getContent(), '>Luas Pengendalian</th>'));
+    }
+
+    public function test_observation_history_is_empty_until_a_filter_is_applied(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        $response = $this->actingAs($admin)->get(route('pengamatan.riwayat.index'));
+
+        $response->assertOk()
+            ->assertViewHas('data', fn ($data): bool => $data->isEmpty() && $data->total() === 0)
+            ->assertViewHas('recordCount', 0);
     }
 
     public function test_popt_cannot_access_the_admin_observation_history(): void
@@ -53,7 +66,7 @@ class RiwayatPengamatanTest extends TestCase
         $this->createObservation($admin, $uppt, $kecamatan, $karet, $opt, $jenisOpt, '2026-01-15', 1, 2, 0.5);
         $this->createObservation($admin, $uppt, $kecamatan, $kelapa, $opt, $jenisOpt, '2026-01-20', 4, 5);
         $this->createObservation($admin, $uppt, $kecamatan, $karet, $opt, $jenisOpt, '2026-02-05', 0.5, 0.25);
-        $this->createObservation($admin, $uppt, $kecamatan, $karet, $opt, $jenisOpt, '2026-02-25', 1.5, 0.75);
+        $this->createObservation($admin, $uppt, $kecamatan, $karet, $opt, $jenisOpt, '2026-02-25', 1.5, 0.75, 1.25);
 
         $response = $this->actingAs($admin)->get(route('pengamatan.riwayat.index', [
             'tahun' => 2026,
@@ -71,11 +84,11 @@ class RiwayatPengamatanTest extends TestCase
 
         $this->assertCount(3, $rows);
         $this->assertNull($january->previous);
-        $this->assertSame(['ringan' => 1.0, 'berat' => 2.0, 'jumlah' => 3.0, 'kondisi_serangan' => 2.5], $january->current);
-        $this->assertSame(['ringan' => 1.0, 'berat' => 2.0, 'jumlah' => 3.0, 'kondisi_serangan' => 2.5], $february->previous);
-        $this->assertSame(['ringan' => 3.0, 'berat' => 3.0, 'jumlah' => 6.0, 'kondisi_serangan' => 5.5], $february->current);
+        $this->assertSame(['ringan' => 1.0, 'berat' => 2.0, 'jumlah' => 3.0, 'pengendalian' => 0.5, 'kondisi_serangan' => 2.5], $january->current);
+        $this->assertSame(['ringan' => 1.0, 'berat' => 2.0, 'jumlah' => 3.0, 'pengendalian' => 0.5, 'kondisi_serangan' => 2.5], $february->previous);
+        $this->assertSame(['ringan' => 3.0, 'berat' => 3.0, 'jumlah' => 6.0, 'pengendalian' => 1.25, 'kondisi_serangan' => 4.25], $february->current);
         $march = $rows->first(fn (object $row): bool => $row->bulan === 3);
-        $this->assertSame(['ringan' => 3.0, 'berat' => 3.0, 'jumlah' => 6.0, 'kondisi_serangan' => 5.5], $march->previous);
+        $this->assertSame(['ringan' => 3.0, 'berat' => 3.0, 'jumlah' => 6.0, 'pengendalian' => 1.25, 'kondisi_serangan' => 4.25], $march->previous);
         $this->assertNull($march->current);
 
         $allCommoditiesResponse = $this->get(route('pengamatan.riwayat.index', ['tahun' => 2026]));
@@ -84,7 +97,7 @@ class RiwayatPengamatanTest extends TestCase
             $kelapa = $februaryRows->first(fn (object $row): bool => $row->komoditas === 'Kelapa');
 
             return $kelapa !== null
-                && $kelapa->previous === ['ringan' => 4.0, 'berat' => 5.0, 'jumlah' => 9.0, 'kondisi_serangan' => 9.0]
+                && $kelapa->previous === ['ringan' => 4.0, 'berat' => 5.0, 'jumlah' => 9.0, 'pengendalian' => 0.0, 'kondisi_serangan' => 9.0]
                 && $kelapa->current === null;
         });
     }

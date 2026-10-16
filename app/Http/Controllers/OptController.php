@@ -24,6 +24,8 @@ class OptController extends Controller
     {
         $validated = $request->validate([
             'nama_jenis_opt' => 'required|string|max:255|unique:jenis_opts,nama_jenis_opt,NULL,id,opt_id,'.$opt->id,
+        ], [
+            'nama_jenis_opt.unique' => 'Jenis turunan tersebut sudah terdaftar untuk OPT ini.',
         ]);
         $opt->jenisOpts()->create($validated);
 
@@ -35,6 +37,8 @@ class OptController extends Controller
         abort_unless($jenisOpt->opt_id === $opt->id, 404);
         $validated = $request->validate([
             'nama_jenis_opt' => 'required|string|max:255|unique:jenis_opts,nama_jenis_opt,'.$jenisOpt->id.',id,opt_id,'.$opt->id,
+        ], [
+            'nama_jenis_opt.unique' => 'Jenis turunan tersebut sudah terdaftar untuk OPT ini.',
         ]);
         $jenisOpt->update($validated);
 
@@ -55,6 +59,8 @@ class OptController extends Controller
             'nama_opt' => 'required|string|max:255|unique:opts',
             'jenis_opts' => 'nullable|array|max:20',
             'jenis_opts.*' => 'nullable|string|max:255|distinct:ignore_case',
+        ], [
+            'jenis_opts.*.distinct' => 'Nama jenis turunan OPT tidak boleh duplikat.',
         ]);
 
         try {
@@ -86,6 +92,8 @@ class OptController extends Controller
             'jenis_opts' => 'nullable|array|max:20',
             'jenis_opts.*.id' => ['nullable', 'integer', Rule::exists('jenis_opts', 'id')->where('opt_id', $opt->id)],
             'jenis_opts.*.nama_jenis_opt' => 'nullable|string|max:255|distinct:ignore_case',
+        ], [
+            'jenis_opts.*.nama_jenis_opt.distinct' => 'Nama jenis turunan OPT tidak boleh duplikat.',
         ]);
 
         try {

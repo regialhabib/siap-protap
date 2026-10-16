@@ -93,11 +93,19 @@
                                 </button>
     
                                 <!-- Modal Edit OPT -->
-                                <x-modal name="edit-opt-{{ $k->id }}" focusable maxWidth="2xl">
-                                    <form method="post" action="{{ route('opt.update', $k->id) }}" class="p-6 text-left whitespace-normal" x-data="{ jenisOpts: @js($k->jenisOpts->map(fn ($jenis) => ['id' => $jenis->id, 'nama_jenis_opt' => $jenis->nama_jenis_opt])->values()) }">
+                                @php
+                                    $showEditOptModal = (string) old('_opt_id') === (string) $k->id
+                                        && collect($errors->keys())->contains(fn ($key) => str_starts_with($key, 'jenis_opts.'));
+                                    $editJenisOpts = $showEditOptModal
+                                        ? old('jenis_opts', [])
+                                        : $k->jenisOpts->map(fn ($jenis) => ['id' => $jenis->id, 'nama_jenis_opt' => $jenis->nama_jenis_opt])->values();
+                                @endphp
+                                <x-modal name="edit-opt-{{ $k->id }}" focusable maxWidth="2xl" :show="$showEditOptModal">
+                                    <form method="post" action="{{ route('opt.update', $k->id) }}" class="p-6 text-left whitespace-normal" x-data="{ jenisOpts: @js($editJenisOpts) }">
                                         @csrf
                                         @method('put')
                                         <input type="hidden" name="jenis_opts_present" value="1">
+                                        <input type="hidden" name="_opt_id" value="{{ $k->id }}">
 
                                         <h2 class="text-lg font-bold text-gray-900">Edit OPT</h2>
 
@@ -129,6 +137,12 @@
                                                 </template>
                                             </div>
                                         </div>
+
+                                        @foreach($errors->getMessages() as $field => $messages)
+                                            @if(str_starts_with($field, 'jenis_opts.'))
+                                                <p class="mt-2 text-sm text-red-600">{{ implode(' ', $messages) }}</p>
+                                            @endif
+                                        @endforeach
 
                                         <div class="mt-6 flex justify-end gap-3 border-t border-gray-100 pt-5">
                                             <button type="button" x-on:click="$dispatch('close')" class="px-4 py-2 bg-white border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest shadow-sm hover:bg-gray-50">Batal</button>

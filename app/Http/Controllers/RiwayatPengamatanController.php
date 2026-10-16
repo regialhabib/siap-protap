@@ -51,9 +51,13 @@ class RiwayatPengamatanController extends Controller
             $query->where('jenis_opt_id', $filters['jenis_opt_id']);
         }
 
-        $observations = $query->orderBy('tanggal_pengamatan')->orderBy('id')->get();
+        $hasFilters = collect(['tahun', 'kabupaten_id', 'uppt_id', 'kecamatan_id', 'komoditas_id', 'jenis_opt_id'])
+            ->contains(fn (string $filter): bool => $request->filled($filter));
+        $observations = $hasFilters
+            ? $query->orderBy('tanggal_pengamatan')->orderBy('id')->get()
+            : new EloquentCollection;
         $history->attachRunningTotals($observations);
-        $rows = $this->monthlyComparisonRows($observations);
+        $rows = $hasFilters ? $this->monthlyComparisonRows($observations) : collect();
 
         return view('pengamatan.riwayat', [
             'data' => $this->paginateRows($rows, $request),
@@ -189,7 +193,7 @@ class RiwayatPengamatanController extends Controller
         ]);
     }
 
-    /** @return array{ringan: float, berat: float, jumlah: float, kondisi_serangan: float}|null */
+    /** @return array{ringan: float, berat: float, jumlah: float, pengendalian: float, kondisi_serangan: float}|null */
     private function attackSnapshot(?Pengamatan $observation): ?array
     {
         if ($observation === null) {
@@ -200,6 +204,7 @@ class RiwayatPengamatanController extends Controller
             'ringan' => (float) $observation->serangan_ringan_berjalan,
             'berat' => (float) $observation->serangan_berat_berjalan,
             'jumlah' => (float) $observation->serangan_jumlah_berjalan,
+            'pengendalian' => (float) $observation->kendali_jumlah,
             'kondisi_serangan' => (float) $observation->kondisi_serangan_ha,
         ];
     }

@@ -119,10 +119,10 @@
     <div class="mb-8 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
         <div class="border-b border-gray-100 bg-gray-50/50 px-6 py-4">
             <h2 class="font-bold text-gray-900">Data Pengamatan {{ $tahun }}</h2>
-            <p class="mt-1 text-sm text-gray-500">{{ $recordCount }} baris perbandingan · nilai luas serangan dan sisa serangan dalam hektare.</p>
+            <p class="mt-1 text-sm text-gray-500">{{ $recordCount }} baris perbandingan · luas serangan, pengendalian, dan sisa serangan dalam hektare.</p>
         </div>
         <div class="overflow-x-auto">
-            <table class="w-full min-w-[1350px] text-left text-sm">
+            <table class="w-full min-w-[1500px] text-left text-sm">
                 <thead class="border-b border-gray-200 bg-gray-100/70 text-xs uppercase text-gray-700">
                     <tr>
                         <th rowspan="2" class="border-r px-3 py-3">Bulan</th>
@@ -132,7 +132,7 @@
                         <th rowspan="2" class="border-r px-3 py-3">Komoditas</th>
                         <th rowspan="2" class="border-r px-3 py-3">Jenis OPT</th>
                         <th colspan="4" class="border-r border-b px-3 py-2 text-center">Periode Sebelumnya (Ha)</th>
-                        <th colspan="4" class="border-b px-3 py-2 text-center">Periode Sekarang (Ha)</th>
+                        <th colspan="5" class="border-b px-3 py-2 text-center">Periode Sekarang (Ha)</th>
                     </tr>
                     <tr>
                         <th class="border-r px-3 py-2 text-center">Ringan</th>
@@ -142,6 +142,7 @@
                         <th class="border-r px-3 py-2 text-center">Ringan</th>
                         <th class="border-r px-3 py-2 text-center">Berat</th>
                         <th class="border-r px-3 py-2 text-center">Jumlah</th>
+                        <th class="border-r px-3 py-2 text-center">Luas Pengendalian</th>
                         <th class="px-3 py-2 text-center">Sisa Serangan</th>
                     </tr>
                 </thead>
@@ -150,7 +151,7 @@
                         @if($row->is_empty)
                             <tr class="border-b border-gray-100 bg-gray-50/70">
                                 <td class="whitespace-nowrap border-r px-3 py-3 font-semibold text-gray-700">{{ \Carbon\Carbon::create($tahun, $row->bulan, 1)->locale('id')->translatedFormat('F') }}</td>
-                                <td colspan="13" class="px-3 py-3 text-center text-gray-500">Belum ada data pengamatan pada bulan ini.</td>
+                                <td colspan="14" class="px-3 py-3 text-center text-gray-500">Belum ada data pengamatan pada bulan ini.</td>
                             </tr>
                         @else
                             <tr class="border-b border-gray-100 hover:bg-gray-50/70">
@@ -166,6 +167,11 @@
                                             {{ $snapshot === null ? '—' : number_format($snapshot[$field], 2) }}
                                         </td>
                                     @endforeach
+                                    @if($period === 'current')
+                                        <td class="border-r px-3 py-3 text-center">
+                                            {{ $snapshot === null ? '—' : number_format($snapshot['pengendalian'], 2) }}
+                                        </td>
+                                    @endif
                                     <td class="{{ $period === 'previous' ? 'border-r' : '' }} px-3 py-3 text-center font-semibold">
                                         {{ $snapshot === null ? '—' : number_format($snapshot['kondisi_serangan'], 2) }}
                                     </td>
