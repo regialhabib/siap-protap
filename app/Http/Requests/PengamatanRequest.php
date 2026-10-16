@@ -37,19 +37,16 @@ class PengamatanRequest extends FormRequest
             ],
             'luas_komoditi_ha' => 'required|numeric|min:0',
             'serangan_ringan' => 'nullable|numeric|min:0',
-            'serangan_sedang' => 'nullable|numeric|min:0',
             'serangan_berat' => 'nullable|numeric|min:0',
             'kendali_apbd_kab' => 'nullable|numeric|min:0',
             'kendali_apbd_prov' => 'nullable|numeric|min:0',
             'kendali_apbn' => 'nullable|numeric|min:0',
             'kendali_masyarakat' => 'nullable|numeric|min:0',
-            'kondisi_status' => 'nullable|string|in:Bertambah,Tetap,Berkurang',
-            'kondisi_luas' => 'nullable|numeric|min:0',
         ];
 
         $user = Auth::user();
         if ($user && $user->uppt_id && $user->uppt->kecamatans()->count() > 0) {
-            $rules['kecamatan_id'] = 'required|exists:kecamatans,id';
+            $rules['kecamatan_id'] = ['required', Rule::exists('kecamatans', 'id')->where('uppt_id', $user->uppt_id)];
         } else {
             $rules['kecamatan_id'] = 'nullable';
         }

@@ -34,7 +34,7 @@
             }
         }
         
-        $petugas_nama = $pengamatan->user->name ?? Auth::user()->name;
+        $petugas_nama = $pengamatan?->user?->name ?? Auth::user()->name;
         $tanggal_pengamatan = $pengamatan && $pengamatan->tanggal_pengamatan ? \Carbon\Carbon::parse($pengamatan->tanggal_pengamatan)->translatedFormat('d F Y') : now()->translatedFormat('d F Y');
     @endphp
 
@@ -76,19 +76,19 @@
                 <th rowspan="2">Jenis Komoditas</th>
                 <th rowspan="2">Luas Komoditi (Ha)</th>
                 <th rowspan="2">Jenis OPT</th>
-                <th colspan="4">Luas Serangan (Ha)</th>
-                <th colspan="4">Luas Pengendalian (Ha)</th>
-                <th rowspan="2">Kondisi Serangan</th>
+                <th colspan="3">Luas Serangan (Ha)</th>
+                <th colspan="5">Luas Pengendalian (Ha)</th>
+                <th rowspan="2">Kondisi Serangan (Ha)</th>
             </tr>
             <tr>
                 <th>Ringan</th>
-                <th>Sedang</th>
                 <th>Berat</th>
                 <th>Jumlah</th>
                 <th>APBD Kabupaten</th>
                 <th>APBD Provinsi</th>
                 <th>Masyarakat</th>
                 <th>APBN</th>
+                <th>Jumlah</th>
             </tr>
         </thead>
         <tbody>
@@ -101,7 +101,6 @@
                 <td class="left">{{ $d->opt->nama_opt ?? '-' }}{{ $d->jenisOpt ? ' — '.$d->jenisOpt->nama_jenis_opt : '' }}</td>
                 
                 <td>{{ floatval($d->serangan_ringan) }}</td>
-                <td>{{ floatval($d->serangan_sedang) }}</td>
                 <td>{{ floatval($d->serangan_berat) }}</td>
                 <td><strong>{{ floatval($d->serangan_jumlah) }}</strong></td>
                 
@@ -109,8 +108,9 @@
                 <td>{{ floatval($d->kendali_apbd_prov) }}</td>
                 <td>{{ floatval($d->kendali_masyarakat) }}</td>
                 <td>{{ floatval($d->kendali_apbn) }}</td>
+                <td><strong>{{ floatval($d->kendali_jumlah) }}</strong></td>
                 
-                <td class="left">{{ $d->kondisi_serangan ?: '-' }}</td>
+                <td>{{ number_format($d->kondisi_serangan_ha, 2) }}</td>
             </tr>
             @endforeach
             

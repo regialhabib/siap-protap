@@ -51,7 +51,6 @@
                 <select name="jenis" x-model="jenis" class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 text-sm">
                     <option value="bulanan">Laporan Bulanan</option>
                     <option value="triwulan">Laporan Triwulan</option>
-                    <option value="tahunan">Laporan Tahunan</option>
                 </select>
             </div>
 
@@ -94,7 +93,7 @@
                 <div class="relative" @click.outside="openUpptOptions = false">
                     <input id="report-uppt-search" x-ref="upptSearch" type="text" x-model="upptSearch"
                         @focus="openUpptOptions = true"
-                        @input="uppt_id = ''; $refs.upptSearch.setCustomValidity('')"
+                        @input="uppt_id = ''; kecamatans = []; kecamatan_id = ''; $refs.upptSearch.setCustomValidity('')"
                         @keydown.escape="openUpptOptions = false"
                         role="combobox" aria-autocomplete="list" aria-controls="report-uppt-options"
                         :aria-expanded="openUpptOptions.toString()" required autocomplete="off"
@@ -118,10 +117,10 @@
             </div>
 
             <!-- Filter Kecamatan (Dynamic) -->
-            <div x-show="kecamatans.length > 0" x-cloak>
+            <div>
                 <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Kecamatan</label>
-                <select name="kecamatan_id" x-model="kecamatan_id" class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 text-sm">
-                    <option value="">-- Semua Kecamatan --</option>
+                <select name="kecamatan_id" x-model="kecamatan_id" :disabled="kecamatans.length === 0" class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 text-sm disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500">
+                    <option value="" x-text="kecamatans.length > 0 ? '-- Semua Kecamatan --' : 'Pilih UPPT terlebih dahulu'"></option>
                     <template x-for="kec in kecamatans" :key="kec.id">
                         <option :value="kec.id" x-text="kec.nama_kecamatan"></option>
                     </template>
@@ -217,13 +216,12 @@
                         <th rowspan="2" class="px-4 py-3 border-r border-gray-200">Komoditas</th>
                         <th rowspan="2" class="px-4 py-3 border-r border-gray-200">OPT</th>
                         <th rowspan="2" class="px-4 py-3 border-r border-gray-200">Luas (Ha)</th>
-                        <th colspan="4" class="px-4 py-2 border-r border-gray-200 text-center border-b">Luas Serangan (Ha)</th>
-                        <th colspan="4" class="px-4 py-2 border-r border-gray-200 text-center border-b">Pengendalian (Ha)</th>
+                        <th colspan="3" class="px-4 py-2 border-r border-gray-200 text-center border-b">Luas Serangan (Ha)</th>
+                        <th colspan="5" class="px-4 py-2 border-r border-gray-200 text-center border-b">Luas Pengendalian (Ha)</th>
                         <th rowspan="2" class="px-4 py-3">Kondisi Serangan</th>
                     </tr>
                     <tr>
                         <th class="px-3 py-2 border-r border-gray-200 text-center bg-yellow-50/50">R</th>
-                        <th class="px-3 py-2 border-r border-gray-200 text-center bg-orange-50/50">S</th>
                         <th class="px-3 py-2 border-r border-gray-200 text-center bg-red-50/50">B</th>
                         <th class="px-3 py-2 border-r border-gray-200 text-center font-bold">JML</th>
                         
@@ -231,6 +229,7 @@
                         <th class="px-3 py-2 border-r border-gray-200 text-center bg-blue-50/50">Prov</th>
                         <th class="px-3 py-2 border-r border-gray-200 text-center bg-blue-50/50">Masy</th>
                         <th class="px-3 py-2 border-r border-gray-200 text-center bg-blue-50/50">APBN</th>
+                        <th class="px-3 py-2 border-r border-gray-200 text-center font-bold">JML</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -243,16 +242,16 @@
                             <td class="px-4 py-3 border-r border-gray-100 font-bold text-center">{{ floatval($d->luas_komoditi_ha) }}</td>
                             
                             <td class="px-3 py-3 border-r border-gray-100 text-center">{{ floatval($d->serangan_ringan) }}</td>
-                            <td class="px-3 py-3 border-r border-gray-100 text-center">{{ floatval($d->serangan_sedang) }}</td>
                             <td class="px-3 py-3 border-r border-gray-100 text-center">{{ floatval($d->serangan_berat) }}</td>
                             <td class="px-3 py-3 border-r border-gray-200 font-bold text-center bg-gray-50">{{ floatval($d->serangan_jumlah) }}</td>
                             
                             <td class="px-3 py-3 border-r border-gray-100 text-center">{{ floatval($d->kendali_apbd_kab) }}</td>
                             <td class="px-3 py-3 border-r border-gray-100 text-center">{{ floatval($d->kendali_apbd_prov) }}</td>
                             <td class="px-3 py-3 border-r border-gray-100 text-center">{{ floatval($d->kendali_masyarakat) }}</td>
-                            <td class="px-3 py-3 border-r border-gray-200 text-center">{{ floatval($d->kendali_apbn) }}</td>
+                            <td class="px-3 py-3 border-r border-gray-100 text-center">{{ floatval($d->kendali_apbn) }}</td>
+                            <td class="px-3 py-3 border-r border-gray-200 font-bold text-center bg-blue-50/50">{{ floatval($d->kendali_jumlah) }}</td>
                             
-                            <td class="px-4 py-3 text-sm italic">{{ $d->kondisi_serangan ?: '-' }}</td>
+                            <td class="px-4 py-3 text-sm italic">{{ number_format($d->kondisi_serangan_ha, 2) }} Ha</td>
                         </tr>
                     @empty
                         <tr>

@@ -7,8 +7,10 @@ use App\Models\Kabupaten;
 use App\Models\Kecamatan;
 use App\Models\Komoditas;
 use App\Models\Opt;
+use App\Models\Pengamatan;
 use App\Models\Uppt;
 use App\Models\User;
+use App\Services\PengamatanHistoryService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -48,6 +50,7 @@ class PengamatanTest extends TestCase
         $response = $this->actingAs($this->createPopt($this->createUppt()))->get('/pengamatan/create');
 
         $response->assertOk();
+        $response->assertSee('Tambah Serangan')->assertDontSee('Sedang');
     }
 
     public function test_rejects_creation_when_required_fields_are_missing(): void
@@ -75,9 +78,8 @@ class PengamatanTest extends TestCase
             'opt_id' => $opt->id,
             'luas_komoditi_ha' => 10.5,
             'serangan_ringan' => 2,
-            'serangan_sedang' => 1,
             'serangan_berat' => 0.5,
-            'kondisi_serangan' => 'Terkendali',
+            'kendali_apbd_kab' => 0.25,
         ];
 
         $response = $this->actingAs($popt)->post('/pengamatan', $payload);
@@ -90,10 +92,112 @@ class PengamatanTest extends TestCase
             'opt_id' => $opt->id,
             'luas_komoditi_ha' => 10.5,
             'serangan_ringan' => 2,
-            'serangan_sedang' => 1,
             'serangan_berat' => 0.5,
-            'serangan_jumlah' => 3.5,
+            'serangan_jumlah' => 2.5,
+            'kendali_apbd_kab' => 0.25,
         ]);
+    }
+
+    public function test_continues_attack_and_condition_history_for_same_year_and_group(): void
+    {
+        $uppt = $this->createUppt();
+        $popt = $this->createPopt($uppt);
+        $komoditas = Komoditas::create(['nama_komoditas' => 'Karet']);
+        $opt = Opt::create(['nama_opt' => 'Gugur Daun']);
+        $common = [
+            'user_id' => $popt->id,
+            'uppt_id' => $uppt->id,
+            'komoditas_id' => $komoditas->id,
+            'opt_id' => $opt->id,
+            'luas_komoditi_ha' => 10,
+            'serangan_jumlah' => 0,
+        ];
+        Pengamatan::create($common + [
+            'tanggal_pengamatan' => '2026-01-10',
+            'serangan_ringan' => 2,
+            'serangan_berat' => 3,
+        ]);
+
+        $this->actingAs($popt)->getJson(route('pengamatan.history', [
+            'tanggal_pengamatan' => '2026-02-10',
+            'komoditas_id' => $komoditas->id,
+            'opt_id' => $opt->id,
+        ]))->assertOk()->assertJsonPath('summary.serangan_ringan', 2)->assertJsonPath('summary.serangan_berat', 3)->assertJsonPath('summary.kondisi_serangan', 5);
+
+        $this->actingAs($popt)->getJson(route('pengamatan.history', [
+            'tanggal_pengamatan' => '2027-02-10',
+            'komoditas_id' => $komoditas->id,
+            'opt_id' => $opt->id,
+        ]))->assertOk()->assertJsonPath('summary.serangan_jumlah', 0);
+
+        $this->actingAs($popt)->post('/pengamatan', [
+            'tanggal_pengamatan' => '2026-02-10',
+            'komoditas_id' => $komoditas->id,
+            'opt_id' => $opt->id,
+            'luas_komoditi_ha' => 10,
+            'serangan_ringan' => 2,
+            'kendali_apbd_kab' => 3,
+        ])->assertRedirect(route('dashboard'));
+
+        $this->actingAs($popt)->post('/pengamatan', [
+            'tanggal_pengamatan' => '2026-03-10',
+            'komoditas_id' => $komoditas->id,
+            'opt_id' => $opt->id,
+            'luas_komoditi_ha' => 10,
+            'kendali_apbd_kab' => 10,
+        ])->assertRedirect(route('dashboard'));
+
+        $jenis = JenisOpt::create(['opt_id' => $opt->id, 'nama_jenis_opt' => 'Jenis Turunan']);
+        $this->actingAs($popt)->getJson(route('pengamatan.history', [
+            'tanggal_pengamatan' => '2026-02-10',
+            'komoditas_id' => $komoditas->id,
+            'opt_id' => $opt->id,
+            'jenis_opt_id' => $jenis->id,
+        ]))->assertOk()->assertJsonPath('summary.serangan_jumlah', 0);
+
+        $history = app(PengamatanHistoryService::class);
+        $rows = Pengamatan::query()->orderBy('tanggal_pengamatan')->orderBy('id')->get();
+        $history->attachRunningTotals($rows);
+
+        $this->assertSame(7.0, (float) $rows->get(1)->serangan_jumlah_berjalan);
+        $this->assertSame(4.0, (float) $rows->get(1)->kondisi_serangan_ha);
+        $this->assertSame(0.0, (float) $rows->last()->kondisi_serangan_ha);
+        $this->assertSame(3.0, (float) $rows->get(1)->kendali_apbd_kab);
+        $this->assertSame(10.0, (float) $rows->last()->kendali_apbd_kab);
+    }
+
+    public function test_calculates_condition_as_two_previous_plus_three_new_minus_two_control(): void
+    {
+        $uppt = $this->createUppt();
+        $popt = $this->createPopt($uppt);
+        $komoditas = Komoditas::create(['nama_komoditas' => 'Karet']);
+        $opt = Opt::create(['nama_opt' => 'Gugur Daun']);
+        $common = [
+            'user_id' => $popt->id,
+            'uppt_id' => $uppt->id,
+            'komoditas_id' => $komoditas->id,
+            'opt_id' => $opt->id,
+            'luas_komoditi_ha' => 10,
+            'serangan_jumlah' => 0,
+        ];
+
+        Pengamatan::create($common + [
+            'tanggal_pengamatan' => '2026-01-10',
+            'serangan_ringan' => 2,
+            'serangan_berat' => 0,
+        ]);
+        Pengamatan::create($common + [
+            'tanggal_pengamatan' => '2026-02-10',
+            'serangan_ringan' => 3,
+            'serangan_berat' => 0,
+            'kendali_apbd_kab' => 2,
+        ]);
+
+        $rows = Pengamatan::query()->orderBy('tanggal_pengamatan')->get();
+        app(PengamatanHistoryService::class)->attachRunningTotals($rows);
+
+        $this->assertSame(5.0, (float) $rows->last()->serangan_jumlah_berjalan);
+        $this->assertSame(3.0, (float) $rows->last()->kondisi_serangan_ha);
     }
 
     public function test_requires_and_saves_a_child_opt_when_parent_has_child_types(): void

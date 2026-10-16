@@ -235,11 +235,11 @@
                                     {{ number_format($item->luas_komoditi_ha, 2) }} Ha
                                 </td>
                                 <td class="px-6 py-4 text-center font-medium text-gray-500">
-                                    {{ number_format($item->serangan_jumlah, 2) }} Ha
+                                    {{ number_format($item->serangan_jumlah_berjalan, 2) }} Ha
                                 </td>
                                 <td class="px-6 py-4 text-center">
                                     <span class="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-xs font-medium lowercase">
-                                        {{ $item->kondisi_serangan }}
+                                        {{ number_format($item->kondisi_serangan_ha, 2) }} Ha
                                     </span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-center">
@@ -254,11 +254,10 @@
                                                 'komoditas' => $item->komoditas->nama_komoditas ?? '-',
                                                 'opt' => ($item->opt->nama_opt ?? '-').($item->jenisOpt ? ' — '.$item->jenisOpt->nama_jenis_opt : ''),
                                                 'luas_komoditi_num' => number_format($item->luas_komoditi_ha, 2),
-                                                'kondisi' => $item->kondisi_serangan,
-                                                'serangan_ringan_num' => number_format($item->serangan_ringan, 2),
-                                                'serangan_sedang_num' => number_format($item->serangan_sedang, 2),
-                                                'serangan_berat_num' => number_format($item->serangan_berat, 2),
-                                                'serangan_total_num' => number_format($item->serangan_jumlah, 2),
+                                                'kondisi' => number_format($item->kondisi_serangan_ha, 2).' Ha',
+                                                'serangan_ringan_num' => number_format($item->serangan_ringan_berjalan, 2),
+                                                'serangan_berat_num' => number_format($item->serangan_berat_berjalan, 2),
+                                                'serangan_total_num' => number_format($item->serangan_jumlah_berjalan, 2),
                                                 'kendali_apbd_kab' => number_format($item->kendali_apbd_kab, 2),
                                                 'kendali_apbd_prov' => number_format($item->kendali_apbd_prov, 2),
                                                 'kendali_apbn' => number_format($item->kendali_apbn, 2),
@@ -376,12 +375,12 @@
                                 <p class="text-lg font-bold text-red-600"><span x-text="modalData.serangan_ringan_num"></span> <span class="text-xs font-medium text-red-400">Ha</span></p>
                             </div>
                             <div class="bg-red-50 border border-red-100 rounded-lg p-3">
-                                <p class="text-[10px] font-bold text-red-500 uppercase tracking-wider mb-1">SEDANG</p>
-                                <p class="text-lg font-bold text-red-600"><span x-text="modalData.serangan_sedang_num"></span> <span class="text-xs font-medium text-red-400">Ha</span></p>
-                            </div>
-                            <div class="bg-red-50 border border-red-100 rounded-lg p-3">
                                 <p class="text-[10px] font-bold text-red-500 uppercase tracking-wider mb-1">BERAT</p>
                                 <p class="text-lg font-bold text-red-600"><span x-text="modalData.serangan_berat_num"></span> <span class="text-xs font-medium text-red-400">Ha</span></p>
+                            </div>
+                            <div class="bg-red-50 border border-red-100 rounded-lg p-3">
+                                <p class="text-[10px] font-bold text-red-500 uppercase tracking-wider mb-1">JUMLAH</p>
+                                <p class="text-lg font-bold text-red-600"><span x-text="modalData.serangan_total_num"></span> <span class="text-xs font-medium text-red-400">Ha</span></p>
                             </div>
                         </div>
                     </div>

@@ -57,8 +57,6 @@ class DummyDataSeeder extends Seeder
         ]);
         $opts = Opt::all();
 
-        $kondisiOptions = ['Aman', 'Terkendali', 'Waspada', 'Eradikasi'];
-
         // 2. Buat 3 Petugas POPT
         for ($i = 1; $i <= 3; $i++) {
             $user = User::firstOrCreate(
@@ -77,9 +75,8 @@ class DummyDataSeeder extends Seeder
 
                 // Nilai serangan acak
                 $ringan = rand(0, 50) / 10;
-                $sedang = rand(0, 30) / 10;
                 $berat = rand(0, 10) / 10;
-                $jumlah = $ringan + $sedang + $berat;
+                $jumlah = $ringan + $berat;
 
                 Pengamatan::create([
                     'user_id' => $user->id,
@@ -91,7 +88,6 @@ class DummyDataSeeder extends Seeder
                     'luas_komoditi_ha' => rand(10, 100) + (rand(0, 9) / 10),
 
                     'serangan_ringan' => $ringan,
-                    'serangan_sedang' => $sedang,
                     'serangan_berat' => $berat,
                     'serangan_jumlah' => $jumlah,
 
@@ -100,7 +96,6 @@ class DummyDataSeeder extends Seeder
                     'kendali_masyarakat' => rand(0, 5) / 10,
                     'kendali_apbn' => 0,
 
-                    'kondisi_serangan' => $kondisiOptions[array_rand($kondisiOptions)],
                 ]);
             }
         }

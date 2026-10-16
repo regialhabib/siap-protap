@@ -4,13 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Models\Pengamatan;
 use App\Models\Uppt;
+use App\Services\PengamatanHistoryService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request, PengamatanHistoryService $history)
     {
         $user = Auth::user();
 
@@ -41,7 +42,25 @@ class DashboardController extends Controller
                 ->whereYear('tanggal_pengamatan', $currentYear);
         }
 
+        $historyQuery = Pengamatan::query()->with(['komoditas', 'opt', 'jenisOpt', 'uppt', 'kecamatan']);
+        if ($user->role === 'popt') {
+            $historyQuery->where('uppt_id', $user->uppt_id);
+        } else {
+            $historyQuery->whereYear('tanggal_pengamatan', $currentYear)
+                ->whereMonth('tanggal_pengamatan', '<=', $currentMonth);
+        }
+
+        $historyRows = $historyQuery->orderBy('tanggal_pengamatan')->orderBy('id')->get();
+        $history->attachRunningTotals($historyRows);
+        $historyById = $historyRows->keyBy('id');
+
         $pengamatans = $tableQuery->paginate(5)->withQueryString();
+        $pengamatans->getCollection()->each(function (Pengamatan $pengamatan) use ($historyById): void {
+            $historyRecord = $historyById->get($pengamatan->id);
+            foreach (['serangan_ringan_berjalan', 'serangan_berat_berjalan', 'serangan_jumlah_berjalan', 'kendali_jumlah', 'kondisi_serangan_ha'] as $attribute) {
+                $pengamatan->setAttribute($attribute, $historyRecord?->getAttribute($attribute) ?? 0);
+            }
+        });
 
         // Hitung Kepatuhan UPPT (Bulan Ini)
         $allUppt = Uppt::orderBy('nama_uppt', 'asc')->get();

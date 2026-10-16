@@ -6,8 +6,12 @@ use App\Http\Requests\PengamatanRequest;
 use App\Models\Komoditas;
 use App\Models\Opt;
 use App\Models\Pengamatan;
+use App\Services\PengamatanHistoryService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\Rule;
 
 class PengamatanController extends Controller
 {
@@ -27,58 +31,63 @@ class PengamatanController extends Controller
         return view('pengamatan.create', compact('komoditas', 'opts', 'kecamatans'));
     }
 
+    public function history(Request $request, PengamatanHistoryService $history): JsonResponse
+    {
+        $user = Auth::user();
+        $pengamatanId = $request->integer('pengamatan_id') ?: null;
+
+        if ($pengamatanId !== null) {
+            $current = Pengamatan::findOrFail($pengamatanId);
+            Gate::authorize('update', $current);
+            $upptId = $current->uppt_id;
+        } else {
+            Gate::authorize('create', Pengamatan::class);
+            abort_if(! $user->uppt_id, 403);
+            $upptId = $user->uppt_id;
+        }
+
+        $validated = $request->validate([
+            'tanggal_pengamatan' => ['required', 'date'],
+            'komoditas_id' => ['required', 'exists:komoditas,id'],
+            'opt_id' => ['required', 'exists:opts,id'],
+            'jenis_opt_id' => ['nullable', Rule::exists('jenis_opts', 'id')->where('opt_id', $request->input('opt_id'))],
+            'kecamatan_id' => ['nullable', Rule::exists('kecamatans', 'id')->where('uppt_id', $upptId)],
+        ]);
+
+        $summary = $history->previousSummary([
+            ...$validated,
+            'uppt_id' => $upptId,
+        ], $pengamatanId);
+
+        return response()->json(['summary' => $summary]);
+    }
+
     public function store(PengamatanRequest $request)
     {
-
         $user = Auth::user();
 
         if (! $user->uppt_id) {
             return back()->withInput()->with('error', 'Gagal: Akun Anda belum memiliki penempatan wilayah (UPPT). Hubungi Admin.');
         }
 
-        try {
-            // Kalkulasi otomatis jumlah serangan di backend
-            $ringan = $request->serangan_ringan ?? 0;
-            $sedang = $request->serangan_sedang ?? 0;
-            $berat = $request->serangan_berat ?? 0;
-            $jumlah_serangan = $ringan + $sedang + $berat;
+        $validated = $request->validated();
+        $ringan = (float) ($validated['serangan_ringan'] ?? 0);
+        $berat = (float) ($validated['serangan_berat'] ?? 0);
 
-            $kondisi_serangan = null;
-            if ($request->kondisi_status) {
-                if ($request->kondisi_status === 'Tetap') {
-                    $kondisi_serangan = 'Tetap';
-                } else {
-                    $luas = $request->kondisi_luas ?? 0;
-                    $kondisi_serangan = $request->kondisi_status.' '.$luas.' Ha';
-                }
-            }
+        Pengamatan::create([
+            ...$validated,
+            'user_id' => $user->id,
+            'uppt_id' => $user->uppt_id,
+            'serangan_ringan' => $ringan,
+            'serangan_berat' => $berat,
+            'serangan_jumlah' => $ringan + $berat,
+            'kendali_apbd_kab' => $validated['kendali_apbd_kab'] ?? 0,
+            'kendali_apbd_prov' => $validated['kendali_apbd_prov'] ?? 0,
+            'kendali_apbn' => $validated['kendali_apbn'] ?? 0,
+            'kendali_masyarakat' => $validated['kendali_masyarakat'] ?? 0,
+        ]);
 
-            Pengamatan::create([
-                'user_id' => $user->id,
-                'uppt_id' => $user->uppt_id,
-                'tanggal_pengamatan' => $request->tanggal_pengamatan,
-                'komoditas_id' => $request->komoditas_id,
-                'opt_id' => $request->opt_id,
-                'jenis_opt_id' => $request->jenis_opt_id,
-                'luas_komoditi_ha' => $request->luas_komoditi_ha,
-                'serangan_ringan' => $ringan,
-                'serangan_sedang' => $sedang,
-                'serangan_berat' => $berat,
-                'serangan_jumlah' => $jumlah_serangan,
-                'kecamatan_id' => $request->kecamatan_id,
-                'kendali_apbd_kab' => $request->kendali_apbd_kab ?? 0,
-                'kendali_apbd_prov' => $request->kendali_apbd_prov ?? 0,
-                'kendali_apbn' => $request->kendali_apbn ?? 0,
-                'kendali_masyarakat' => $request->kendali_masyarakat ?? 0,
-                'kondisi_serangan' => $kondisi_serangan,
-            ]);
-
-            return redirect()->route('dashboard')->with('success', 'Data pengamatan lapangan berhasil dikirim dan disimpan!');
-        } catch (\Throwable $e) {
-            report($e);
-
-            return back()->withInput()->with('error', 'Terjadi kesalahan sistem saat menyimpan data. Silakan coba lagi.');
-        }
+        return redirect()->route('dashboard')->with('success', 'Data pengamatan lapangan berhasil dikirim dan disimpan!');
     }
 
     public function edit(Pengamatan $pengamatan)
@@ -92,53 +101,32 @@ class PengamatanController extends Controller
         $user->loadMissing('uppt.kecamatans');
         $kecamatans = $user->uppt ? $user->uppt->kecamatans : collect();
 
-        return view('pengamatan.edit', compact('pengamatan', 'komoditas', 'opts', 'kecamatans'));
+        $history = app(PengamatanHistoryService::class);
+        $historySummary = $history->previousSummary($pengamatan->toArray(), $pengamatan->id);
+
+        return view('pengamatan.edit', compact('pengamatan', 'komoditas', 'opts', 'kecamatans', 'historySummary'));
     }
 
     public function update(PengamatanRequest $request, Pengamatan $pengamatan)
     {
         Gate::authorize('update', $pengamatan);
 
-        try {
-            $ringan = $request->serangan_ringan ?? 0;
-            $sedang = $request->serangan_sedang ?? 0;
-            $berat = $request->serangan_berat ?? 0;
-            $jumlah_serangan = $ringan + $sedang + $berat;
+        $validated = $request->validated();
+        $ringan = (float) ($validated['serangan_ringan'] ?? 0);
+        $berat = (float) ($validated['serangan_berat'] ?? 0);
 
-            $kondisi_serangan = null;
-            if ($request->kondisi_status) {
-                if ($request->kondisi_status === 'Tetap') {
-                    $kondisi_serangan = 'Tetap';
-                } else {
-                    $luas = $request->kondisi_luas ?? 0;
-                    $kondisi_serangan = $request->kondisi_status.' '.$luas.' Ha';
-                }
-            }
+        $pengamatan->update([
+            ...$validated,
+            'serangan_ringan' => $ringan,
+            'serangan_berat' => $berat,
+            'serangan_jumlah' => $ringan + $berat,
+            'kendali_apbd_kab' => $validated['kendali_apbd_kab'] ?? 0,
+            'kendali_apbd_prov' => $validated['kendali_apbd_prov'] ?? 0,
+            'kendali_apbn' => $validated['kendali_apbn'] ?? 0,
+            'kendali_masyarakat' => $validated['kendali_masyarakat'] ?? 0,
+        ]);
 
-            $pengamatan->update([
-                'tanggal_pengamatan' => $request->tanggal_pengamatan,
-                'komoditas_id' => $request->komoditas_id,
-                'opt_id' => $request->opt_id,
-                'jenis_opt_id' => $request->jenis_opt_id,
-                'luas_komoditi_ha' => $request->luas_komoditi_ha,
-                'serangan_ringan' => $ringan,
-                'serangan_sedang' => $sedang,
-                'serangan_berat' => $berat,
-                'serangan_jumlah' => $jumlah_serangan,
-                'kecamatan_id' => $request->kecamatan_id,
-                'kendali_apbd_kab' => $request->kendali_apbd_kab ?? 0,
-                'kendali_apbd_prov' => $request->kendali_apbd_prov ?? 0,
-                'kendali_apbn' => $request->kendali_apbn ?? 0,
-                'kendali_masyarakat' => $request->kendali_masyarakat ?? 0,
-                'kondisi_serangan' => $kondisi_serangan,
-            ]);
-
-            return redirect()->route('dashboard')->with('success', 'Data pengamatan berhasil diperbarui!');
-        } catch (\Throwable $e) {
-            report($e);
-
-            return back()->withInput()->with('error', 'Terjadi kesalahan sistem saat memperbarui data. Silakan coba lagi.');
-        }
+        return redirect()->route('dashboard')->with('success', 'Data pengamatan berhasil diperbarui!');
     }
 
     public function destroy(Pengamatan $pengamatan)

@@ -10,9 +10,9 @@ class Pengamatan extends Model
     protected $fillable = [
         'user_id', 'uppt_id', 'komoditas_id', 'opt_id', 'jenis_opt_id',
         'tanggal_pengamatan', 'luas_komoditi_ha', 'serangan_ringan',
-        'serangan_sedang', 'serangan_berat', 'serangan_jumlah',
+        'serangan_berat', 'serangan_jumlah',
         'kendali_apbd_kab', 'kendali_apbd_prov', 'kendali_masyarakat',
-        'kendali_apbn', 'kondisi_serangan', 'kecamatan_id',
+        'kendali_apbn', 'kecamatan_id',
     ];
 
     protected function casts(): array

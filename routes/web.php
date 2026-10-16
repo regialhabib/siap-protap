@@ -21,6 +21,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/opt', [OptController::class, 'index'])->name('opt.index');
 
     // Fitur Pengamatan (Input Data)
+    Route::get('/pengamatan/riwayat', [PengamatanController::class, 'history'])->name('pengamatan.history');
     Route::get('/pengamatan/create', [PengamatanController::class, 'create'])->name('pengamatan.create');
     Route::post('/pengamatan', [PengamatanController::class, 'store'])->name('pengamatan.store');
     Route::get('/pengamatan/{pengamatan}/edit', [PengamatanController::class, 'edit'])->name('pengamatan.edit');
@@ -38,6 +39,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::middleware([IsAdminMiddleware::class])->group(function () {
         // Laporan
         Route::get('/laporan', [LaporanController::class, 'index'])->name('laporan.index');
+        Route::get('/laporan/tahunan', [LaporanController::class, 'historyTahunan'])->name('laporan.tahunan');
         Route::get('/laporan/export/excel', [LaporanController::class, 'exportExcel'])->name('laporan.export.excel');
         Route::get('/laporan/export/pdf', [LaporanController::class, 'exportPdf'])->name('laporan.export.pdf');
 
