@@ -12,7 +12,7 @@ class Pengamatan extends Model
         'tanggal_pengamatan', 'luas_komoditi_ha', 'serangan_ringan',
         'serangan_berat', 'serangan_jumlah',
         'kendali_apbd_kab', 'kendali_apbd_prov', 'kendali_masyarakat',
-        'kendali_apbn', 'kecamatan_id',
+        'kendali_apbn', 'kecamatan_id', 'cara_pengendalian',
     ];
 
     protected function casts(): array

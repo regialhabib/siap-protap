@@ -106,8 +106,10 @@ Alpine.data('pengamatanForm', (historyUrl, initialSummary, initialArea, editId =
             }
             this.history = payload.summary;
             this.historyReady = true;
-            if (!this.areaTouched && Number(this.history.luas_komoditi_ha) > 0) {
-                this.luasKomoditi = this.history.luas_komoditi_ha;
+            if (!this.areaTouched) {
+                this.luasKomoditi = Number(this.history.luas_komoditi_ha) > 0
+                    ? this.history.luas_komoditi_ha
+                    : '';
             }
         } catch {
             if (requestId === this.historyRequest) {

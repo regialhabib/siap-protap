@@ -13,7 +13,7 @@
     </div>
 
     <!-- Navigation -->
-    <nav class="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
+    <nav class="flex-1 py-6 pl-4 pr-6 space-y-1 overflow-y-auto">
         <!-- Dashboard Link -->
         <a href="{{ route('dashboard') }}" class="flex items-center px-4 py-3 rounded-lg transition-all duration-200 {{ request()->routeIs('dashboard') ? 'bg-emerald-600 text-white font-medium shadow-md shadow-emerald-900/20' : 'text-gray-400 hover:bg-gray-800 hover:text-gray-100 font-medium' }}">
             <svg class="w-5 h-5 mr-3 {{ request()->routeIs('dashboard') ? 'text-white' : 'text-gray-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
@@ -40,13 +40,29 @@
             <div class="pt-6 pb-2">
                 <p class="px-4 text-[11px] font-bold text-gray-500 uppercase tracking-widest">Pelaporan</p>
             </div>
-            <a href="{{ route('laporan.index') }}" class="flex items-center px-4 py-3 rounded-lg transition-all duration-200 {{ request()->routeIs('laporan.index', 'laporan.export.*') ? 'bg-emerald-600 text-white font-medium shadow-md shadow-emerald-900/20' : 'text-gray-400 hover:bg-gray-800 hover:text-gray-100 font-medium' }}">
-                <svg class="w-5 h-5 mr-3 {{ request()->routeIs('laporan.index', 'laporan.export.*') ? 'text-white' : 'text-gray-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                Laporan
-            </a>
-            <a href="{{ route('laporan.tahunan') }}" class="flex items-center px-4 py-3 rounded-lg transition-all duration-200 {{ request()->routeIs('laporan.tahunan') ? 'bg-emerald-600 text-white font-medium shadow-md shadow-emerald-900/20' : 'text-gray-400 hover:bg-gray-800 hover:text-gray-100 font-medium' }}">
-                <svg class="w-5 h-5 mr-3 {{ request()->routeIs('laporan.tahunan') ? 'text-white' : 'text-gray-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                Histori Tahunan
+            @php
+                $reportsActive = request()->routeIs('laporan.index', 'laporan.triwulan', 'laporan.tahunan', 'laporan.export.excel', 'laporan.export.pdf', 'laporan.export.triwulan.*', 'laporan.export.tahunan.*');
+                $monthlyReportActive = request()->routeIs('laporan.index', 'laporan.export.excel', 'laporan.export.pdf');
+                $quarterlyReportActive = request()->routeIs('laporan.triwulan', 'laporan.export.triwulan.*');
+                $annualReportActive = request()->routeIs('laporan.tahunan', 'laporan.export.tahunan.*');
+            $observationHistoryActive = request()->routeIs('pengamatan.riwayat.index');
+            @endphp
+            <div x-data="{ reportsOpen: {{ $reportsActive ? 'true' : 'false' }} }" class="space-y-1">
+                <button type="button" @click="reportsOpen = !reportsOpen" :aria-expanded="reportsOpen.toString()" aria-controls="report-submenu"
+                    class="flex w-full items-center rounded-lg px-4 py-3 text-left font-medium transition-all duration-200 {{ $reportsActive ? 'bg-emerald-600 text-white shadow-md shadow-emerald-900/20' : 'text-gray-400 hover:bg-gray-800 hover:text-gray-100' }}">
+                    <svg class="mr-3 h-5 w-5 {{ $reportsActive ? 'text-white' : 'text-gray-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    <span class="flex-1">Laporan</span>
+                    <svg class="h-4 w-4 transition-transform" :class="reportsOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 9-7 7-7-7"></path></svg>
+                </button>
+                <div id="report-submenu" x-cloak x-show="reportsOpen" x-transition class="ml-4 space-y-1 border-l border-gray-700 pl-3" style="display: none;">
+                    <a href="{{ route('laporan.index') }}" @if($monthlyReportActive) aria-current="page" @endif class="block rounded-lg px-4 py-2.5 text-sm transition-all duration-200 {{ $monthlyReportActive ? 'bg-gray-800 font-semibold text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-gray-100' }}">Laporan Bulanan</a>
+                    <a href="{{ route('laporan.triwulan') }}" @if($quarterlyReportActive) aria-current="page" @endif class="block rounded-lg px-4 py-2.5 text-sm transition-all duration-200 {{ $quarterlyReportActive ? 'bg-gray-800 font-semibold text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-gray-100' }}">Laporan Triwulan</a>
+                    <a href="{{ route('laporan.tahunan') }}" @if($annualReportActive) aria-current="page" @endif class="block rounded-lg px-4 py-2.5 text-sm transition-all duration-200 {{ $annualReportActive ? 'bg-gray-800 font-semibold text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-gray-100' }}">Laporan Tahunan</a>
+                </div>
+            </div>
+            <a href="{{ route('pengamatan.riwayat.index') }}" @if($observationHistoryActive) aria-current="page" @endif class="flex items-center rounded-lg px-4 py-3 font-medium transition-all duration-200 {{ $observationHistoryActive ? 'bg-emerald-600 text-white shadow-md shadow-emerald-900/20' : 'text-gray-400 hover:bg-gray-800 hover:text-gray-100' }}">
+                <svg class="mr-3 h-5 w-5 {{ $observationHistoryActive ? 'text-white' : 'text-gray-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12M8 12h12M8 17h12M4 7h.01M4 12h.01M4 17h.01"></path></svg>
+                Riwayat Pengamatan
             </a>
 
             <div class="pt-6 pb-2">

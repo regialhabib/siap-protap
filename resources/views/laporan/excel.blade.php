@@ -42,7 +42,7 @@
             @if($jenis == 'bulanan') 
                 {{ \Carbon\Carbon::create()->month((int)$bulan)->translatedFormat('F') }} {{ $tahun }}
             @elseif($jenis == 'triwulan')
-                Kuartal {{ $triwulan }} Tahun {{ $tahun }}
+                {{ \Carbon\Carbon::create()->month((int) $bulan_awal)->translatedFormat('F') }}–{{ \Carbon\Carbon::create()->month((int) $bulan_akhir)->translatedFormat('F') }} Tahun {{ $tahun }}
             @else
                 Tahun {{ $tahun }}
             @endif
@@ -95,7 +95,7 @@
         <td style="text-align: center; vertical-align: middle; border: 1px solid #000000;">{{ floatval($d->kendali_apbn) }}</td> <!-- N -->
         <td style="text-align: center; vertical-align: middle; font-weight: bold; border: 1px solid #000000;">{{ floatval($d->kendali_jumlah) }}</td>
         
-        <td style="text-align: center; vertical-align: middle; border: 1px solid #000000;">{{ number_format($d->kondisi_serangan_ha, 2) }}</td>
+        <td style="text-align: center; vertical-align: middle; border: 1px solid #000000;">{{ rtrim(rtrim(number_format($d->kondisi_serangan_ha, 2), '0'), '.') }}</td>
     </tr>
     @endforeach
     

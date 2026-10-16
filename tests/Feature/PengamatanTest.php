@@ -80,6 +80,7 @@ class PengamatanTest extends TestCase
             'serangan_ringan' => 2,
             'serangan_berat' => 0.5,
             'kendali_apbd_kab' => 0.25,
+            'cara_pengendalian' => 'Pembersihan dan pemangkasan bagian terserang',
         ];
 
         $response = $this->actingAs($popt)->post('/pengamatan', $payload);
@@ -95,6 +96,7 @@ class PengamatanTest extends TestCase
             'serangan_berat' => 0.5,
             'serangan_jumlah' => 2.5,
             'kendali_apbd_kab' => 0.25,
+            'cara_pengendalian' => 'Pembersihan dan pemangkasan bagian terserang',
         ]);
     }
 
@@ -128,7 +130,9 @@ class PengamatanTest extends TestCase
             'tanggal_pengamatan' => '2027-02-10',
             'komoditas_id' => $komoditas->id,
             'opt_id' => $opt->id,
-        ]))->assertOk()->assertJsonPath('summary.serangan_jumlah', 0);
+        ]))->assertOk()
+            ->assertJsonPath('summary.serangan_jumlah', 0)
+            ->assertJsonPath('summary.luas_komoditi_ha', 0);
 
         $this->actingAs($popt)->post('/pengamatan', [
             'tanggal_pengamatan' => '2026-02-10',

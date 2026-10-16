@@ -6,6 +6,7 @@ use App\Http\Controllers\LaporanController;
 use App\Http\Controllers\OptController;
 use App\Http\Controllers\PengamatanController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\RiwayatPengamatanController;
 use App\Http\Controllers\UpptController;
 use App\Http\Controllers\UserController;
 use App\Http\Middleware\IsAdminMiddleware;
@@ -37,11 +38,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Fitur Khusus Admin (Laporan & Master Data)
     Route::middleware([IsAdminMiddleware::class])->group(function () {
+        Route::get('/data-pengamatan', [RiwayatPengamatanController::class, 'index'])->name('pengamatan.riwayat.index');
+
         // Laporan
         Route::get('/laporan', [LaporanController::class, 'index'])->name('laporan.index');
+        Route::get('/laporan/triwulan', [LaporanController::class, 'quarterly'])->name('laporan.triwulan');
         Route::get('/laporan/tahunan', [LaporanController::class, 'historyTahunan'])->name('laporan.tahunan');
         Route::get('/laporan/export/excel', [LaporanController::class, 'exportExcel'])->name('laporan.export.excel');
         Route::get('/laporan/export/pdf', [LaporanController::class, 'exportPdf'])->name('laporan.export.pdf');
+        Route::get('/laporan/triwulan/export/excel', [LaporanController::class, 'exportQuarterlyExcel'])->name('laporan.export.triwulan.excel');
+        Route::get('/laporan/triwulan/export/pdf', [LaporanController::class, 'exportQuarterlyPdf'])->name('laporan.export.triwulan.pdf');
+        Route::get('/laporan/tahunan/export/excel', [LaporanController::class, 'exportAnnualExcel'])->name('laporan.export.tahunan.excel');
+        Route::get('/laporan/tahunan/export/pdf', [LaporanController::class, 'exportAnnualPdf'])->name('laporan.export.tahunan.pdf');
 
         // Master Data
         Route::resource('komoditas', KomoditasController::class)->except(['create', 'show', 'edit']);

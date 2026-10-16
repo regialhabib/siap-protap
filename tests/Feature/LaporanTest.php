@@ -32,7 +32,45 @@ class LaporanTest extends TestCase
         $response = $this->actingAs($admin)->get('/laporan');
 
         $response->assertOk();
-        $response->assertSee('Export Laporan')->assertViewHas('uppt_id', '');
+        $response->assertSee('Filter Laporan Bulanan')->assertSee('Pilih UPPT dan tampilkan laporan terlebih dahulu')->assertViewHas('uppt_id', '');
+    }
+
+    public function test_monthly_and_quarterly_reports_have_separate_pages_and_sidebar_links(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $this->createUppt();
+
+        $monthlyResponse = $this->actingAs($admin)->get(route('laporan.index'));
+        $monthlyResponse->assertSee('Filter Laporan Bulanan')
+            ->assertSee('Laporan Bulanan')
+            ->assertSee('Laporan Triwulan')
+            ->assertSee('Laporan Tahunan')
+            ->assertSee('aria-current="page"', false)
+            ->assertDontSee('name="jenis"', false)
+            ->assertDontSee('name="bulan_awal"', false);
+
+        $this->get(route('laporan.triwulan'))
+            ->assertSee('Filter Laporan Triwulan')
+            ->assertSee('aria-current="page"', false)
+            ->assertSee('name="bulan_awal"', false)
+            ->assertSee('name="bulan_tengah"', false)
+            ->assertSee('name="bulan_akhir"', false)
+            ->assertDontSee('name="jenis"', false)
+            ->assertDontSee('name="bulan"', false);
+    }
+
+    public function test_legacy_quarterly_url_redirects_to_the_separate_quarterly_page(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $this->createUppt();
+
+        $this->actingAs($admin)->get('/laporan?jenis=triwulan&bulan_awal=2&bulan_tengah=3&bulan_akhir=4&tahun=2026')
+            ->assertRedirect(route('laporan.triwulan', [
+                'bulan_awal' => 2,
+                'bulan_tengah' => 3,
+                'bulan_akhir' => 4,
+                'tahun' => 2026,
+            ]));
     }
 
     public function test_report_shows_parent_and_child_opt_names(): void
@@ -65,59 +103,151 @@ class LaporanTest extends TestCase
         $response->assertForbidden();
     }
 
-    public function test_annual_history_shows_observations_from_oldest_to_newest_with_running_condition(): void
+    public function test_annual_report_accumulates_monthly_latest_rows_across_kecamatans(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);
         $uppt = $this->createUppt();
         $komoditas = Komoditas::create(['nama_komoditas' => 'Karet']);
         $opt = Opt::create(['nama_opt' => 'Gugur Daun']);
-        $common = [
-            'user_id' => $admin->id,
-            'uppt_id' => $uppt->id,
-            'komoditas_id' => $komoditas->id,
-            'opt_id' => $opt->id,
-            'luas_komoditi_ha' => 10,
-        ];
+        $kecamatanSatu = Kecamatan::create(['nama_kecamatan' => 'Kecamatan Satu', 'uppt_id' => $uppt->id]);
+        $kecamatanDua = Kecamatan::create(['nama_kecamatan' => 'Kecamatan Dua', 'uppt_id' => $uppt->id]);
+        $common = ['user_id' => $admin->id, 'uppt_id' => $uppt->id, 'komoditas_id' => $komoditas->id, 'opt_id' => $opt->id];
 
-        Pengamatan::create($common + [
-            'tanggal_pengamatan' => '2026-01-10',
-            'serangan_ringan' => 2,
-            'serangan_jumlah' => 2,
-        ]);
-        Pengamatan::create($common + [
-            'tanggal_pengamatan' => '2026-02-10',
-            'serangan_ringan' => 3,
-            'serangan_jumlah' => 3,
-            'kendali_apbd_kab' => 2,
-        ]);
-        Pengamatan::create($common + [
-            'tanggal_pengamatan' => '2025-12-10',
-            'serangan_ringan' => 5,
-            'serangan_jumlah' => 5,
-        ]);
+        Pengamatan::create($common + ['kecamatan_id' => $kecamatanSatu->id, 'tanggal_pengamatan' => '2026-01-10', 'luas_komoditi_ha' => 10, 'serangan_ringan' => 2, 'serangan_berat' => 1, 'serangan_jumlah' => 3, 'kendali_apbd_prov' => 1, 'cara_pengendalian' => 'Pemangkasan']);
+        Pengamatan::create($common + ['kecamatan_id' => $kecamatanSatu->id, 'tanggal_pengamatan' => '2026-01-25', 'luas_komoditi_ha' => 12, 'serangan_ringan' => 3, 'serangan_berat' => 2, 'serangan_jumlah' => 5, 'kendali_apbd_prov' => 2, 'cara_pengendalian' => 'Penyemprotan']);
+        Pengamatan::create($common + ['kecamatan_id' => $kecamatanSatu->id, 'tanggal_pengamatan' => '2026-02-10', 'luas_komoditi_ha' => 13, 'serangan_ringan' => 1, 'serangan_berat' => 1, 'serangan_jumlah' => 2, 'kendali_apbd_kab' => 2, 'cara_pengendalian' => 'Penyemprotan']);
+        Pengamatan::create($common + ['kecamatan_id' => $kecamatanDua->id, 'tanggal_pengamatan' => '2026-03-15', 'luas_komoditi_ha' => 20, 'serangan_ringan' => 4, 'serangan_berat' => 2, 'serangan_jumlah' => 6, 'kendali_masyarakat' => 3, 'kendali_apbn' => 4, 'cara_pengendalian' => 'Sanitasi kebun']);
 
         $this->actingAs($admin)->get(route('laporan.tahunan', ['tahun' => 2026, 'uppt_id' => $uppt->id]))
-            ->assertOk()
-            ->assertSee('Histori Tahun 2026')
+            ->assertOk()->assertSee('Laporan Tahunan 2026')->assertSee('Kerugian Hasil (Rp 000)')
             ->assertViewHas('data', function ($data): bool {
-                return $data->count() === 2
-                    && $data->first()->tanggal_pengamatan->toDateString() === '2026-01-10'
-                    && (float) $data->first()->serangan_jumlah === 2.0
-                    && (float) $data->first()->kondisi_serangan_ha === 2.0
-                    && $data->last()->tanggal_pengamatan->toDateString() === '2026-02-10'
-                    && (float) $data->last()->serangan_jumlah === 3.0
-                    && (float) $data->last()->kondisi_serangan_ha === 3.0;
+                $row = $data->first();
+
+                return $data->count() === 1
+                    && (float) $row->serangan_ringan === 8.0
+                    && (float) $row->serangan_berat === 5.0
+                    && (float) $row->serangan_jumlah === 13.0
+                    && (float) $row->kendali_apbd_prov === 2.0
+                    && (float) $row->kendali_apbd_kab === 2.0
+                    && (float) $row->kendali_masyarakat === 3.0
+                    && (float) $row->kendali_apbn === 4.0
+                    && (float) $row->kendali_jumlah === 11.0
+                    && (float) $row->luas_komoditi_ha === 33.0
+                    && $row->cara_pengendalian === 'Penyemprotan; Sanitasi kebun'
+                    && $row->kerugian_hasil === '';
             });
     }
 
-    public function test_annual_history_does_not_preselect_an_uppt(): void
+    public function test_annual_report_does_not_preselect_an_uppt(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);
         $this->createUppt();
 
         $this->actingAs($admin)->get(route('laporan.tahunan'))
             ->assertOk()
-            ->assertViewHas('upptId', '');
+            ->assertViewHas('upptId', '')
+            ->assertSee('aria-current="page"', false);
+    }
+
+    public function test_annual_report_includes_all_commodities_and_opt_types_without_filter_controls(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $uppt = $this->createUppt();
+        $karet = Komoditas::create(['nama_komoditas' => 'Karet']);
+        $kelapa = Komoditas::create(['nama_komoditas' => 'Kelapa']);
+        $gugurDaun = Opt::create(['nama_opt' => 'Gugur Daun']);
+        $penggerekBatang = Opt::create(['nama_opt' => 'Penggerek Batang']);
+        $jenisGugurDaun = JenisOpt::create(['opt_id' => $gugurDaun->id, 'nama_jenis_opt' => 'Corynespora']);
+        $jenisPenggerekBatang = JenisOpt::create(['opt_id' => $penggerekBatang->id, 'nama_jenis_opt' => 'Penggerek']);
+
+        Pengamatan::create([
+            'user_id' => $admin->id, 'uppt_id' => $uppt->id, 'komoditas_id' => $karet->id,
+            'opt_id' => $gugurDaun->id, 'jenis_opt_id' => $jenisGugurDaun->id,
+            'tanggal_pengamatan' => '2026-05-10', 'luas_komoditi_ha' => 5, 'serangan_jumlah' => 2,
+        ]);
+        Pengamatan::create([
+            'user_id' => $admin->id, 'uppt_id' => $uppt->id, 'komoditas_id' => $kelapa->id,
+            'opt_id' => $penggerekBatang->id, 'jenis_opt_id' => $jenisPenggerekBatang->id,
+            'tanggal_pengamatan' => '2026-05-10', 'luas_komoditi_ha' => 7, 'serangan_jumlah' => 3,
+        ]);
+
+        $this->actingAs($admin)->get(route('laporan.tahunan', [
+            'tahun' => 2026,
+            'komoditas_id' => $karet->id,
+            'jenis_opt_id' => $jenisGugurDaun->id,
+        ]))
+            ->assertOk()
+            ->assertDontSee('name="komoditas_id"', false)
+            ->assertDontSee('name="jenis_opt_id"', false)
+            ->assertViewHas('data', fn ($data): bool => $data->count() === 2);
+    }
+
+    public function test_annual_report_filters_by_uppt_and_exports_annual_layout(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $uppt = $this->createUppt();
+        $otherUppt = Uppt::create(['nama_uppt' => 'UPPT Lain', 'kabupaten_id' => 1]);
+        $komoditas = Komoditas::create(['nama_komoditas' => 'Karet']);
+        $opt = Opt::create(['nama_opt' => 'Gugur Daun']);
+        $attributes = ['user_id' => $admin->id, 'komoditas_id' => $komoditas->id, 'opt_id' => $opt->id, 'tanggal_pengamatan' => '2026-05-10', 'luas_komoditi_ha' => 5, 'serangan_jumlah' => 2];
+        Pengamatan::create($attributes + ['uppt_id' => $uppt->id]);
+        Pengamatan::create($attributes + ['uppt_id' => $otherUppt->id]);
+        Pengamatan::create(array_merge($attributes, ['uppt_id' => $uppt->id, 'tanggal_pengamatan' => '2025-12-10']));
+
+        $this->actingAs($admin)->get(route('laporan.tahunan', ['tahun' => 2026, 'uppt_id' => $uppt->id]))
+            ->assertViewHas('data', fn ($data): bool => $data->count() === 1);
+
+        $this->get(route('laporan.export.tahunan.excel', ['tahun' => 2026, 'uppt_id' => $uppt->id]))
+            ->assertOk()
+            ->assertHeader('content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+            ->assertHeader('content-disposition', 'attachment; filename=Laporan_Tahunan_2026.xlsx');
+
+        $this->get(route('laporan.export.tahunan.pdf', ['tahun' => 2026, 'uppt_id' => $uppt->id]))
+            ->assertOk()
+            ->assertHeader('content-type', 'application/pdf');
+    }
+
+    public function test_monthly_and_quarterly_exports_require_a_selected_uppt(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        $this->actingAs($admin)->get(route('laporan.export.excel', ['jenis' => 'bulanan', 'bulan' => 1, 'tahun' => 2026]))
+            ->assertRedirect()
+            ->assertSessionHasErrors('uppt_id');
+
+        $this->get(route('laporan.export.triwulan.pdf', ['bulan_awal' => 1, 'bulan_tengah' => 2, 'bulan_akhir' => 3, 'tahun' => 2026]))
+            ->assertRedirect()
+            ->assertSessionHasErrors('uppt_id');
+    }
+
+    public function test_monthly_and_annual_reports_paginate_five_rows_per_page(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $uppt = $this->createUppt();
+        $komoditas = Komoditas::create(['nama_komoditas' => 'Karet']);
+
+        foreach (range(1, 6) as $number) {
+            $opt = Opt::create(['nama_opt' => "OPT {$number}"]);
+            Pengamatan::create([
+                'user_id' => $admin->id,
+                'uppt_id' => $uppt->id,
+                'komoditas_id' => $komoditas->id,
+                'opt_id' => $opt->id,
+                'tanggal_pengamatan' => '2026-05-10',
+                'luas_komoditi_ha' => 5,
+                'serangan_jumlah' => 1,
+            ]);
+        }
+
+        $this->actingAs($admin)->get(route('laporan.index', ['jenis' => 'bulanan', 'bulan' => 5, 'tahun' => 2026, 'uppt_id' => $uppt->id]))
+            ->assertViewHas('data', fn ($data): bool => $data->total() === 6 && $data->count() === 5)
+            ->assertSee('page=2');
+
+        $this->get(route('laporan.index', ['jenis' => 'bulanan', 'bulan' => 5, 'tahun' => 2026, 'uppt_id' => $uppt->id, 'page' => 2]))
+            ->assertViewHas('data', fn ($data): bool => $data->total() === 6 && $data->count() === 1);
+
+        $this->get(route('laporan.tahunan', ['tahun' => 2026, 'uppt_id' => $uppt->id, 'page' => 2]))
+            ->assertViewHas('data', fn ($data): bool => $data->total() === 6 && $data->count() === 1);
     }
 
     public function test_filters_and_exports_laporan_by_time()
@@ -135,8 +265,12 @@ class LaporanTest extends TestCase
             'serangan_jumlah' => 0,
         ];
 
-        // Data 1: UPPT 1, Jan 2026 (Triwulan 1, 2026)
+        // Data 1: UPPT 1, Jan 2026.
         Pengamatan::create(array_merge($commonData, ['uppt_id' => $uppt1->id, 'tanggal_pengamatan' => '2026-01-15']));
+
+        foreach (['2026-02-15', '2026-03-15', '2026-04-15'] as $date) {
+            Pengamatan::create(array_merge($commonData, ['uppt_id' => $uppt1->id, 'tanggal_pengamatan' => $date]));
+        }
 
         // Data 2: UPPT 2, Jun 2026 (bulan terakhir Triwulan 2)
         Pengamatan::create(array_merge($commonData, ['uppt_id' => $uppt2->id, 'tanggal_pengamatan' => '2026-06-10']));
@@ -150,14 +284,15 @@ class LaporanTest extends TestCase
             return $data->count() === 1 && $data->first()->tanggal_pengamatan->format('Y-m-d') === '2026-01-15';
         });
 
-        // 2. Uji Filter Triwulan (Triwulan 2 2026) - hanya bulan terakhir
-        $resTriwulan = $this->actingAs($admin)->get('/laporan?jenis=triwulan&triwulan=2&tahun=2026&uppt_id=');
-        $resTriwulan->assertViewHas('data', function ($data) use ($uppt2) {
-            return $data->count() === 1 && $data->first()->uppt_id === $uppt2->id;
+        // 2. Rentang bergeser Februari-April mengambil snapshot bulan April.
+        $resTriwulan = $this->actingAs($admin)->get(route('laporan.triwulan', ['bulan_awal' => 2, 'bulan_tengah' => 3, 'bulan_akhir' => 4, 'tahun' => 2026, 'uppt_id' => $uppt1->id]));
+        $resTriwulan->assertViewHas('data', function ($data) {
+            return $data->count() === 1 && $data->first()->tanggal_pengamatan->format('Y-m-d') === '2026-04-15';
         });
 
-        // 3. Laporan tahunan belum tersedia pada tahap ini.
-        $this->actingAs($admin)->get('/laporan?jenis=tahunan&tahun=2026&uppt_id=')->assertSessionHasErrors('jenis');
+        // 3. Legacy quarterly URLs move to the dedicated quarterly page.
+        $this->actingAs($admin)->get('/laporan?jenis=triwulan&bulan_awal=2&bulan_tengah=3&bulan_akhir=4&tahun=2026&uppt_id='.$uppt1->id)
+            ->assertRedirect(route('laporan.triwulan', ['bulan_awal' => 2, 'bulan_tengah' => 3, 'bulan_akhir' => 4, 'tahun' => 2026, 'uppt_id' => $uppt1->id]));
 
         // 4. Uji pencarian pada laporan bulanan.
         $resSearch = $this->actingAs($admin)->get('/laporan?jenis=bulanan&bulan=1&tahun=2026&search=Padi&uppt_id=');
@@ -165,11 +300,14 @@ class LaporanTest extends TestCase
             return $data->count() === 1;
         });
 
-        // 5. Uji Export Excel (Filter Triwulan 1 2026, Semua UPPT)
-        $resExcel = $this->actingAs($admin)->get('/laporan/export/excel?jenis=triwulan&triwulan=1&tahun=2026&uppt_id=');
+        // 5. Uji export Excel membawa rentang Februari-April.
+        $resExcel = $this->actingAs($admin)->get(route('laporan.export.triwulan.excel', ['bulan_awal' => 2, 'bulan_tengah' => 3, 'bulan_akhir' => 4, 'tahun' => 2026, 'uppt_id' => $uppt1->id]));
         $resExcel->assertOk();
         $resExcel->assertHeader('content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        $resExcel->assertHeader('content-disposition', 'attachment; filename=Laporan_Triwulan_1_2026.xlsx');
+        $resExcel->assertHeader('content-disposition', 'attachment; filename=Laporan_Triwulan_02-04_2026.xlsx');
+
+        $resQuarterlyPdf = $this->get(route('laporan.export.triwulan.pdf', ['bulan_awal' => 2, 'bulan_tengah' => 3, 'bulan_akhir' => 4, 'tahun' => 2026, 'uppt_id' => $uppt1->id]));
+        $resQuarterlyPdf->assertOk()->assertHeader('content-type', 'application/pdf');
 
         // 6. Uji Export PDF (Filter Bulanan Des 2025, UPPT 1)
         $resPdf = $this->actingAs($admin)->get("/laporan/export/pdf?jenis=bulanan&bulan=12&tahun=2025&uppt_id={$uppt1->id}");
@@ -253,7 +391,7 @@ class LaporanTest extends TestCase
         })->assertSee('JML')->assertDontSee('Sedang');
     }
 
-    public function test_quarterly_report_does_not_fall_back_to_prior_month(): void
+    public function test_quarterly_report_requires_data_in_all_selected_months_for_uppt_and_kecamatan(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);
         $uppt = $this->createUppt();
@@ -264,12 +402,55 @@ class LaporanTest extends TestCase
             'uppt_id' => $uppt->id,
             'komoditas_id' => $komoditas->id,
             'opt_id' => $opt->id,
-            'tanggal_pengamatan' => '2026-04-15',
+            'tanggal_pengamatan' => '2026-02-15',
             'luas_komoditi_ha' => 10,
             'serangan_ringan' => 2,
         ]);
 
-        $this->actingAs($admin)->get('/laporan?jenis=triwulan&triwulan=2&tahun=2026&uppt_id=')
-            ->assertViewHas('data', fn ($data): bool => $data->isEmpty());
+        $kecamatan = Kecamatan::create(['nama_kecamatan' => 'Kecamatan Uji', 'uppt_id' => $uppt->id]);
+
+        $this->actingAs($admin)->get(route('laporan.triwulan', [
+            'bulan_awal' => 2, 'bulan_tengah' => 3, 'bulan_akhir' => 4,
+            'tahun' => 2026, 'uppt_id' => $uppt->id, 'kecamatan_id' => $kecamatan->id,
+        ]))
+            ->assertSee('Laporan belum tersedia karena data tiga bulan belum lengkap.')
+            ->assertViewHas('data', fn ($data): bool => $data->isEmpty())
+            ->assertViewHas('reportAvailable', false);
+
+        $this->get(route('laporan.export.triwulan.pdf', [
+            'bulan_awal' => 2, 'bulan_tengah' => 3, 'bulan_akhir' => 4,
+            'tahun' => 2026, 'uppt_id' => $uppt->id, 'kecamatan_id' => $kecamatan->id,
+        ]))
+            ->assertRedirect(route('laporan.triwulan', [
+                'bulan_awal' => 2, 'bulan_tengah' => 3, 'bulan_akhir' => 4,
+                'tahun' => 2026, 'uppt_id' => $uppt->id, 'kecamatan_id' => $kecamatan->id,
+            ]))
+            ->assertSessionHasErrors('bulan_awal');
+
+        $this->get(route('laporan.export.triwulan.excel', [
+            'bulan_awal' => 2, 'bulan_tengah' => 3, 'bulan_akhir' => 4,
+            'tahun' => 2026, 'uppt_id' => $uppt->id, 'kecamatan_id' => $kecamatan->id,
+        ]))
+            ->assertRedirect()
+            ->assertSessionHasErrors('bulan_awal');
+    }
+
+    public function test_quarterly_months_must_be_consecutive_in_the_same_year(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $uppt = $this->createUppt();
+
+        $this->actingAs($admin)->get(route('laporan.triwulan', [
+            'bulan_awal' => 2, 'bulan_tengah' => 4, 'bulan_akhir' => 5, 'tahun' => 2026,
+        ]))
+            ->assertRedirect()
+            ->assertSessionHasErrors('bulan_tengah');
+
+        $this->get(route('laporan.export.triwulan.excel', [
+            'bulan_awal' => 11, 'bulan_tengah' => 12, 'bulan_akhir' => 1,
+            'tahun' => 2026, 'uppt_id' => $uppt->id,
+        ]))
+            ->assertRedirect()
+            ->assertSessionHasErrors('bulan_tengah');
     }
 }

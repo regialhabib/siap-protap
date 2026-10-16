@@ -112,19 +112,18 @@
                                 <span class="text-gray-400 font-bold">Ha</span>
                             </div>
                         </div>
-                        <p class="text-xs text-gray-500 mt-3 font-medium">Terisi dari catatan terakhir dan dapat diubah.</p>
+                        <p class="text-xs text-gray-500 mt-3 font-medium">Terisi otomatis dari data terakhir dan dapat diubah.</p>
                         <x-input-error :messages="$errors->get('luas_komoditi_ha')" class="mt-2" />
                     </div>
 
                     <div class="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 p-5" x-show="loadingHistory || historyReady" x-cloak>
-                        <p class="text-sm font-bold text-emerald-900" x-show="history.luas_komoditi_ha > 0">Catatan sebelumnya</p>
-                        <div class="mt-3 grid grid-cols-1 gap-3 text-sm text-emerald-900 sm:grid-cols-3" x-show="historyReady && history.luas_komoditi_ha > 0">
-                            <p>Total serangan tahun ini: <strong x-text="Number(history.serangan_jumlah).toFixed(2)"></strong> Ha</p>
+                        <p class="text-sm font-bold text-emerald-900" x-show="history.luas_komoditi_ha > 0">Data sebelumnya</p>
+                        <div class="mt-3 grid grid-cols-1 gap-3 text-sm text-emerald-900 sm:grid-cols-2" x-show="historyReady && history.luas_komoditi_ha > 0">
                             <p>Luas komoditi terakhir: <strong x-text="Number(history.luas_komoditi_ha).toFixed(2)"></strong> Ha</p>
                             <p>Keadaan serangan: <strong x-text="Number(history.kondisi_serangan).toFixed(2)"></strong> Ha</p>
                         </div>
-                        <p class="text-sm text-emerald-900" x-show="historyReady && history.luas_komoditi_ha <= 0">Belum ada catatan tahun ini. Keadaan serangan dimulai dari 0 Ha.</p>
-                        <p class="text-sm text-emerald-800" x-show="loadingHistory">Memuat catatan sebelumnya...</p>
+                        <p class="text-sm text-emerald-900" x-show="historyReady && history.luas_komoditi_ha <= 0">Belum ada data tahun ini. Keadaan serangan dimulai dari 0 Ha.</p>
+                        <p class="text-sm text-emerald-800" x-show="loadingHistory">Memuat data sebelumnya...</p>
                     </div>
                     <p class="mb-6 text-sm font-medium text-red-700" x-show="historyError" x-text="historyError" x-cloak></p>
 
@@ -136,7 +135,7 @@
                             <button type="button" @click="showAttack = !showAttack" class="inline-flex items-center rounded-lg bg-red-600 px-4 py-2 text-sm font-bold text-white hover:bg-red-700">
                                 <span x-text="showAttack ? 'Tutup input serangan' : 'Tambah Serangan'"></span>
                             </button>
-                            <p class="mt-2 text-xs text-gray-600">Isi bila ada serangan baru sejak catatan sebelumnya.</p>
+                            <p class="mt-2 text-xs text-gray-600">Isi luas serangan tambahan sejak pengamatan terakhir.</p>
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 relative z-10" x-show="showAttack" x-cloak>
                             <div>
@@ -148,7 +147,6 @@
                                 <input type="number" step="0.01" min="0" name="serangan_berat" x-model="berat" class="block w-full px-4 py-2.5 rounded-lg border-gray-300 focus:ring-red-500 focus:border-red-500 text-sm font-medium transition-colors" placeholder="0.00">
                             </div>
                         </div>
-                        <p class="mt-5 text-sm font-bold text-red-800 relative z-10">Total serangan tahun ini: <span x-text="totalSeranganBerjalan.toFixed(2)"></span> Ha</p>
                     </div>
                 </div>
 
@@ -162,7 +160,7 @@
                     <div class="bg-blue-50/30 p-6 md:p-8 rounded-xl border border-blue-100 mb-6 relative overflow-hidden">
                         <div class="absolute top-0 right-0 w-32 h-32 bg-blue-100 rounded-bl-full -mr-8 -mt-8 opacity-50 pointer-events-none"></div>
                         <p class="text-sm font-bold text-blue-800 mb-2 relative z-10">Luas Pengendalian per Sumber (Ha)</p>
-                        <p class="mb-6 text-xs text-gray-600 relative z-10">Isi bila ada pengendalian pada catatan ini.</p>
+                        <p class="mb-6 text-xs text-gray-600 relative z-10">Isi luas pengendalian jika ada.</p>
                         <div class="grid grid-cols-2 md:grid-cols-4 gap-6 relative z-10">
                             <div>
                                 <label class="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wider">APBD Kab/Kota</label>
@@ -181,7 +179,13 @@
                                 <input type="number" step="0.01" min="0" name="kendali_apbn" x-model="kendaliApbn" class="block w-full px-4 py-2.5 rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500 text-sm font-medium transition-colors" placeholder="0.00">
                             </div>
                         </div>
-                        <p class="mt-5 text-sm font-bold text-blue-800 relative z-10">Jumlah pengendalian pada catatan ini: <span x-text="totalKendaliBaru.toFixed(2)"></span> Ha</p>
+                        <p class="mt-5 text-sm font-bold text-blue-800 relative z-10">Jumlah total luas pengendalian: <span x-text="totalKendaliBaru.toFixed(2)"></span> Ha</p>
+                    </div>
+
+                    <div class="mb-6 rounded-xl border border-blue-100 bg-white p-6 shadow-sm md:p-8">
+                        <label for="cara_pengendalian" class="mb-2 block text-sm font-bold text-gray-700">Cara Pengendalian</label>
+                        <textarea id="cara_pengendalian" name="cara_pengendalian" rows="3" maxlength="2000" class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">{{ old('cara_pengendalian') }}</textarea>
+                        <x-input-error :messages="$errors->get('cara_pengendalian')" class="mt-2" />
                     </div>
 
                     <div class="bg-gray-50/50 p-6 md:p-8 rounded-xl border border-gray-100">

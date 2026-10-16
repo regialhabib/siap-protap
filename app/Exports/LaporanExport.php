@@ -7,6 +7,7 @@ use Maatwebsite\Excel\Concerns\FromView;
 use Maatwebsite\Excel\Concerns\WithColumnWidths;
 use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Events\AfterSheet;
+use PhpOffice\PhpSpreadsheet\Worksheet\PageSetup;
 
 class LaporanExport implements FromView, WithColumnWidths, WithEvents
 {
@@ -18,34 +19,51 @@ class LaporanExport implements FromView, WithColumnWidths, WithEvents
 
     protected $bulan;
 
-    protected $triwulan;
+    protected $bulanAwal;
+
+    protected $bulanTengah;
+
+    protected $bulanAkhir;
 
     protected $uppt_id;
 
-    public function __construct($data, $jenis, $tahun, $bulan, $triwulan, $uppt_id)
+    public function __construct($data, $jenis, $tahun, $bulan, $bulanAwal, $bulanTengah, $bulanAkhir, $upptId)
     {
         $this->data = $data;
         $this->jenis = $jenis;
         $this->tahun = $tahun;
         $this->bulan = $bulan;
-        $this->triwulan = $triwulan;
-        $this->uppt_id = $uppt_id;
+        $this->bulanAwal = $bulanAwal;
+        $this->bulanTengah = $bulanTengah;
+        $this->bulanAkhir = $bulanAkhir;
+        $this->uppt_id = $upptId;
     }
 
     public function view(): View
     {
-        return view('laporan.excel', [
+        return view($this->jenis === 'tahunan' ? 'laporan.excel-tahunan' : 'laporan.excel', [
             'data' => $this->data,
             'jenis' => $this->jenis,
             'tahun' => $this->tahun,
             'bulan' => $this->bulan,
-            'triwulan' => $this->triwulan,
+            'bulan_awal' => $this->bulanAwal,
+            'bulan_tengah' => $this->bulanTengah,
+            'bulan_akhir' => $this->bulanAkhir,
             'uppt_id' => $this->uppt_id,
         ]);
     }
 
     public function columnWidths(): array
     {
+        if ($this->jenis === 'tahunan') {
+            return [
+                'A' => 3.0, 'B' => 6.5, 'C' => 25.0, 'D' => 22.0, 'E' => 16.0,
+                'F' => 28.0, 'G' => 19.0, 'H' => 12.0, 'I' => 12.0, 'J' => 12.0,
+                'K' => 13.0, 'L' => 13.0, 'M' => 15.0, 'N' => 12.0, 'O' => 13.0,
+                'P' => 33.0, 'Q' => 18.0, 'R' => 3.0,
+            ];
+        }
+
         return [
             'A' => 13.0,
             'B' => 6.5,
@@ -69,8 +87,30 @@ class LaporanExport implements FromView, WithColumnWidths, WithEvents
     {
         return [
             AfterSheet::class => function (AfterSheet $event) {
-                // Formatting tambahan yang tidak bisa di-handle HTML
-                // Pastikan gridlines tidak hilang sepenuhnya jika mau, atau biarkan default
+                if ($this->jenis !== 'tahunan') {
+                    return;
+                }
+
+                $sheet = $event->sheet->getDelegate();
+                $pageSetup = $sheet->getPageSetup();
+
+                $sheet->setShowGridlines(false);
+                $sheet->freezePane('B10');
+                $pageSetup
+                    ->setOrientation(PageSetup::ORIENTATION_LANDSCAPE)
+                    ->setPaperSize(PageSetup::PAPERSIZE_A3)
+                    ->setFitToPage(true)
+                    ->setFitToWidth(1)
+                    ->setFitToHeight(0)
+                    ->setRowsToRepeatAtTopByStartAndEnd(8, 9)
+                    ->setHorizontalCentered(true)
+                    ->setPrintArea("A1:R{$sheet->getHighestRow()}");
+
+                $sheet->getPageMargins()
+                    ->setLeft(0.25)
+                    ->setRight(0.25)
+                    ->setTop(0.5)
+                    ->setBottom(0.5);
             },
         ];
     }
