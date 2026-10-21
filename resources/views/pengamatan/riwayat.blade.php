@@ -1,8 +1,8 @@
 <x-app-layout>
     <div class="mb-6 mt-6 overflow-visible rounded-xl border border-gray-200 bg-white shadow-sm">
         <div class="rounded-t-xl border-b border-gray-100 bg-gray-50/50 px-6 py-4">
-            <h1 class="text-xl font-bold leading-tight tracking-tight text-gray-800">Riwayat Pengamatan Tahunan</h1>
-            <p class="mt-1 text-sm text-gray-500">Bandingkan luas serangan setiap bulan selama tahun {{ $tahun }}.</p>
+            <h1 class="text-xl font-bold leading-tight tracking-tight text-gray-800">Riwayat Pengamatan Periode</h1>
+            <p class="mt-1 text-sm text-gray-500">Baca rantai pengamatan setiap bulan selama periode Februari {{ $tahun }} – Januari {{ $tahun + 1 }}.</p>
         </div>
 
         <form method="GET" action="{{ route('pengamatan.riwayat.index') }}" class="grid grid-cols-1 gap-4 p-6 md:grid-cols-3 xl:grid-cols-4"
@@ -50,7 +50,7 @@
                 }
             }">
             <div>
-                <label for="tahun" class="mb-2 block text-xs font-bold uppercase text-gray-500">Tahun</label>
+                <label for="tahun" class="mb-2 block text-xs font-bold uppercase text-gray-500">Tahun (Periode Feb–Jan)</label>
                 <input id="tahun" type="number" name="tahun" min="2000" max="2100" required value="{{ $tahun }}"
                     class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-emerald-500 focus:ring-emerald-500">
                 @error('tahun') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
@@ -116,13 +116,16 @@
         </form>
     </div>
 
+    @php
+        $hektare = fn ($value) => number_format((float) $value, 2);
+    @endphp
     <div class="mb-8 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
         <div class="border-b border-gray-100 bg-gray-50/50 px-6 py-4">
-            <h2 class="font-bold text-gray-900">Data Pengamatan {{ $tahun }}</h2>
-            <p class="mt-1 text-sm text-gray-500">{{ $recordCount }} baris perbandingan · luas serangan, pengendalian, dan sisa serangan dalam hektare.</p>
+            <h2 class="font-bold text-gray-900">Data Pengamatan Periode {{ $tahun }} (Februari {{ $tahun }} – Januari {{ $tahun + 1 }})</h2>
+            <p class="mt-1 text-sm text-gray-500">{{ $recordCount }} baris rantai · luas dalam hektare. Bulan tanpa input tetap ditampilkan dengan tambah serangan dan pengendalian 0.</p>
         </div>
         <div class="overflow-x-auto">
-            <table class="w-full min-w-[1500px] text-left text-sm">
+            <table class="w-full min-w-[2200px] text-left text-sm">
                 <thead class="border-b border-gray-200 bg-gray-100/70 text-xs uppercase text-gray-700">
                     <tr>
                         <th rowspan="2" class="border-r px-3 py-3">Bulan</th>
@@ -131,51 +134,61 @@
                         <th rowspan="2" class="border-r px-3 py-3">Kecamatan</th>
                         <th rowspan="2" class="border-r px-3 py-3">Komoditas</th>
                         <th rowspan="2" class="border-r px-3 py-3">Jenis OPT</th>
-                        <th colspan="4" class="border-r border-b px-3 py-2 text-center">Periode Sebelumnya (Ha)</th>
-                        <th colspan="5" class="border-b px-3 py-2 text-center">Periode Sekarang (Ha)</th>
+                        <th colspan="4" class="border-r border-b px-3 py-2 text-center">Bulan Lalu</th>
+                        <th colspan="3" class="border-r border-b px-3 py-2 text-center">Tambah Serangan Bulan Ini</th>
+                        <th colspan="3" class="border-r border-b px-3 py-2 text-center">Serangan Kumulatif</th>
+                        <th colspan="5" class="border-r border-b px-3 py-2 text-center">Pengendalian Bulan Ini</th>
+                        <th rowspan="2" class="px-3 py-3 text-center">Kondisi Serangan</th>
                     </tr>
                     <tr>
                         <th class="border-r px-3 py-2 text-center">Ringan</th>
                         <th class="border-r px-3 py-2 text-center">Berat</th>
-                        <th class="border-r border-b px-3 py-2 text-center">Jumlah</th>
-                        <th class="border-r border-b px-3 py-2 text-center">Sisa Serangan</th>
+                        <th class="border-r px-3 py-2 text-center">Jumlah</th>
+                        <th class="border-r px-3 py-2 text-center">Kondisi</th>
                         <th class="border-r px-3 py-2 text-center">Ringan</th>
                         <th class="border-r px-3 py-2 text-center">Berat</th>
                         <th class="border-r px-3 py-2 text-center">Jumlah</th>
-                        <th class="border-r px-3 py-2 text-center">Luas Pengendalian</th>
-                        <th class="px-3 py-2 text-center">Sisa Serangan</th>
+                        <th class="border-r px-3 py-2 text-center">Ringan</th>
+                        <th class="border-r px-3 py-2 text-center">Berat</th>
+                        <th class="border-r px-3 py-2 text-center">Jumlah</th>
+                        <th class="border-r px-3 py-2 text-center">APBD I</th>
+                        <th class="border-r px-3 py-2 text-center">APBD II</th>
+                        <th class="border-r px-3 py-2 text-center">Masyarakat</th>
+                        <th class="border-r px-3 py-2 text-center">APBN</th>
+                        <th class="border-r px-3 py-2 text-center">Jumlah</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach($data as $row)
                         @if($row->is_empty)
                             <tr class="border-b border-gray-100 bg-gray-50/70">
-                                <td class="whitespace-nowrap border-r px-3 py-3 font-semibold text-gray-700">{{ \Carbon\Carbon::create($tahun, $row->bulan, 1)->locale('id')->translatedFormat('F') }}</td>
-                                <td colspan="14" class="px-3 py-3 text-center text-gray-500">Belum ada data pengamatan pada bulan ini.</td>
+                                <td class="whitespace-nowrap border-r px-3 py-3 font-semibold text-gray-700">{{ $row->bulan_label }}</td>
+                                <td colspan="21" class="px-3 py-3 text-center text-gray-500">Belum ada data pengamatan pada bulan ini.</td>
                             </tr>
                         @else
                             <tr class="border-b border-gray-100 hover:bg-gray-50/70">
-                                <td class="whitespace-nowrap border-r px-3 py-3 font-semibold text-gray-700">{{ \Carbon\Carbon::create($tahun, $row->bulan, 1)->locale('id')->translatedFormat('F') }}</td>
+                                <td class="whitespace-nowrap border-r px-3 py-3 font-semibold text-gray-700">
+                                    {{ $row->bulan_label }}
+                                    @unless($row->ada_input)
+                                        <span class="mt-1 block text-xs font-normal text-amber-700">Tidak ada input</span>
+                                    @endunless
+                                </td>
                                 <td class="border-r px-3 py-3">{{ $row->kabupaten }}</td>
                                 <td class="border-r px-3 py-3">{{ $row->uppt }}</td>
                                 <td class="border-r px-3 py-3">{{ $row->kecamatan }}</td>
                                 <td class="border-r px-3 py-3">{{ $row->komoditas }}</td>
                                 <td class="border-r px-3 py-3">{{ $row->opt }}{{ $row->jenis_opt ? ' — '.$row->jenis_opt : '' }}</td>
-                                @foreach(['previous' => $row->previous, 'current' => $row->current] as $period => $snapshot)
-                                    @foreach(['ringan', 'berat', 'jumlah'] as $field)
-                                        <td class="border-r px-3 py-3 text-center {{ $field === 'jumlah' ? 'font-bold' : '' }}">
-                                            {{ $snapshot === null ? '—' : number_format($snapshot[$field], 2) }}
-                                        </td>
-                                    @endforeach
-                                    @if($period === 'current')
-                                        <td class="border-r px-3 py-3 text-center">
-                                            {{ $snapshot === null ? '—' : number_format($snapshot['pengendalian'], 2) }}
-                                        </td>
-                                    @endif
-                                    <td class="{{ $period === 'previous' ? 'border-r' : '' }} px-3 py-3 text-center font-semibold">
-                                        {{ $snapshot === null ? '—' : number_format($snapshot['kondisi_serangan'], 2) }}
+                                @foreach(['ringan', 'berat', 'jumlah', 'kondisi_serangan'] as $field)
+                                    <td class="border-r px-3 py-3 text-center {{ $field === 'jumlah' ? 'font-bold' : '' }}">
+                                        {{ $row->previous === null ? '—' : $hektare($row->previous[$field]) }}
                                     </td>
                                 @endforeach
+                                @foreach(['tambah_ringan', 'tambah_berat', 'tambah_jumlah', 'ringan', 'berat', 'jumlah', 'kendali_apbd_prov', 'kendali_apbd_kab', 'kendali_masyarakat', 'kendali_apbn', 'pengendalian'] as $field)
+                                    <td class="border-r px-3 py-3 text-center {{ in_array($field, ['tambah_jumlah', 'jumlah', 'pengendalian'], true) ? 'font-bold' : '' }}">
+                                        {{ $hektare($row->current[$field]) }}
+                                    </td>
+                                @endforeach
+                                <td class="whitespace-nowrap px-3 py-3 text-center font-semibold">{{ $row->current['kondisi_label'] }}</td>
                             </tr>
                         @endif
                     @endforeach

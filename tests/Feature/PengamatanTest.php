@@ -100,108 +100,253 @@ class PengamatanTest extends TestCase
         ]);
     }
 
-    public function test_continues_attack_and_condition_history_for_same_year_and_group(): void
+    /** @param array<string, mixed> $attributes */
+    private function createObservation(User $user, Komoditas $komoditas, Opt $opt, string $date, array $attributes = []): Pengamatan
     {
-        $uppt = $this->createUppt();
-        $popt = $this->createPopt($uppt);
+        $ringan = $attributes['serangan_ringan'] ?? 0;
+        $berat = $attributes['serangan_berat'] ?? 0;
+
+        return Pengamatan::create([
+            'user_id' => $user->id,
+            'uppt_id' => $user->uppt_id,
+            'komoditas_id' => $komoditas->id,
+            'opt_id' => $opt->id,
+            'tanggal_pengamatan' => $date,
+            'luas_komoditi_ha' => 10,
+            'serangan_jumlah' => $ringan + $berat,
+            ...$attributes,
+        ]);
+    }
+
+    public function test_history_continues_until_january_and_resets_every_february(): void
+    {
+        $popt = $this->createPopt($this->createUppt());
         $komoditas = Komoditas::create(['nama_komoditas' => 'Karet']);
         $opt = Opt::create(['nama_opt' => 'Gugur Daun']);
-        $common = [
-            'user_id' => $popt->id,
-            'uppt_id' => $uppt->id,
-            'komoditas_id' => $komoditas->id,
-            'opt_id' => $opt->id,
-            'luas_komoditi_ha' => 10,
-            'serangan_jumlah' => 0,
-        ];
-        Pengamatan::create($common + [
-            'tanggal_pengamatan' => '2026-01-10',
-            'serangan_ringan' => 2,
-            'serangan_berat' => 3,
-        ]);
+        $this->createObservation($popt, $komoditas, $opt, '2025-11-10', ['serangan_ringan' => 2, 'serangan_berat' => 3]);
+        $query = ['komoditas_id' => $komoditas->id, 'opt_id' => $opt->id];
 
-        $this->actingAs($popt)->getJson(route('pengamatan.history', [
-            'tanggal_pengamatan' => '2026-02-10',
-            'komoditas_id' => $komoditas->id,
-            'opt_id' => $opt->id,
-        ]))->assertOk()->assertJsonPath('summary.serangan_ringan', 2)->assertJsonPath('summary.serangan_berat', 3)->assertJsonPath('summary.kondisi_serangan', 5);
+        $january = $this->actingAs($popt)->getJson(route('pengamatan.history', $query + ['tanggal_pengamatan' => '2026-01-20']));
+        $february = $this->getJson(route('pengamatan.history', $query + ['tanggal_pengamatan' => '2026-02-10']));
 
-        $this->actingAs($popt)->getJson(route('pengamatan.history', [
-            'tanggal_pengamatan' => '2027-02-10',
-            'komoditas_id' => $komoditas->id,
-            'opt_id' => $opt->id,
-        ]))->assertOk()
+        $january->assertOk()
+            ->assertJsonPath('summary.serangan_ringan', 2)
+            ->assertJsonPath('summary.serangan_berat', 3)
+            ->assertJsonPath('summary.kondisi_serangan', 5);
+        $february->assertOk()
             ->assertJsonPath('summary.serangan_jumlah', 0)
-            ->assertJsonPath('summary.luas_komoditi_ha', 0);
+            ->assertJsonPath('summary.luas_komoditi_ha', 0)
+            ->assertJsonPath('summary.kondisi_serangan', 0);
+    }
 
-        $this->actingAs($popt)->post('/pengamatan', [
-            'tanggal_pengamatan' => '2026-02-10',
-            'komoditas_id' => $komoditas->id,
-            'opt_id' => $opt->id,
-            'luas_komoditi_ha' => 10,
-            'serangan_ringan' => 2,
-            'kendali_apbd_kab' => 3,
-        ])->assertRedirect(route('dashboard'));
+    public function test_history_separates_chains_by_child_opt(): void
+    {
+        $popt = $this->createPopt($this->createUppt());
+        $komoditas = Komoditas::create(['nama_komoditas' => 'Karet']);
+        $opt = Opt::create(['nama_opt' => 'Gugur Daun']);
+        $jenis = JenisOpt::create(['opt_id' => $opt->id, 'nama_jenis_opt' => 'Jenis Turunan']);
+        $this->createObservation($popt, $komoditas, $opt, '2026-02-10', ['serangan_ringan' => 4]);
 
-        $this->actingAs($popt)->post('/pengamatan', [
+        $response = $this->actingAs($popt)->getJson(route('pengamatan.history', [
             'tanggal_pengamatan' => '2026-03-10',
             'komoditas_id' => $komoditas->id,
             'opt_id' => $opt->id,
-            'luas_komoditi_ha' => 10,
-            'kendali_apbd_kab' => 10,
-        ])->assertRedirect(route('dashboard'));
+            'jenis_opt_id' => $jenis->id,
+        ]));
 
-        $jenis = JenisOpt::create(['opt_id' => $opt->id, 'nama_jenis_opt' => 'Jenis Turunan']);
-        $this->actingAs($popt)->getJson(route('pengamatan.history', [
-            'tanggal_pengamatan' => '2026-02-10',
+        $response->assertOk()->assertJsonPath('summary.serangan_jumlah', 0);
+    }
+
+    public function test_history_for_an_edited_observation_excludes_itself_after_moving_its_date(): void
+    {
+        $popt = $this->createPopt($this->createUppt());
+        $komoditas = Komoditas::create(['nama_komoditas' => 'Karet']);
+        $opt = Opt::create(['nama_opt' => 'Gugur Daun']);
+        $edited = $this->createObservation($popt, $komoditas, $opt, '2026-02-10', ['serangan_ringan' => 2]);
+        $this->createObservation($popt, $komoditas, $opt, '2026-03-10', ['serangan_ringan' => 3]);
+
+        $response = $this->actingAs($popt)->getJson(route('pengamatan.history', [
+            'pengamatan_id' => $edited->id,
+            'tanggal_pengamatan' => '2026-04-10',
             'komoditas_id' => $komoditas->id,
             'opt_id' => $opt->id,
-            'jenis_opt_id' => $jenis->id,
-        ]))->assertOk()->assertJsonPath('summary.serangan_jumlah', 0);
+        ]));
 
-        $history = app(PengamatanHistoryService::class);
-        $rows = Pengamatan::query()->orderBy('tanggal_pengamatan')->orderBy('id')->get();
-        $history->attachRunningTotals($rows);
-
-        $this->assertSame(7.0, (float) $rows->get(1)->serangan_jumlah_berjalan);
-        $this->assertSame(4.0, (float) $rows->get(1)->kondisi_serangan_ha);
-        $this->assertSame(0.0, (float) $rows->last()->kondisi_serangan_ha);
-        $this->assertSame(3.0, (float) $rows->get(1)->kendali_apbd_kab);
-        $this->assertSame(10.0, (float) $rows->last()->kendali_apbd_kab);
+        $response->assertOk()->assertJsonPath('summary.kondisi_serangan', 3);
     }
 
     public function test_calculates_condition_as_two_previous_plus_three_new_minus_two_control(): void
     {
-        $uppt = $this->createUppt();
-        $popt = $this->createPopt($uppt);
+        $popt = $this->createPopt($this->createUppt());
         $komoditas = Komoditas::create(['nama_komoditas' => 'Karet']);
         $opt = Opt::create(['nama_opt' => 'Gugur Daun']);
-        $common = [
-            'user_id' => $popt->id,
-            'uppt_id' => $uppt->id,
-            'komoditas_id' => $komoditas->id,
-            'opt_id' => $opt->id,
-            'luas_komoditi_ha' => 10,
-            'serangan_jumlah' => 0,
-        ];
-
-        Pengamatan::create($common + [
-            'tanggal_pengamatan' => '2026-01-10',
-            'serangan_ringan' => 2,
-            'serangan_berat' => 0,
-        ]);
-        Pengamatan::create($common + [
-            'tanggal_pengamatan' => '2026-02-10',
-            'serangan_ringan' => 3,
-            'serangan_berat' => 0,
-            'kendali_apbd_kab' => 2,
-        ]);
+        $this->createObservation($popt, $komoditas, $opt, '2026-02-10', ['serangan_ringan' => 2]);
+        $this->createObservation($popt, $komoditas, $opt, '2026-03-10', ['serangan_ringan' => 3, 'kendali_apbd_kab' => 2]);
 
         $rows = Pengamatan::query()->orderBy('tanggal_pengamatan')->get();
         app(PengamatanHistoryService::class)->attachRunningTotals($rows);
 
         $this->assertSame(5.0, (float) $rows->last()->serangan_jumlah_berjalan);
         $this->assertSame(3.0, (float) $rows->last()->kondisi_serangan_ha);
+    }
+
+    public function test_rejects_control_larger_than_previous_condition_plus_new_attack(): void
+    {
+        $popt = $this->createPopt($this->createUppt());
+        $komoditas = Komoditas::create(['nama_komoditas' => 'Karet']);
+        $opt = Opt::create(['nama_opt' => 'Gugur Daun']);
+        $this->createObservation($popt, $komoditas, $opt, '2026-02-10', ['serangan_ringan' => 2]);
+        $payload = [
+            'tanggal_pengamatan' => '2026-03-10',
+            'komoditas_id' => $komoditas->id,
+            'opt_id' => $opt->id,
+            'luas_komoditi_ha' => 10,
+            'serangan_berat' => 1,
+            'kendali_apbd_kab' => 3,
+        ];
+
+        $rejected = $this->actingAs($popt)->post('/pengamatan', [...$payload, 'kendali_masyarakat' => 0.5]);
+        $rejected->assertSessionHasErrors(['pengendalian' => 'Total pengendalian melebihi luas serangan yang ada. Maksimal 3 Ha (kondisi sebelumnya + tambah serangan).']);
+        $this->assertDatabaseCount('pengamatans', 1);
+
+        $accepted = $this->post('/pengamatan', $payload);
+
+        $accepted->assertRedirect(route('dashboard'))->assertSessionHasNoErrors();
+        $this->assertDatabaseCount('pengamatans', 2);
+        $this->assertDatabaseHas('pengamatans', ['kendali_apbd_kab' => 3, 'kendali_masyarakat' => 0, 'serangan_berat' => 1]);
+    }
+
+    public function test_allows_attack_larger_than_commodity_area(): void
+    {
+        $popt = $this->createPopt($this->createUppt());
+        $komoditas = Komoditas::create(['nama_komoditas' => 'Karet']);
+        $opt = Opt::create(['nama_opt' => 'Gugur Daun']);
+        $this->createObservation($popt, $komoditas, $opt, '2026-02-10', ['serangan_ringan' => 8]);
+
+        $response = $this->actingAs($popt)->post('/pengamatan', [
+            'tanggal_pengamatan' => '2026-03-10',
+            'komoditas_id' => $komoditas->id,
+            'opt_id' => $opt->id,
+            'luas_komoditi_ha' => 10,
+            'serangan_berat' => 7,
+        ]);
+
+        $response->assertRedirect(route('dashboard'))->assertSessionHasNoErrors();
+        $this->assertDatabaseHas('pengamatans', ['serangan_berat' => 7, 'serangan_jumlah' => 7]);
+    }
+
+    public function test_rejects_update_that_makes_a_later_condition_negative(): void
+    {
+        $popt = $this->createPopt($this->createUppt());
+        $komoditas = Komoditas::create(['nama_komoditas' => 'Karet']);
+        $opt = Opt::create(['nama_opt' => 'Gugur Daun']);
+        $february = $this->createObservation($popt, $komoditas, $opt, '2026-02-10', ['serangan_ringan' => 5]);
+        $this->createObservation($popt, $komoditas, $opt, '2026-03-15', ['kendali_apbd_kab' => 4]);
+
+        $response = $this->actingAs($popt)->put(route('pengamatan.update', $february), [
+            'tanggal_pengamatan' => '2026-02-10',
+            'komoditas_id' => $komoditas->id,
+            'opt_id' => $opt->id,
+            'luas_komoditi_ha' => 10,
+            'serangan_ringan' => 2,
+        ]);
+
+        $response->assertSessionHasErrors(['pengendalian' => 'Perubahan ini membuat kondisi serangan pada pengamatan tanggal 15 Maret 2026 menjadi minus (pengendalian maksimal di tanggal tersebut 2 Ha).']);
+        $this->assertSame(5.0, (float) $february->fresh()->serangan_ringan);
+    }
+
+    public function test_rejects_deleting_an_observation_that_later_controls_depend_on(): void
+    {
+        $popt = $this->createPopt($this->createUppt());
+        $komoditas = Komoditas::create(['nama_komoditas' => 'Karet']);
+        $opt = Opt::create(['nama_opt' => 'Gugur Daun']);
+        $february = $this->createObservation($popt, $komoditas, $opt, '2026-02-10', ['serangan_ringan' => 5]);
+        $march = $this->createObservation($popt, $komoditas, $opt, '2026-03-15', ['kendali_apbd_kab' => 4]);
+
+        $rejected = $this->actingAs($popt)->from(route('dashboard'))->delete(route('pengamatan.destroy', $february));
+        $rejected->assertRedirect(route('dashboard'))
+            ->assertSessionHas('error', 'Data tidak dapat dihapus karena kondisi serangan pada pengamatan tanggal 15 Maret 2026 akan menjadi minus. Ubah pengendalian pada tanggal tersebut terlebih dahulu.');
+        $this->assertModelExists($february);
+
+        $accepted = $this->delete(route('pengamatan.destroy', $march));
+
+        $accepted->assertRedirect(route('dashboard'))->assertSessionHas('success');
+        $this->assertModelMissing($march);
+    }
+
+    public function test_admin_edit_lists_kecamatans_of_the_observation_uppt(): void
+    {
+        $uppt = $this->createUppt();
+        $popt = $this->createPopt($uppt);
+        $kecamatan = Kecamatan::create(['nama_kecamatan' => 'Kecamatan Pengamatan', 'uppt_id' => $uppt->id]);
+        $komoditas = Komoditas::create(['nama_komoditas' => 'Karet']);
+        $opt = Opt::create(['nama_opt' => 'Gugur Daun']);
+        $pengamatan = $this->createObservation($popt, $komoditas, $opt, '2026-02-10', ['kecamatan_id' => $kecamatan->id]);
+
+        $response = $this->actingAs($this->createAdmin())->get(route('pengamatan.edit', $pengamatan));
+
+        $response->assertOk()->assertSee('Kecamatan Pengamatan');
+    }
+
+    public function test_rejects_update_with_kecamatan_from_another_uppt(): void
+    {
+        $uppt = $this->createUppt();
+        $otherUppt = Uppt::create(['nama_uppt' => 'UPPT Lain', 'kabupaten_id' => $uppt->kabupaten_id]);
+        $popt = $this->createPopt($uppt);
+        $kecamatan = Kecamatan::create(['nama_kecamatan' => 'Kecamatan Pengamatan', 'uppt_id' => $uppt->id]);
+        $otherKecamatan = Kecamatan::create(['nama_kecamatan' => 'Kecamatan Lain', 'uppt_id' => $otherUppt->id]);
+        $komoditas = Komoditas::create(['nama_komoditas' => 'Karet']);
+        $opt = Opt::create(['nama_opt' => 'Gugur Daun']);
+        $pengamatan = $this->createObservation($popt, $komoditas, $opt, '2026-02-10', ['kecamatan_id' => $kecamatan->id]);
+
+        $response = $this->actingAs($this->createAdmin())->put(route('pengamatan.update', $pengamatan), [
+            'tanggal_pengamatan' => '2026-02-10',
+            'kecamatan_id' => $otherKecamatan->id,
+            'komoditas_id' => $komoditas->id,
+            'opt_id' => $opt->id,
+            'luas_komoditi_ha' => 10,
+        ]);
+
+        $response->assertSessionHasErrors(['kecamatan_id']);
+        $this->assertSame($kecamatan->id, $pengamatan->fresh()->kecamatan_id);
+    }
+
+    public function test_forbids_updating_another_uppt_observation_before_validating_it(): void
+    {
+        $uppt = $this->createUppt();
+        $otherPopt = $this->createPopt(Uppt::create(['nama_uppt' => 'UPPT Lain', 'kabupaten_id' => $uppt->kabupaten_id]));
+        $komoditas = Komoditas::create(['nama_komoditas' => 'Karet']);
+        $opt = Opt::create(['nama_opt' => 'Gugur Daun']);
+        $pengamatan = $this->createObservation($this->createPopt($uppt), $komoditas, $opt, '2026-02-10', ['serangan_ringan' => 5]);
+        $this->createObservation($this->createPopt($uppt), $komoditas, $opt, '2026-03-15', ['kendali_apbd_kab' => 4]);
+
+        $response = $this->actingAs($otherPopt)->put(route('pengamatan.update', $pengamatan), [
+            'tanggal_pengamatan' => '2026-02-10',
+            'komoditas_id' => $komoditas->id,
+            'opt_id' => $opt->id,
+            'luas_komoditi_ha' => 10,
+        ]);
+
+        $response->assertForbidden()->assertSessionHasNoErrors();
+        $this->assertSame(5.0, (float) $pengamatan->fresh()->serangan_ringan);
+    }
+
+    public function test_rejects_values_with_more_than_two_decimal_places(): void
+    {
+        $komoditas = Komoditas::create(['nama_komoditas' => 'Karet']);
+        $opt = Opt::create(['nama_opt' => 'Gugur Daun']);
+
+        $response = $this->actingAs($this->createPopt($this->createUppt()))->post('/pengamatan', [
+            'tanggal_pengamatan' => '2026-03-10',
+            'komoditas_id' => $komoditas->id,
+            'opt_id' => $opt->id,
+            'luas_komoditi_ha' => 10.125,
+            'serangan_ringan' => 1.005,
+            'kendali_apbd_kab' => 0.5,
+        ]);
+
+        $response->assertSessionHasErrors(['luas_komoditi_ha', 'serangan_ringan'])->assertSessionDoesntHaveErrors('kendali_apbd_kab');
+        $this->assertDatabaseCount('pengamatans', 0);
     }
 
     public function test_requires_and_saves_a_child_opt_when_parent_has_child_types(): void

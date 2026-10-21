@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use Carbon\CarbonInterface;
+use Illuminate\Database\Eloquent\Attributes\Scope;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -20,6 +23,16 @@ class Pengamatan extends Model
         return [
             'tanggal_pengamatan' => 'date',
         ];
+    }
+
+    /**
+     * Batasi pengamatan pada rentang tanggal (inklusif di kedua ujung).
+     */
+    #[Scope]
+    protected function observedBetween(Builder $query, CarbonInterface $from, CarbonInterface $until): void
+    {
+        $query->whereDate('tanggal_pengamatan', '>=', $from->toDateString())
+            ->whereDate('tanggal_pengamatan', '<=', $until->toDateString());
     }
 
     public function uppt(): BelongsTo

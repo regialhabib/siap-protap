@@ -24,7 +24,7 @@
     <tr>
         <td></td>
         <td colspan="2" style="font-weight: bold;">Tahun Laporan</td>
-        <td colspan="14">: {{ $tahun }}</td>
+        <td colspan="14">: {{ $tahun }} (Februari {{ $tahun }} – Januari {{ $tahun + 1 }})</td>
         <td></td>
     </tr>
     <tr><td colspan="18" style="height: 10px;"></td></tr>
@@ -99,13 +99,18 @@
     </tr>
     <tr>
         <td colspan="10"></td>
-        <td colspan="7" style="text-align: center;">Petugas Pengamat,</td>
+        <td colspan="7" style="text-align: center;">Pejabat Berwenang,</td>
         <td></td>
     </tr>
     <tr><td colspan="18" style="height: 60px;"></td></tr>
     <tr>
         <td colspan="10"></td>
         <td colspan="7" style="text-align: center;">( ........................................ )</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td colspan="10"></td>
+        <td colspan="7" style="text-align: center;">NIP. ........................................</td>
         <td></td>
     </tr>
     <tr>

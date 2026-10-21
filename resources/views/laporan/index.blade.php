@@ -1,41 +1,28 @@
 <x-app-layout>
+    @php
+        $periode = \App\Services\PeriodePengamatan::forDate(\Carbon\Carbon::create($tahun, $bulan, 1));
+        $hektare = fn ($value) => \App\Services\PengamatanHistoryService::hektare((float) $value);
+    @endphp
+
     <!-- Filter Form -->
     <div class="mb-6 bg-white rounded-xl border border-gray-200 shadow-sm mt-6 overflow-visible">
         <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50 rounded-t-xl">
             <h2 class="font-bold text-xl text-gray-800 leading-tight tracking-tight">
-                Filter Laporan {{ ucfirst($jenis) }}
+                Filter Laporan Bulanan
             </h2>
+            <p class="mt-1 text-sm text-gray-500">Luas serangan dan pengendalian bulan ini saja; kondisi serangan adalah posisi akhir bulan pada periode {{ $periode }} (Februari–Januari).</p>
         </div>
         <div class="p-6">
-            <form id="filterForm" method="GET" action="{{ route($jenis === 'triwulan' ? 'laporan.triwulan' : 'laporan.index') }}" class="grid grid-cols-1 md:grid-cols-6 gap-4" autocomplete="off"
-                  x-data="{ 
-                      jenis: '{{ $jenis }}', 
-                      bulan_awal: @js((int) $bulan_awal),
-                      bulan_tengah: @js((int) $bulan_tengah),
-                      bulan_akhir: @js((int) $bulan_akhir),
+            <form id="filterForm" method="GET" action="{{ route('laporan.index') }}" class="grid grid-cols-1 md:grid-cols-5 gap-4" autocomplete="off"
+                  x-data="{
                       uppt_id: @js((string) $uppt_id),
                       openUpptOptions: false,
                       upptSearch: '',
                       upptOptions: @js($uppts->map(fn ($uppt) => ['id' => (string) $uppt->id, 'name' => $uppt->nama_uppt])->values()),
-                      kecamatans: {{ Js::from($kecamatans) }}, 
-                      kecamatan_id: '{{ request('kecamatan_id') }}',
+                      kecamatans: {{ Js::from($kecamatans) }},
+                      kecamatan_id: @js((string) $kecamatan_id),
                       get filteredUpptOptions() {
                           return this.upptOptions.filter(option => option.name.toLowerCase().includes(this.upptSearch.toLowerCase()));
-                      },
-                      get isQuarterRangeValid() {
-                          return Number(this.bulan_tengah) === Number(this.bulan_awal) + 1
-                              && Number(this.bulan_akhir) === Number(this.bulan_tengah) + 1;
-                      },
-                      validateQuarterRange() {
-                          this.clearQuarterValidity();
-                          if (this.jenis === 'triwulan' && !this.isQuarterRangeValid) {
-                              this.$refs.bulanAwal.setCustomValidity('Pilih tiga bulan yang berbeda dan berurutan.');
-                          }
-                      },
-                      clearQuarterValidity() {
-                          this.$refs.bulanAwal?.setCustomValidity('');
-                          this.$refs.bulanTengah?.setCustomValidity('');
-                          this.$refs.bulanAkhir?.setCustomValidity('');
                       },
                       selectUppt(option) {
                           this.uppt_id = option.id;
@@ -45,7 +32,7 @@
                           this.fetchKecamatans();
                       },
                       fetchKecamatans() {
-                          if(!this.uppt_id) {
+                          if (!this.uppt_id) {
                               this.kecamatans = [];
                               this.kecamatan_id = '';
                               return;
@@ -54,16 +41,14 @@
                               .then(res => res.json())
                               .then(data => {
                                   this.kecamatans = data;
-                                  // if currently selected kecamatan_id is not in new list, reset it
-                                  if(!data.find(k => k.id == this.kecamatan_id)) {
+                                  if (!data.find(k => k.id == this.kecamatan_id)) {
                                       this.kecamatan_id = '';
                                   }
                               });
                       }
                   }"
                   x-init="upptSearch = upptOptions.find(option => option.id === uppt_id)?.name ?? ''"
-                  @submit="if (jenis === 'triwulan' && !isQuarterRangeValid) { $event.preventDefault(); validateQuarterRange(); $refs.bulanAwal.reportValidity(); } else { clearQuarterValidity(); if (!uppt_id) { $event.preventDefault(); $refs.upptSearch.setCustomValidity('Pilih wilayah UPPT dari daftar.'); $refs.upptSearch.reportValidity(); } }">
-            @if($jenis === 'bulanan')
+                  @submit="if (!uppt_id) { $event.preventDefault(); $refs.upptSearch.setCustomValidity('Pilih wilayah UPPT dari daftar.'); $refs.upptSearch.reportValidity(); }">
             <div>
                 <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Bulan</label>
                 <select name="bulan" class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 text-sm">
@@ -74,32 +59,11 @@
                     @endforeach
                 </select>
             </div>
-            @else
-            @foreach(['bulan_awal' => 'Bulan Pertama', 'bulan_tengah' => 'Bulan Kedua', 'bulan_akhir' => 'Bulan Ketiga'] as $field => $label)
-            <div>
-                <label for="{{ $field }}" class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">{{ $label }}</label>
-                <select id="{{ $field }}" name="{{ $field }}" x-model="{{ $field }}" x-ref="{{ $field === 'bulan_awal' ? 'bulanAwal' : ($field === 'bulan_tengah' ? 'bulanTengah' : 'bulanAkhir') }}" @change="validateQuarterRange()" required :aria-invalid="(!isQuarterRangeValid).toString()" class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 text-sm">
-                    @foreach(range(1, 12) as $month)
-                        <option value="{{ $month }}" {{ (int) old($field, $$field) === $month ? 'selected' : '' }}>
-                            {{ \Carbon\Carbon::create()->month($month)->translatedFormat('F') }}
-                        </option>
-                    @endforeach
-                </select>
-                @error($field)
-                    <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-                @enderror
-            </div>
-            @endforeach
-            <p x-cloak x-show="!isQuarterRangeValid" role="alert" class="text-sm font-medium text-red-600 md:col-span-3">
-                Pilih tiga bulan yang berbeda dan berurutan, misalnya Februari, Maret, April.
-            </p>
-            @endif
 
-            <!-- Filter Tahun (Selalu Muncul) -->
             <div>
                 <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Tahun</label>
                 <select name="tahun" class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 text-sm">
-                    @foreach(range(date('Y'), date('Y') - 5) as $y)
+                    @foreach(range(date('Y') + 1, date('Y') - 5) as $y)
                         <option value="{{ $y }}" {{ $tahun == $y ? 'selected' : '' }}>{{ $y }}</option>
                     @endforeach
                 </select>
@@ -156,83 +120,28 @@
     </div>
 
     <!-- Tabel Data -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-8" x-data="{ 
-        search: '{{ request('search') }}',
-        loading: false,
-        updateTable() {
-            this.loading = true;
-            let url = new URL(window.location.href);
-            if(this.search) {
-                url.searchParams.set('search', this.search);
-            } else {
-                url.searchParams.delete('search');
-            }
-            fetch(url, { headers: {'X-Requested-With': 'XMLHttpRequest'} })
-                .then(res => res.text())
-                .then(html => {
-                    let doc = new DOMParser().parseFromString(html, 'text/html');
-                    document.getElementById('table-container').innerHTML = doc.getElementById('table-container').innerHTML;
-                    this.loading = false;
-                    window.history.pushState({}, '', url);
-                });
-        }
-    }">
-        
-        <!-- Header Tabel & Export -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-8">
         <div class="px-6 py-4 border-b border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-gray-50/50">
             <div>
                 <h3 class="font-bold text-gray-900">
-                    Laporan {{ ucfirst($jenis) }} 
-                    @if($jenis == 'bulanan') 
-                        {{ \Carbon\Carbon::create()->month((int)$bulan)->translatedFormat('F') }} 
-                    @elseif($jenis == 'triwulan')
-                        {{ \Carbon\Carbon::create()->month((int) $bulan_awal)->translatedFormat('F') }}–{{ \Carbon\Carbon::create()->month((int) $bulan_akhir)->translatedFormat('F') }}
-                    @endif
-                    {{ $tahun }}
+                    Laporan Bulanan {{ \Carbon\Carbon::create()->month((int) $bulan)->translatedFormat('F') }} {{ $tahun }}
                 </h3>
-                <p class="text-sm text-gray-500 mt-1">Ditemukan {{ $data->total() }} data pengamatan.</p>
-                @if($jenis === 'triwulan' && ! $reportAvailable)
-                    <p class="mt-2 text-sm font-medium text-amber-700">Laporan belum tersedia karena data tiga bulan belum lengkap.</p>
-                @endif
+                <p class="text-sm text-gray-500 mt-1">Ditemukan {{ $data->total() }} rantai pengamatan.</p>
             </div>
-            
-            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
-                <div class="relative hidden">
-                    <input type="text" x-model.debounce.500ms="search" @input="updateTable()" placeholder="Cari data laporan..." class="block w-full sm:w-64 pl-10 pr-10 py-2 border-gray-300 rounded-lg shadow-sm focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm">
-                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                    </div>
-                    <!-- Tombol Hapus / Clear -->
-                    <button type="button" x-cloak x-show="search.length > 0 && !loading" @click="search = ''; updateTable()" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 focus:outline-none">
-                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                    </button>
-                    <!-- Spinner Loading -->
-                    <div x-show="loading" class="absolute inset-y-0 right-0 pr-3 flex items-center" style="display: none;">
-                        <svg class="animate-spin h-4 w-4 text-emerald-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                    </div>
-                </div>
 
-                <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-                    <!-- Export PDF -->
-                    @if($uppt_id && $reportAvailable)
-                    <a href="{{ route($jenis === 'triwulan' ? 'laporan.export.triwulan.pdf' : 'laporan.export.pdf', request()->query()) }}" target="_blank" rel="noopener noreferrer" class="w-full sm:w-auto justify-center inline-flex items-center px-4 py-2 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 text-sm font-bold rounded-lg shadow-sm transition-colors">
-                        <svg class="w-4 h-4 mr-2 text-red-500" fill="currentColor" viewBox="0 0 384 512"><path d="M369.9 97.9L286 14C277 5 264.8-.1 252.1-.1H48C21.5 0 0 21.5 0 48v416c0 26.5 21.5 48 48 48h288c26.5 0 48-21.5 48-48V131.9c0-12.7-5.1-25-14.1-34zM332.1 128H256V51.9l76.1 76.1zM48 464V48h160v104c0 13.3 10.7 24 24 24h104v288H48zm250.2-143.7c-12.2-12-47-8.7-64.4-6.5-17.2-10.5-28.7-25-36.8-46.3 3.9-16.1 10.1-40.6 5.4-56-4.2-13.6-21.6-13.6-24-11.3-4.3 4.3-8.8 15.6-8.8 35 0 17 6.1 36.4 12.8 52.8-15.5 35-37.1 66.8-59.5 83.1-23.7 17.3-43 27-46.9 29.8-13.6 9.8-12.5 30.2 4.1 30.2 11 0 28.5-8.8 46.9-29.2 19.3-21.4 39.5-62 55.4-106.6 22 2.9 50.8 7.4 69 7.4 20.3 0 36.1-5.1 43.1-13.1 7.2-8.3 7.5-22.3 3.7-29.3zm-192.4 56.6c10.8-9 22.9-21.7 32.7-36.5-19.1 17.6-32.9 31.9-32.7 36.5zm82.8-135.5c2.3-15.1 6.5-24.1 9.7-24.1 3.2 0 5.4 6.9 5.4 17.3 0 6.6-1.5 13.8-3.4 20.8-3.9-5.3-8.1-10.2-11.7-14zM218.4 290c-9.5 21.6-21 41.8-34 58.7 8.1-18.7 18.2-37.7 29.1-52.9 2-2.7 3.9-5.1 4.9-5.8zm73.9 3.2c-5 4.8-16.8 5.7-34.9 5.7-9.5 0-21.4-.7-32.5-2.2 17.9-10.4 31.3-17.6 39-17.6 6 0 10.2 3.4 10.2 7.7 0 1.9-4.8 5.4-21.8 6.4z"/></svg>
+            <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                @if($uppt_id)
+                    <a href="{{ route('laporan.export.pdf', request()->query()) }}" target="_blank" rel="noopener noreferrer" class="w-full sm:w-auto justify-center inline-flex items-center px-4 py-2 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 text-sm font-bold rounded-lg shadow-sm transition-colors">
                         Cetak PDF
                     </a>
-                    @else
-                    <button type="button" disabled title="{{ $reportAvailable ? 'Pilih UPPT dan tampilkan laporan terlebih dahulu' : 'Data tiga bulan belum lengkap' }}" class="w-full sm:w-auto justify-center inline-flex items-center px-4 py-2 bg-gray-100 border border-gray-300 text-gray-400 text-sm font-bold rounded-lg cursor-not-allowed">Cetak PDF</button>
-                    @endif
-                    
-                    <!-- Export Excel -->
-                    @if($uppt_id && $reportAvailable)
-                    <a href="{{ route($jenis === 'triwulan' ? 'laporan.export.triwulan.excel' : 'laporan.export.excel', request()->query()) }}" class="w-full sm:w-auto justify-center inline-flex items-center px-4 py-2 bg-emerald-600 text-white hover:bg-emerald-700 text-sm font-bold rounded-lg shadow-sm transition-colors shadow-emerald-500/20">
+                    <a href="{{ route('laporan.export.excel', request()->query()) }}" class="w-full sm:w-auto justify-center inline-flex items-center px-4 py-2 bg-emerald-600 text-white hover:bg-emerald-700 text-sm font-bold rounded-lg shadow-sm transition-colors shadow-emerald-500/20">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
                         Unduh Excel
                     </a>
-                    @else
-                    <button type="button" disabled title="{{ $reportAvailable ? 'Pilih UPPT dan tampilkan laporan terlebih dahulu' : 'Data tiga bulan belum lengkap' }}" class="w-full sm:w-auto justify-center inline-flex items-center px-4 py-2 bg-gray-100 border border-gray-300 text-gray-400 text-sm font-bold rounded-lg cursor-not-allowed">Unduh Excel</button>
-                    @endif
-                </div>
+                @else
+                    <button type="button" disabled title="Pilih UPPT dan tampilkan laporan terlebih dahulu" class="w-full sm:w-auto justify-center inline-flex items-center px-4 py-2 bg-gray-100 border border-gray-300 text-gray-400 text-sm font-bold rounded-lg cursor-not-allowed">Cetak PDF</button>
+                    <button type="button" disabled title="Pilih UPPT dan tampilkan laporan terlebih dahulu" class="w-full sm:w-auto justify-center inline-flex items-center px-4 py-2 bg-gray-100 border border-gray-300 text-gray-400 text-sm font-bold rounded-lg cursor-not-allowed">Unduh Excel</button>
+                @endif
             </div>
         </div>
 
@@ -245,17 +154,17 @@
                         <th rowspan="2" class="px-4 py-3 border-r border-gray-200">Komoditas</th>
                         <th rowspan="2" class="px-4 py-3 border-r border-gray-200">OPT</th>
                         <th rowspan="2" class="px-4 py-3 border-r border-gray-200">Luas (Ha)</th>
-                        <th colspan="3" class="px-4 py-2 border-r border-gray-200 text-center border-b">Luas Serangan (Ha)</th>
-                        <th colspan="5" class="px-4 py-2 border-r border-gray-200 text-center border-b">Luas Pengendalian (Ha)</th>
+                        <th colspan="3" class="px-4 py-2 border-r border-gray-200 text-center border-b">Luas Serangan Bulan Ini (Ha)</th>
+                        <th colspan="5" class="px-4 py-2 border-r border-gray-200 text-center border-b">Luas Pengendalian Bulan Ini (Ha)</th>
                         <th rowspan="2" class="px-4 py-3">Kondisi Serangan</th>
                     </tr>
                     <tr>
                         <th class="px-3 py-2 border-r border-gray-200 text-center bg-yellow-50/50">R</th>
                         <th class="px-3 py-2 border-r border-gray-200 text-center bg-red-50/50">B</th>
                         <th class="px-3 py-2 border-r border-gray-200 text-center font-bold">JML</th>
-                        
-                        <th class="px-3 py-2 border-r border-gray-200 text-center bg-blue-50/50">Kab</th>
-                        <th class="px-3 py-2 border-r border-gray-200 text-center bg-blue-50/50">Prov</th>
+
+                        <th class="px-3 py-2 border-r border-gray-200 text-center bg-blue-50/50">APBD I</th>
+                        <th class="px-3 py-2 border-r border-gray-200 text-center bg-blue-50/50">APBD II</th>
                         <th class="px-3 py-2 border-r border-gray-200 text-center bg-blue-50/50">Masy</th>
                         <th class="px-3 py-2 border-r border-gray-200 text-center bg-blue-50/50">APBN</th>
                         <th class="px-3 py-2 border-r border-gray-200 text-center font-bold">JML</th>
@@ -264,28 +173,32 @@
                 <tbody>
                     @forelse($data as $d)
                         <tr class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                            <td class="px-4 py-3 border-r border-gray-100 text-center">{{ $loop->iteration }}</td>
-                            <td class="px-4 py-3 border-r border-gray-100 font-medium text-gray-900">{{ $d->uppt->nama_uppt ?? '-' }}{{ $d->kecamatan ? ' / ' . $d->kecamatan->nama_kecamatan : '' }}</td>
+                            <td class="px-4 py-3 border-r border-gray-100 text-center">{{ $data->firstItem() + $loop->index }}</td>
+                            <td class="px-4 py-3 border-r border-gray-100 font-medium text-gray-900">
+                                {{ $d->uppt->nama_uppt ?? '-' }}{{ $d->kecamatan ? ' / ' . $d->kecamatan->nama_kecamatan : '' }}
+                                @unless($d->ada_input)
+                                    <span class="mt-1 block text-xs font-normal text-amber-700">Tidak ada input bulan ini</span>
+                                @endunless
+                            </td>
                             <td class="px-4 py-3 border-r border-gray-100">{{ $d->komoditas->nama_komoditas ?? '-' }}</td>
                             <td class="px-4 py-3 border-r border-gray-100">{{ $d->opt->nama_opt ?? '-' }}{{ $d->jenisOpt ? ' — '.$d->jenisOpt->nama_jenis_opt : '' }}</td>
-                            <td class="px-4 py-3 border-r border-gray-100 font-bold text-center">{{ floatval($d->luas_komoditi_ha) }}</td>
-                            
-                            <td class="px-3 py-3 border-r border-gray-100 text-center">{{ floatval($d->serangan_ringan) }}</td>
-                            <td class="px-3 py-3 border-r border-gray-100 text-center">{{ floatval($d->serangan_berat) }}</td>
-                            <td class="px-3 py-3 border-r border-gray-200 font-bold text-center bg-gray-50">{{ floatval($d->serangan_jumlah) }}</td>
-                            
-                            <td class="px-3 py-3 border-r border-gray-100 text-center">{{ floatval($d->kendali_apbd_kab) }}</td>
-                            <td class="px-3 py-3 border-r border-gray-100 text-center">{{ floatval($d->kendali_apbd_prov) }}</td>
-                            <td class="px-3 py-3 border-r border-gray-100 text-center">{{ floatval($d->kendali_masyarakat) }}</td>
-                            <td class="px-3 py-3 border-r border-gray-100 text-center">{{ floatval($d->kendali_apbn) }}</td>
-                            <td class="px-3 py-3 border-r border-gray-200 font-bold text-center bg-blue-50/50">{{ floatval($d->kendali_jumlah) }}</td>
-                            
-                            <td class="px-4 py-3 text-sm italic">{{ rtrim(rtrim(number_format($d->kondisi_serangan_ha, 2), '0'), '.') }} Ha</td>
+                            <td class="px-4 py-3 border-r border-gray-100 font-bold text-center">{{ $hektare($d->luas_komoditi_ha) }}</td>
+
+                            <td class="px-3 py-3 border-r border-gray-100 text-center">{{ $hektare($d->serangan_ringan) }}</td>
+                            <td class="px-3 py-3 border-r border-gray-100 text-center">{{ $hektare($d->serangan_berat) }}</td>
+                            <td class="px-3 py-3 border-r border-gray-200 font-bold text-center bg-gray-50">{{ $hektare($d->serangan_jumlah) }}</td>
+
+                            <td class="px-3 py-3 border-r border-gray-100 text-center">{{ $hektare($d->kendali_apbd_prov) }}</td>
+                            <td class="px-3 py-3 border-r border-gray-100 text-center">{{ $hektare($d->kendali_apbd_kab) }}</td>
+                            <td class="px-3 py-3 border-r border-gray-100 text-center">{{ $hektare($d->kendali_masyarakat) }}</td>
+                            <td class="px-3 py-3 border-r border-gray-100 text-center">{{ $hektare($d->kendali_apbn) }}</td>
+                            <td class="px-3 py-3 border-r border-gray-200 font-bold text-center bg-blue-50/50">{{ $hektare($d->kendali_jumlah) }}</td>
+
+                            <td class="px-4 py-3 text-sm whitespace-nowrap">{{ $d->kondisi_label }}</td>
                         </tr>
                     @empty
                         <tr>
                             <td colspan="14" class="px-6 py-12 text-center text-gray-500">
-                                <svg class="w-12 h-12 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                                 Tidak ada data pengamatan yang ditemukan pada periode ini.
                             </td>
                         </tr>

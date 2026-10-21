@@ -1,4 +1,18 @@
 <x-app-layout>
+    @if (session('success'))
+        <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 3000)" x-transition.duration.500ms class="mb-6 flex items-center justify-between bg-emerald-100 border border-emerald-300 text-emerald-800 px-4 py-3 rounded-lg shadow-sm font-medium" role="alert">
+            <span>{{ session('success') }}</span>
+            <button @click="show = false" type="button" class="text-emerald-600 hover:text-emerald-800 focus:outline-none ml-4 transition-colors" aria-label="Tutup">&times;</button>
+        </div>
+    @endif
+
+    @if (session('error'))
+        <div x-data="{ show: true }" x-show="show" x-transition.duration.500ms class="mb-6 flex items-center justify-between bg-red-100 border border-red-300 text-red-800 px-4 py-3 rounded-lg shadow-sm font-medium" role="alert">
+            <span>{{ session('error') }}</span>
+            <button @click="show = false" type="button" class="text-red-600 hover:text-red-800 focus:outline-none ml-4 transition-colors" aria-label="Tutup">&times;</button>
+        </div>
+    @endif
+
     <div x-data="dashboardFilter()" x-init="initChart()">
     <!-- Header / Title -->
     <div class="mb-6 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
@@ -185,6 +199,51 @@
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
+    @endcan
+
+    @can('popt')
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-8">
+        <div class="p-6 border-b border-gray-100">
+            <h3 class="text-lg font-bold text-gray-900">Laporan Bulan Ini ({{ now()->isoFormat('MMMM Y') }})</h3>
+            <p class="mt-1 text-sm text-gray-500">Rantai pengamatan aktif pada periode {{ \App\Services\PeriodePengamatan::current() }} (Februari–Januari). Rantai yang belum dilaporkan tetap dibawa dengan tambah serangan 0.</p>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm text-left">
+                <thead class="text-[11px] font-bold text-gray-400 uppercase bg-gray-50/50 border-b border-gray-100 tracking-wider">
+                    <tr>
+                        <th class="px-6 py-3">Kecamatan</th>
+                        <th class="px-6 py-3">Komoditas / OPT</th>
+                        <th class="px-6 py-3 text-center">Kondisi Serangan</th>
+                        <th class="px-6 py-3 text-center">Status Bulan Ini</th>
+                        <th class="px-6 py-3 text-center">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100 text-gray-600">
+                    @forelse($activeChains as $chain)
+                        <tr>
+                            <td class="px-6 py-3 font-medium text-gray-900">{{ $chain->kecamatan }}</td>
+                            <td class="px-6 py-3">{{ $chain->komoditas }} · {{ $chain->opt }}</td>
+                            <td class="px-6 py-3 text-center">{{ number_format($chain->kondisi_serangan_ha, 2) }} Ha</td>
+                            <td class="px-6 py-3 text-center">
+                                @if($chain->sudah_lapor)
+                                    <span class="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">Sudah dilaporkan</span>
+                                @else
+                                    <span class="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">Belum dilaporkan</span>
+                                @endif
+                            </td>
+                            <td class="px-6 py-3 text-center">
+                                <a href="{{ $chain->input_url }}" class="text-sm font-semibold text-emerald-700 hover:text-emerald-900">Input</a>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="5" class="px-6 py-6 text-center text-gray-500">Belum ada rantai pengamatan pada periode ini.</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
         </div>
     </div>
     @endcan

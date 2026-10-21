@@ -166,4 +166,48 @@ class DashboardTest extends TestCase
 
         $this->actingAs($popt)->get('/dashboard')->assertOk()->assertSee('Gugur Daun — Corynespora cassiicola');
     }
+
+    public function test_popt_dashboard_lists_active_chains_with_this_month_status(): void
+    {
+        $this->travelTo('2026-05-15');
+        DB::table('kabupatens')->insert(['id' => 1, 'nama_kabupaten' => 'Test Kab']);
+        $uppt = Uppt::create(['nama_uppt' => 'Test UPPT', 'kabupaten_id' => 1]);
+        $popt = User::factory()->create(['role' => 'popt', 'uppt_id' => $uppt->id]);
+        $karet = Komoditas::create(['nama_komoditas' => 'Karet']);
+        $sawit = Komoditas::create(['nama_komoditas' => 'Sawit']);
+        $kopi = Komoditas::create(['nama_komoditas' => 'Kopi']);
+        $opt = Opt::create(['nama_opt' => 'Gugur Daun']);
+        $common = ['user_id' => $popt->id, 'uppt_id' => $uppt->id, 'opt_id' => $opt->id, 'luas_komoditi_ha' => 10];
+        Pengamatan::create($common + ['komoditas_id' => $karet->id, 'tanggal_pengamatan' => '2026-04-10', 'serangan_ringan' => 3, 'serangan_jumlah' => 3]);
+        Pengamatan::create($common + ['komoditas_id' => $sawit->id, 'tanggal_pengamatan' => '2026-05-03', 'serangan_ringan' => 2, 'serangan_jumlah' => 2]);
+        Pengamatan::create($common + ['komoditas_id' => $kopi->id, 'tanggal_pengamatan' => '2026-01-20', 'serangan_ringan' => 9, 'serangan_jumlah' => 9]);
+
+        $response = $this->actingAs($popt)->get('/dashboard');
+
+        $response->assertSee('Belum dilaporkan')->assertSee('Sudah dilaporkan');
+        $response->assertViewHas('activeChains', fn ($chains): bool => $chains->pluck('komoditas')->all() === ['Karet', 'Sawit']
+            && $chains[0]->sudah_lapor === false
+            && $chains[0]->kondisi_serangan_ha === 3.0
+            && $chains[1]->sudah_lapor === true
+            && str_contains($chains[0]->input_url, 'komoditas_id='.$karet->id));
+    }
+
+    public function test_popt_dashboard_skips_chains_already_controlled_to_zero(): void
+    {
+        $this->travelTo('2026-05-15');
+        DB::table('kabupatens')->insert(['id' => 1, 'nama_kabupaten' => 'Test Kab']);
+        $uppt = Uppt::create(['nama_uppt' => 'Test UPPT', 'kabupaten_id' => 1]);
+        $popt = User::factory()->create(['role' => 'popt', 'uppt_id' => $uppt->id]);
+        $karet = Komoditas::create(['nama_komoditas' => 'Karet']);
+        $kakao = Komoditas::create(['nama_komoditas' => 'Kakao']);
+        $opt = Opt::create(['nama_opt' => 'Gugur Daun']);
+        $common = ['user_id' => $popt->id, 'uppt_id' => $uppt->id, 'opt_id' => $opt->id, 'luas_komoditi_ha' => 10];
+        Pengamatan::create($common + ['komoditas_id' => $karet->id, 'tanggal_pengamatan' => '2026-04-10', 'serangan_ringan' => 3, 'serangan_jumlah' => 3, 'kendali_apbd_kab' => 3]);
+        Pengamatan::create($common + ['komoditas_id' => $kakao->id, 'tanggal_pengamatan' => '2026-05-03', 'serangan_ringan' => 2, 'serangan_jumlah' => 2, 'kendali_apbd_kab' => 2]);
+
+        $response = $this->actingAs($popt)->get('/dashboard');
+
+        $response->assertViewHas('activeChains', fn ($chains): bool => $chains->pluck('komoditas')->all() === ['Kakao']
+            && $chains[0]->sudah_lapor === true);
+    }
 }

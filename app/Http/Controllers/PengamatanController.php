@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\PengamatanRequest;
+use App\Models\Kecamatan;
 use App\Models\Komoditas;
 use App\Models\Opt;
 use App\Models\Pengamatan;
@@ -70,39 +71,25 @@ class PengamatanController extends Controller
             return back()->withInput()->with('error', 'Gagal: Akun Anda belum memiliki penempatan wilayah (UPPT). Hubungi Admin.');
         }
 
-        $validated = $request->validated();
-        $ringan = (float) ($validated['serangan_ringan'] ?? 0);
-        $berat = (float) ($validated['serangan_berat'] ?? 0);
-
         Pengamatan::create([
-            ...$validated,
+            ...$request->observationAttributes(),
             'user_id' => $user->id,
-            'uppt_id' => $user->uppt_id,
-            'serangan_ringan' => $ringan,
-            'serangan_berat' => $berat,
-            'serangan_jumlah' => $ringan + $berat,
-            'kendali_apbd_kab' => $validated['kendali_apbd_kab'] ?? 0,
-            'kendali_apbd_prov' => $validated['kendali_apbd_prov'] ?? 0,
-            'kendali_apbn' => $validated['kendali_apbn'] ?? 0,
-            'kendali_masyarakat' => $validated['kendali_masyarakat'] ?? 0,
         ]);
 
         return redirect()->route('dashboard')->with('success', 'Data pengamatan lapangan berhasil dikirim dan disimpan!');
     }
 
-    public function edit(Pengamatan $pengamatan)
+    public function edit(Pengamatan $pengamatan, PengamatanHistoryService $history)
     {
         Gate::authorize('update', $pengamatan);
 
         $komoditas = Komoditas::orderBy('nama_komoditas')->get();
         $opts = Opt::with('jenisOpts')->orderBy('nama_opt')->get();
-
-        $user = Auth::user();
-        $user->loadMissing('uppt.kecamatans');
-        $kecamatans = $user->uppt ? $user->uppt->kecamatans : collect();
-
-        $history = app(PengamatanHistoryService::class);
-        $historySummary = $history->previousSummary($pengamatan->toArray(), $pengamatan->id);
+        $kecamatans = Kecamatan::where('uppt_id', $pengamatan->uppt_id)->orderBy('nama_kecamatan')->get();
+        $historySummary = $history->previousSummary([
+            ...$pengamatan->only(['uppt_id', 'kecamatan_id', 'komoditas_id', 'opt_id', 'jenis_opt_id']),
+            'tanggal_pengamatan' => $pengamatan->tanggal_pengamatan->toDateString(),
+        ], $pengamatan->id);
 
         return view('pengamatan.edit', compact('pengamatan', 'komoditas', 'opts', 'kecamatans', 'historySummary'));
     }
@@ -111,27 +98,20 @@ class PengamatanController extends Controller
     {
         Gate::authorize('update', $pengamatan);
 
-        $validated = $request->validated();
-        $ringan = (float) ($validated['serangan_ringan'] ?? 0);
-        $berat = (float) ($validated['serangan_berat'] ?? 0);
-
-        $pengamatan->update([
-            ...$validated,
-            'serangan_ringan' => $ringan,
-            'serangan_berat' => $berat,
-            'serangan_jumlah' => $ringan + $berat,
-            'kendali_apbd_kab' => $validated['kendali_apbd_kab'] ?? 0,
-            'kendali_apbd_prov' => $validated['kendali_apbd_prov'] ?? 0,
-            'kendali_apbn' => $validated['kendali_apbn'] ?? 0,
-            'kendali_masyarakat' => $validated['kendali_masyarakat'] ?? 0,
-        ]);
+        $pengamatan->update($request->observationAttributes());
 
         return redirect()->route('dashboard')->with('success', 'Data pengamatan berhasil diperbarui!');
     }
 
-    public function destroy(Pengamatan $pengamatan)
+    public function destroy(Pengamatan $pengamatan, PengamatanHistoryService $history)
     {
         Gate::authorize('delete', $pengamatan);
+
+        $violation = $history->firstNegativeCondition($pengamatan, null);
+        if ($violation !== null) {
+            return back()->with('error', 'Data tidak dapat dihapus karena kondisi serangan pada pengamatan tanggal '
+                .$violation['tanggal']->translatedFormat('d F Y').' akan menjadi minus. Ubah pengendalian pada tanggal tersebut terlebih dahulu.');
+        }
 
         try {
             $pengamatan->delete();

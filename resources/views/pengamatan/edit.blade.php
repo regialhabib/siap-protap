@@ -123,7 +123,7 @@
                             <p>Luas komoditi terakhir: <strong x-text="Number(history.luas_komoditi_ha).toFixed(2)"></strong> Ha</p>
                             <p>Keadaan serangan: <strong x-text="Number(history.kondisi_serangan).toFixed(2)"></strong> Ha</p>
                         </div>
-                        <p class="text-sm text-emerald-900" x-show="historyReady && history.luas_komoditi_ha <= 0">Belum ada data tahun ini. Keadaan serangan dimulai dari 0 Ha.</p>
+                        <p class="text-sm text-emerald-900" x-show="historyReady && history.luas_komoditi_ha <= 0">Belum ada data pada periode ini (Februari–Januari). Keadaan serangan dimulai dari 0 Ha.</p>
                         <p class="text-sm text-emerald-800" x-show="loadingHistory">Memuat data sebelumnya...</p>
                     </div>
                     <p class="mb-6 text-sm font-medium text-red-700" x-show="historyError" x-text="historyError" x-cloak></p>
@@ -164,12 +164,12 @@
                         <p class="mb-6 text-xs text-gray-600 relative z-10">Isi luas pengendalian jika ada.</p>
                         <div class="grid grid-cols-2 md:grid-cols-4 gap-6 relative z-10">
                             <div>
-                                <label class="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wider">APBD Kab/Kota</label>
-                                <input type="number" step="0.01" min="0" name="kendali_apbd_kab" x-model="kendaliKab" class="block w-full px-4 py-2.5 rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500 text-sm font-medium transition-colors" placeholder="0.00">
+                                <label class="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wider">APBD I (Provinsi)</label>
+                                <input type="number" step="0.01" min="0" name="kendali_apbd_prov" x-model="kendaliProv" class="block w-full px-4 py-2.5 rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500 text-sm font-medium transition-colors" placeholder="0.00">
                             </div>
                             <div>
-                                <label class="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wider">APBD Provinsi</label>
-                                <input type="number" step="0.01" min="0" name="kendali_apbd_prov" x-model="kendaliProv" class="block w-full px-4 py-2.5 rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500 text-sm font-medium transition-colors" placeholder="0.00">
+                                <label class="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wider">APBD II (Kab/Kota)</label>
+                                <input type="number" step="0.01" min="0" name="kendali_apbd_kab" x-model="kendaliKab" class="block w-full px-4 py-2.5 rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500 text-sm font-medium transition-colors" placeholder="0.00">
                             </div>
                             <div>
                                 <label class="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wider">Swadaya/Masyarakat</label>
@@ -181,6 +181,9 @@
                             </div>
                         </div>
                         <p class="mt-5 text-sm font-bold text-blue-800 relative z-10">Jumlah total luas pengendalian: <span x-text="totalKendaliBaru.toFixed(2)"></span> Ha</p>
+                        <p class="mt-2 text-xs text-blue-900 relative z-10" x-show="historyReady">Batas maksimal pengendalian: <strong x-text="batasPengendalian.toFixed(2)"></strong> Ha (keadaan serangan sebelumnya + tambah serangan).</p>
+                        <p class="mt-2 text-sm font-semibold text-red-700 relative z-10" x-show="pengendalianMelebihiBatas" x-cloak>Pengendalian melebihi luas serangan yang ada.</p>
+                        <x-input-error :messages="$errors->get('pengendalian')" class="mt-2 relative z-10" />
                     </div>
 
                     <div class="mb-6 rounded-xl border border-blue-100 bg-white p-6 shadow-sm md:p-8">
@@ -189,11 +192,6 @@
                         <x-input-error :messages="$errors->get('cara_pengendalian')" class="mt-2" />
                     </div>
 
-                    <div class="mb-6 rounded-xl border border-blue-100 bg-white p-6 shadow-sm md:p-8">
-                        <label for="cara_pengendalian" class="mb-2 block text-sm font-bold text-gray-700">Cara Pengendalian <span class="font-normal text-gray-500">(opsional)</span></label>
-                        <textarea id="cara_pengendalian" name="cara_pengendalian" rows="3" maxlength="2000" class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="Jelaskan cara pengendalian yang dilakukan">{{ old('cara_pengendalian', $pengamatan->cara_pengendalian) }}</textarea>
-                        <x-input-error :messages="$errors->get('cara_pengendalian')" class="mt-2" />
-                    </div>
 
                     <div class="bg-gray-50/50 p-6 md:p-8 rounded-xl border border-gray-100">
                         <label class="block text-sm font-bold text-gray-700 mb-3">Keadaan Serangan</label>
@@ -207,7 +205,7 @@
                     <a href="{{ route('dashboard') }}" class="inline-flex items-center justify-center px-6 py-3.5 bg-white border border-gray-300 rounded-xl font-bold text-sm text-gray-700 shadow-sm hover:bg-gray-50 transition-colors">
                         Batal & Kembali
                     </a>
-                    <button type="submit" :disabled="loadingHistory || historyError || !historyReady" class="inline-flex items-center justify-center px-8 py-3.5 bg-emerald-600 hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50 text-white font-bold text-sm rounded-xl shadow-lg shadow-emerald-600/30 transition-all duration-200 transform hover:-translate-y-0.5">
+                    <button type="submit" :disabled="loadingHistory || historyError || !historyReady || pengendalianMelebihiBatas" class="inline-flex items-center justify-center px-8 py-3.5 bg-emerald-600 hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50 text-white font-bold text-sm rounded-xl shadow-lg shadow-emerald-600/30 transition-all duration-200 transform hover:-translate-y-0.5">
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
                         Perbarui Data Pengamatan
                     </button>

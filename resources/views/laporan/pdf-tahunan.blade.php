@@ -33,7 +33,7 @@
         <tr>
             <td><strong>Tahun Laporan</strong></td>
             <td>:</td>
-            <td>{{ $tahun }}</td>
+            <td>{{ $tahun }} (Februari {{ $tahun }} – Januari {{ $tahun + 1 }})</td>
         </tr>
     </table>
 
@@ -106,6 +106,13 @@
                 </tr>
             @endforelse
         </tbody>
+    </table>
+
+    <table style="width: 100%; margin-top: 24px; font-size: 10px;">
+        <tr>
+            <td style="width: 65%;"></td>
+            <td style="text-align: center;">Provinsi Jambi, {{ now()->translatedFormat('d F Y') }}<br><br>Pejabat Berwenang,<br><br><br><br><br>( ........................................ )<br>NIP. ........................................</td>
+        </tr>
     </table>
 </body>
 </html>

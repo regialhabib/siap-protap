@@ -39,13 +39,7 @@
         <td></td> <!-- A4 -->
         <td colspan="2">Periode Laporan</td> <!-- B4:C4 -->
         <td colspan="13">:
-            @if($jenis == 'bulanan') 
-                {{ \Carbon\Carbon::create()->month((int)$bulan)->translatedFormat('F') }} {{ $tahun }}
-            @elseif($jenis == 'triwulan')
-                {{ \Carbon\Carbon::create()->month((int) $bulan_awal)->translatedFormat('F') }}–{{ \Carbon\Carbon::create()->month((int) $bulan_akhir)->translatedFormat('F') }} Tahun {{ $tahun }}
-            @else
-                Tahun {{ $tahun }}
-            @endif
+            {{ \Carbon\Carbon::create()->month((int) $bulan)->translatedFormat('F') }} {{ $tahun }}
         </td> <!-- D4:O4 -->
     </tr>
     <tr>
@@ -56,12 +50,12 @@
         <td></td> <!-- A6 -->
         <td rowspan="2" style="font-weight: bold; text-align: center; vertical-align: middle; border: 1px solid #000000; background-color: #f2f2f2;">No</td> <!-- B6 -->
         <td rowspan="2" style="font-weight: bold; text-align: center; vertical-align: middle; border: 1px solid #000000; background-color: #f2f2f2;">Wilayah Pengamatan / Kecamatan</td> <!-- C6 -->
-        <td rowspan="2" style="font-weight: bold; text-align: center; vertical-align: middle; border: 1px solid #000000; background-color: #f2f2f2;">Jenis Komodtas</td> <!-- D6 -->
+        <td rowspan="2" style="font-weight: bold; text-align: center; vertical-align: middle; border: 1px solid #000000; background-color: #f2f2f2;">Jenis Komoditas</td> <!-- D6 -->
         <td rowspan="2" style="font-weight: bold; text-align: center; vertical-align: middle; border: 1px solid #000000; background-color: #f2f2f2;">Luas Komoditi (Ha)</td> <!-- E6 -->
         <td rowspan="2" style="font-weight: bold; text-align: center; vertical-align: middle; border: 1px solid #000000; background-color: #f2f2f2;">Jenis OPT</td> <!-- F6 -->
         <td colspan="3" style="font-weight: bold; text-align: center; vertical-align: middle; border: 1px solid #000000; background-color: #f2f2f2;">Luas Serangan (Ha)</td>
         <td colspan="5" style="font-weight: bold; text-align: center; vertical-align: middle; border: 1px solid #000000; background-color: #f2f2f2;">Luas Pengendalian (Ha)</td>
-        <td rowspan="2" style="font-weight: bold; text-align: center; vertical-align: middle; border: 1px solid #000000; background-color: #f2f2f2;">Kondisi Serangan (Ha)</td>
+        <td rowspan="2" style="font-weight: bold; text-align: center; vertical-align: middle; border: 1px solid #000000; background-color: #f2f2f2;">Kondisi Serangan</td>
     </tr>
     <!-- Table Header Row 2 (Row 7) -->
     <tr>
@@ -69,8 +63,8 @@
         <td style="font-weight: bold; text-align: center; vertical-align: middle; border: 1px solid #000000; background-color: #f2f2f2;">Ringan</td>
         <td style="font-weight: bold; text-align: center; vertical-align: middle; border: 1px solid #000000; background-color: #f2f2f2;">Berat</td>
         <td style="font-weight: bold; text-align: center; vertical-align: middle; border: 1px solid #000000; background-color: #f2f2f2;">Jumlah</td>
-        <td style="font-weight: bold; text-align: center; vertical-align: middle; border: 1px solid #000000; background-color: #f2f2f2;">APBD Kabupaten</td> <!-- K7 -->
-        <td style="font-weight: bold; text-align: center; vertical-align: middle; border: 1px solid #000000; background-color: #f2f2f2;">APBPD Provinsi</td> <!-- L7 -->
+        <td style="font-weight: bold; text-align: center; vertical-align: middle; border: 1px solid #000000; background-color: #f2f2f2;">APBD I (Provinsi)</td> <!-- K7 -->
+        <td style="font-weight: bold; text-align: center; vertical-align: middle; border: 1px solid #000000; background-color: #f2f2f2;">APBD II (Kabupaten)</td> <!-- L7 -->
         <td style="font-weight: bold; text-align: center; vertical-align: middle; border: 1px solid #000000; background-color: #f2f2f2;">Masyarakat</td> <!-- M7 -->
         <td style="font-weight: bold; text-align: center; vertical-align: middle; border: 1px solid #000000; background-color: #f2f2f2;">APBN</td>
         <td style="font-weight: bold; text-align: center; vertical-align: middle; border: 1px solid #000000; background-color: #f2f2f2;">Jumlah</td>
@@ -89,13 +83,13 @@
         <td style="text-align: center; vertical-align: middle; border: 1px solid #000000;">{{ floatval($d->serangan_berat) }}</td>
         <td style="text-align: center; vertical-align: middle; font-weight: bold; border: 1px solid #000000;">{{ floatval($d->serangan_jumlah) }}</td>
         
-        <td style="text-align: center; vertical-align: middle; border: 1px solid #000000;">{{ floatval($d->kendali_apbd_kab) }}</td> <!-- K -->
-        <td style="text-align: center; vertical-align: middle; border: 1px solid #000000;">{{ floatval($d->kendali_apbd_prov) }}</td> <!-- L -->
+        <td style="text-align: center; vertical-align: middle; border: 1px solid #000000;">{{ floatval($d->kendali_apbd_prov) }}</td> <!-- K -->
+        <td style="text-align: center; vertical-align: middle; border: 1px solid #000000;">{{ floatval($d->kendali_apbd_kab) }}</td> <!-- L -->
         <td style="text-align: center; vertical-align: middle; border: 1px solid #000000;">{{ floatval($d->kendali_masyarakat) }}</td> <!-- M -->
         <td style="text-align: center; vertical-align: middle; border: 1px solid #000000;">{{ floatval($d->kendali_apbn) }}</td> <!-- N -->
         <td style="text-align: center; vertical-align: middle; font-weight: bold; border: 1px solid #000000;">{{ floatval($d->kendali_jumlah) }}</td>
         
-        <td style="text-align: center; vertical-align: middle; border: 1px solid #000000;">{{ rtrim(rtrim(number_format($d->kondisi_serangan_ha, 2), '0'), '.') }}</td>
+        <td style="text-align: center; vertical-align: middle; border: 1px solid #000000;">{{ $d->kondisi_label }}</td>
     </tr>
     @endforeach
     

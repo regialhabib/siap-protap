@@ -57,13 +57,7 @@
             <td>Periode Laporan</td>
             <td>:</td>
             <td>
-                @if($jenis == 'bulanan') 
-                    {{ \Carbon\Carbon::create()->month((int)$bulan)->translatedFormat('F') }} {{ $tahun }}
-                @elseif($jenis == 'triwulan')
-                    {{ \Carbon\Carbon::create()->month((int) $bulan_awal)->translatedFormat('F') }}–{{ \Carbon\Carbon::create()->month((int) $bulan_akhir)->translatedFormat('F') }} Tahun {{ $tahun }}
-                @else
-                    Tahun {{ $tahun }}
-                @endif
+                {{ \Carbon\Carbon::create()->month((int) $bulan)->translatedFormat('F') }} {{ $tahun }}
             </td>
         </tr>
     </table>
@@ -78,14 +72,14 @@
                 <th rowspan="2">Jenis OPT</th>
                 <th colspan="3">Luas Serangan (Ha)</th>
                 <th colspan="5">Luas Pengendalian (Ha)</th>
-                <th rowspan="2">Kondisi Serangan (Ha)</th>
+                <th rowspan="2">Kondisi Serangan</th>
             </tr>
             <tr>
                 <th>Ringan</th>
                 <th>Berat</th>
                 <th>Jumlah</th>
-                <th>APBD Kabupaten</th>
-                <th>APBD Provinsi</th>
+                <th>APBD I (Provinsi)</th>
+                <th>APBD II (Kabupaten)</th>
                 <th>Masyarakat</th>
                 <th>APBN</th>
                 <th>Jumlah</th>
@@ -104,13 +98,13 @@
                 <td>{{ floatval($d->serangan_berat) }}</td>
                 <td><strong>{{ floatval($d->serangan_jumlah) }}</strong></td>
                 
-                <td>{{ floatval($d->kendali_apbd_kab) }}</td>
                 <td>{{ floatval($d->kendali_apbd_prov) }}</td>
+                <td>{{ floatval($d->kendali_apbd_kab) }}</td>
                 <td>{{ floatval($d->kendali_masyarakat) }}</td>
                 <td>{{ floatval($d->kendali_apbn) }}</td>
                 <td><strong>{{ floatval($d->kendali_jumlah) }}</strong></td>
                 
-                <td>{{ rtrim(rtrim(number_format($d->kondisi_serangan_ha, 2), '0'), '.') }}</td>
+                <td>{{ $d->kondisi_label }}</td>
             </tr>
             @endforeach
             

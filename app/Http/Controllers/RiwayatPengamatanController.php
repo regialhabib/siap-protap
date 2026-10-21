@@ -9,8 +9,7 @@ use App\Models\Komoditas;
 use App\Models\Pengamatan;
 use App\Models\Uppt;
 use App\Services\PengamatanHistoryService;
-use Carbon\Carbon;
-use Illuminate\Database\Eloquent\Collection as EloquentCollection;
+use App\Services\PeriodePengamatan;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
@@ -23,13 +22,11 @@ class RiwayatPengamatanController extends Controller
     public function index(Request $request, PengamatanHistoryService $history): View
     {
         $filters = $this->validatedFilters($request);
+        $periode = $filters['tahun'];
 
         $query = Pengamatan::query()
             ->with(['uppt.kabupaten', 'kecamatan', 'komoditas', 'opt', 'jenisOpt'])
-            ->whereBetween('tanggal_pengamatan', [
-                Carbon::create($filters['tahun'], 1, 1)->toDateString(),
-                Carbon::create($filters['tahun'], 12, 31)->toDateString(),
-            ]);
+            ->observedBetween(PeriodePengamatan::start($periode), PeriodePengamatan::end($periode));
 
         if ($filters['kabupaten_id'] !== '') {
             $query->whereHas('uppt', fn ($upptQuery) => $upptQuery->where('kabupaten_id', $filters['kabupaten_id']));
@@ -53,15 +50,13 @@ class RiwayatPengamatanController extends Controller
 
         $hasFilters = collect(['tahun', 'kabupaten_id', 'uppt_id', 'kecamatan_id', 'komoditas_id', 'jenis_opt_id'])
             ->contains(fn (string $filter): bool => $request->filled($filter));
-        $observations = $hasFilters
-            ? $query->orderBy('tanggal_pengamatan')->orderBy('id')->get()
-            : new EloquentCollection;
-        $history->attachRunningTotals($observations);
-        $rows = $hasFilters ? $this->monthlyComparisonRows($observations) : collect();
+        $rows = $hasFilters
+            ? $this->monthlyComparisonRows($history->monthlyChains($query->get(), $periode), $periode, $history)
+            : collect();
 
         return view('pengamatan.riwayat', [
             'data' => $this->paginateRows($rows, $request),
-            'tahun' => $filters['tahun'],
+            'tahun' => $periode,
             'filters' => $filters,
             'recordCount' => $rows->filter(fn (object $row): bool => ! $row->is_empty)->count(),
             'kabupatens' => Kabupaten::orderBy('nama_kabupaten')->get(),
@@ -123,7 +118,7 @@ class RiwayatPengamatanController extends Controller
         $filters = $validator->validate();
 
         return [
-            'tahun' => (int) ($filters['tahun'] ?? now()->year),
+            'tahun' => (int) ($filters['tahun'] ?? PeriodePengamatan::current()),
             'kabupaten_id' => (string) ($filters['kabupaten_id'] ?? ''),
             'uppt_id' => (string) ($filters['uppt_id'] ?? ''),
             'kecamatan_id' => (string) ($filters['kecamatan_id'] ?? ''),
@@ -132,81 +127,72 @@ class RiwayatPengamatanController extends Controller
         ];
     }
 
-    /** @param EloquentCollection<int, Pengamatan> $observations
+    /**
+     * Baris per bulan (Feb–Jan) untuk setiap rantai aktif: posisi bulan lalu dibandingkan dengan bulan ini.
+     *
+     * @param  Collection<string, object>  $chains
      * @return Collection<int, object>
      */
-    private function monthlyComparisonRows(EloquentCollection $observations): Collection
+    private function monthlyComparisonRows(Collection $chains, int $periode, PengamatanHistoryService $history): Collection
     {
-        $monthlySnapshots = [];
-
-        foreach ($observations->groupBy(fn (Pengamatan $row): int => $row->tanggal_pengamatan->month) as $month => $monthRows) {
-            $monthlySnapshots[(int) $month] = $monthRows
-                ->groupBy(fn (Pengamatan $row): string => $this->observationKey($row))
-                ->map(fn (Collection $group): Pengamatan => $group->last());
-        }
-
         $rows = collect();
+        $previousKey = null;
 
-        foreach (range(1, 12) as $month) {
-            $currentSnapshots = $monthlySnapshots[$month] ?? collect();
-            $previousSnapshots = $month === 1 ? collect() : ($monthlySnapshots[$month - 1] ?? collect());
-            $observationKeys = $previousSnapshots->keys()->merge($currentSnapshots->keys())->unique();
-            $monthRows = $observationKeys->map(function (string $key) use ($month, $currentSnapshots, $previousSnapshots): object {
-                $current = $currentSnapshots->get($key);
-                $previous = $previousSnapshots->get($key);
-                $observation = $current ?? $previous;
+        foreach (PeriodePengamatan::months($periode) as $month) {
+            $monthKey = PeriodePengamatan::monthKey($month);
+            $monthRows = $chains
+                ->filter(fn (object $chain): bool => $chain->months[$monthKey] !== null)
+                ->map(function (object $chain) use ($month, $monthKey, $previousKey, $history): object {
+                    $current = $chain->months[$monthKey];
+                    $previous = $previousKey === null ? null : $chain->months[$previousKey];
 
-                return (object) [
-                    'bulan' => $month,
-                    'is_empty' => false,
-                    'kabupaten' => $observation->uppt?->kabupaten?->nama_kabupaten ?? '-',
-                    'uppt' => $observation->uppt?->nama_uppt ?? '-',
-                    'kecamatan' => $observation->kecamatan?->nama_kecamatan ?? '-',
-                    'komoditas' => $observation->komoditas?->nama_komoditas ?? '-',
-                    'opt' => $observation->opt?->nama_opt ?? '-',
-                    'jenis_opt' => $observation->jenisOpt?->nama_jenis_opt,
-                    'previous' => $this->attackSnapshot($previous),
-                    'current' => $this->attackSnapshot($current),
-                ];
-            })->sortBy(fn (object $row): string => mb_strtolower(implode('|', [
-                $row->kabupaten, $row->uppt, $row->kecamatan, $row->komoditas, $row->opt, $row->jenis_opt ?? '',
-            ])))->values();
+                    return (object) [
+                        'bulan_label' => $month->translatedFormat('F Y'),
+                        'is_empty' => false,
+                        'ada_input' => $current['ada_input'],
+                        'kabupaten' => $chain->uppt?->kabupaten?->nama_kabupaten ?? '-',
+                        'uppt' => $chain->uppt?->nama_uppt ?? '-',
+                        'kecamatan' => $chain->kecamatan?->nama_kecamatan ?? '-',
+                        'komoditas' => $chain->komoditas?->nama_komoditas ?? '-',
+                        'opt' => $chain->opt?->nama_opt ?? '-',
+                        'jenis_opt' => $chain->jenisOpt?->nama_jenis_opt,
+                        'previous' => $previous === null ? null : [
+                            'ringan' => $previous['kumulatif_ringan'],
+                            'berat' => $previous['kumulatif_berat'],
+                            'jumlah' => $previous['kumulatif_jumlah'],
+                            'kondisi_serangan' => $previous['kondisi_akhir'],
+                        ],
+                        'current' => [
+                            'tambah_ringan' => $current['tambah_ringan'],
+                            'tambah_berat' => $current['tambah_berat'],
+                            'tambah_jumlah' => $current['tambah_jumlah'],
+                            'ringan' => $current['kumulatif_ringan'],
+                            'berat' => $current['kumulatif_berat'],
+                            'jumlah' => $current['kumulatif_jumlah'],
+                            'kendali_apbd_prov' => $current['kendali_apbd_prov'],
+                            'kendali_apbd_kab' => $current['kendali_apbd_kab'],
+                            'kendali_masyarakat' => $current['kendali_masyarakat'],
+                            'kendali_apbn' => $current['kendali_apbn'],
+                            'pengendalian' => $current['kendali_jumlah'],
+                            'kondisi_serangan' => $current['kondisi_akhir'],
+                            'kondisi_label' => $history->kondisiLabel($current['kondisi_awal'], $current['kondisi_akhir']),
+                        ],
+                    ];
+                })
+                ->sortBy(fn (object $row): string => mb_strtolower(implode('|', [
+                    $row->kabupaten, $row->uppt, $row->kecamatan, $row->komoditas, $row->opt, $row->jenis_opt ?? '',
+                ])))
+                ->values();
 
             if ($monthRows->isEmpty()) {
-                $monthRows->push((object) ['bulan' => $month, 'is_empty' => true]);
+                $monthRows->push((object) ['bulan_label' => $month->translatedFormat('F Y'), 'is_empty' => true]);
             }
 
             $rows = $rows->concat($monthRows);
+            $previousKey = $monthKey;
         }
 
         return $rows->values();
-    }
-
-    private function observationKey(Pengamatan $observation): string
-    {
-        return implode(':', [
-            $observation->uppt_id,
-            $observation->kecamatan_id ?? 'null',
-            $observation->komoditas_id,
-            $observation->opt_id,
-            $observation->jenis_opt_id ?? 'null',
-        ]);
-    }
-
-    /** @return array{ringan: float, berat: float, jumlah: float, pengendalian: float, kondisi_serangan: float}|null */
-    private function attackSnapshot(?Pengamatan $observation): ?array
-    {
-        if ($observation === null) {
-            return null;
-        }
-
-        return [
-            'ringan' => (float) $observation->serangan_ringan_berjalan,
-            'berat' => (float) $observation->serangan_berat_berjalan,
-            'jumlah' => (float) $observation->serangan_jumlah_berjalan,
-            'pengendalian' => (float) $observation->kendali_jumlah,
-            'kondisi_serangan' => (float) $observation->kondisi_serangan_ha,
-        ];
     }
 
     /** @param Collection<int, object> $rows */

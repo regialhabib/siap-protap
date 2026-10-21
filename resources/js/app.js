@@ -37,8 +37,22 @@ Alpine.data('pengamatanForm', (historyUrl, initialSummary, initialArea, editId =
             + this.toNumber(this.kendaliMasyarakat) + this.toNumber(this.kendaliApbn);
     },
 
+    get batasPengendalian() {
+        return this.toNumber(this.history.kondisi_serangan) + this.totalSeranganBaru;
+    },
+
+    get pengendalianMelebihiBatas() {
+        return this.totalKendaliBaru - this.batasPengendalian > 0.001;
+    },
+
     get kondisiBerjalan() {
-        return Math.max(0, this.toNumber(this.history.kondisi_serangan) + this.totalSeranganBaru - this.totalKendaliBaru);
+        return this.batasPengendalian - this.totalKendaliBaru;
+    },
+
+    periodeOf(date) {
+        const [year, month] = date.split('-').map(Number);
+
+        return month >= 2 ? year : year - 1;
     },
 
     toNumber(value) {
@@ -60,8 +74,8 @@ Alpine.data('pengamatanForm', (historyUrl, initialSummary, initialArea, editId =
             return;
         }
 
-        const key = [date.slice(0, 4), kecamatanId, komoditasId, optId, jenisOptId].join(':');
-        if (this.currentKey && this.currentKey !== key) {
+        const key = [this.periodeOf(date), kecamatanId, komoditasId, optId, jenisOptId].join(':');
+        if (!this.editId && this.currentKey && this.currentKey !== key) {
             this.ringan = 0;
             this.berat = 0;
             this.kendaliKab = 0;

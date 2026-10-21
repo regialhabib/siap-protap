@@ -3,6 +3,7 @@
 namespace App\Exports;
 
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\FromView;
 use Maatwebsite\Excel\Concerns\WithColumnWidths;
 use Maatwebsite\Excel\Concerns\WithEvents;
@@ -11,45 +12,27 @@ use PhpOffice\PhpSpreadsheet\Worksheet\PageSetup;
 
 class LaporanExport implements FromView, WithColumnWidths, WithEvents
 {
-    protected $data;
-
-    protected $jenis;
-
-    protected $tahun;
-
-    protected $bulan;
-
-    protected $bulanAwal;
-
-    protected $bulanTengah;
-
-    protected $bulanAkhir;
-
-    protected $uppt_id;
-
-    public function __construct($data, $jenis, $tahun, $bulan, $bulanAwal, $bulanTengah, $bulanAkhir, $upptId)
-    {
-        $this->data = $data;
-        $this->jenis = $jenis;
-        $this->tahun = $tahun;
-        $this->bulan = $bulan;
-        $this->bulanAwal = $bulanAwal;
-        $this->bulanTengah = $bulanTengah;
-        $this->bulanAkhir = $bulanAkhir;
-        $this->uppt_id = $upptId;
-    }
+    /**
+     * @param  Collection<int, object>  $data
+     * @param  'bulanan'|'triwulan'|'tahunan'  $jenis
+     * @param  array<string, mixed>  $viewData
+     */
+    public function __construct(
+        protected Collection $data,
+        protected string $jenis,
+        protected array $viewData = [],
+    ) {}
 
     public function view(): View
     {
-        return view($this->jenis === 'tahunan' ? 'laporan.excel-tahunan' : 'laporan.excel', [
+        return view(match ($this->jenis) {
+            'tahunan' => 'laporan.excel-tahunan',
+            'triwulan' => 'laporan.excel-triwulan',
+            default => 'laporan.excel',
+        }, [
+            ...$this->viewData,
             'data' => $this->data,
             'jenis' => $this->jenis,
-            'tahun' => $this->tahun,
-            'bulan' => $this->bulan,
-            'bulan_awal' => $this->bulanAwal,
-            'bulan_tengah' => $this->bulanTengah,
-            'bulan_akhir' => $this->bulanAkhir,
-            'uppt_id' => $this->uppt_id,
         ]);
     }
 
@@ -67,7 +50,7 @@ class LaporanExport implements FromView, WithColumnWidths, WithEvents
         return [
             'A' => 13.0,
             'B' => 6.5,
-            'C' => 25.0,  // Wilayah Pengamatan/Kecamatan
+            'C' => 25.0,  // Wilayah Pengamatan/Kecamatan atau Kabupaten/Kota
             'D' => 18.0,  // Jenis Komoditas
             'E' => 16.0,  // Luas Komoditi
             'F' => 15.0,  // Jenis OPT
@@ -75,11 +58,11 @@ class LaporanExport implements FromView, WithColumnWidths, WithEvents
             'H' => 13.0,
             'I' => 13.0,
             'J' => 13.0,
-            'K' => 16.0,  // APBD Kab
-            'L' => 16.0,  // APBD Prov
+            'K' => 16.0,  // APBD I
+            'L' => 16.0,  // APBD II
             'M' => 15.0,  // Masyarakat
             'N' => 13.0,  // APBN
-            'O' => 20.0,  // Kondisi Serangan
+            'O' => 28.0,  // Kondisi Serangan
         ];
     }
 

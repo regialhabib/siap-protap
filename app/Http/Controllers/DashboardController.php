@@ -4,9 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\Pengamatan;
 use App\Models\Uppt;
+use App\Models\User;
 use App\Services\PengamatanHistoryService;
+use App\Services\PeriodePengamatan;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
@@ -46,8 +49,11 @@ class DashboardController extends Controller
         if ($user->role === 'popt') {
             $historyQuery->where('uppt_id', $user->uppt_id);
         } else {
-            $historyQuery->whereYear('tanggal_pengamatan', $currentYear)
-                ->whereMonth('tanggal_pengamatan', '<=', $currentMonth);
+            $selectedMonth = Carbon::create((int) $currentYear, (int) $currentMonth, 1);
+            $historyQuery->observedBetween(
+                PeriodePengamatan::start(PeriodePengamatan::forDate($selectedMonth)),
+                $selectedMonth->copy()->endOfMonth(),
+            );
         }
 
         $historyRows = $historyQuery->orderBy('tanggal_pengamatan')->orderBy('id')->get();
@@ -100,6 +106,45 @@ class DashboardController extends Controller
             ]);
         }
 
-        return view('dashboard', compact('stats', 'chartData', 'pengamatans'));
+        $activeChains = $this->activeChains($user, $history);
+
+        return view('dashboard', compact('stats', 'chartData', 'pengamatans', 'activeChains'));
+    }
+
+    /**
+     * Rantai aktif periode berjalan milik UPPT petugas beserta status input bulan ini.
+     *
+     * @return Collection<int, object>
+     */
+    private function activeChains(User $user, PengamatanHistoryService $history): Collection
+    {
+        if ($user->role !== 'popt' || ! $user->uppt_id) {
+            return collect();
+        }
+
+        $periode = PeriodePengamatan::current();
+        $monthKey = PeriodePengamatan::monthKey(now());
+        $observations = Pengamatan::with(['kecamatan', 'komoditas', 'opt', 'jenisOpt'])
+            ->where('uppt_id', $user->uppt_id)
+            ->observedBetween(PeriodePengamatan::start($periode), PeriodePengamatan::end($periode))
+            ->get();
+
+        return $history->monthlyChains($observations, $periode)
+            ->filter(fn (object $chain): bool => $chain->months[$monthKey] !== null && ! $history->hasNothingToReport($chain->months[$monthKey]))
+            ->map(fn (object $chain): object => (object) [
+                'kecamatan' => $chain->kecamatan?->nama_kecamatan ?? '-',
+                'komoditas' => $chain->komoditas?->nama_komoditas ?? '-',
+                'opt' => ($chain->opt?->nama_opt ?? '-').($chain->jenisOpt ? ' — '.$chain->jenisOpt->nama_jenis_opt : ''),
+                'kondisi_serangan_ha' => $chain->months[$monthKey]['kondisi_akhir'],
+                'sudah_lapor' => $chain->months[$monthKey]['ada_input'],
+                'input_url' => route('pengamatan.create', array_filter([
+                    'kecamatan_id' => $chain->kecamatan_id,
+                    'komoditas_id' => $chain->komoditas_id,
+                    'opt_id' => $chain->opt_id,
+                    'jenis_opt_id' => $chain->jenis_opt_id,
+                ])),
+            ])
+            ->sortBy(fn (object $chain): string => mb_strtolower($chain->kecamatan.'|'.$chain->komoditas.'|'.$chain->opt))
+            ->values();
     }
 }

@@ -56,7 +56,7 @@
                             <select name="kecamatan_id" x-ref="kecamatan" @change="loadHistory()" class="block w-full px-4 py-3 rounded-lg border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm transition-colors cursor-pointer" required>
                                 <option value="">-- Pilih Kecamatan --</option>
                                 @foreach($kecamatans as $kec)
-                                    <option value="{{ $kec->id }}" {{ old('kecamatan_id') == $kec->id ? 'selected' : '' }}>{{ $kec->nama_kecamatan }}</option>
+                                    <option value="{{ $kec->id }}" {{ old('kecamatan_id', request('kecamatan_id')) == $kec->id ? 'selected' : '' }}>{{ $kec->nama_kecamatan }}</option>
                                 @endforeach
                             </select>
                             <x-input-error :messages="$errors->get('kecamatan_id')" class="mt-2" />
@@ -67,7 +67,7 @@
                             <select name="komoditas_id" x-ref="komoditas" @change="loadHistory()" class="block w-full px-4 py-3 rounded-lg border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm transition-colors cursor-pointer" required>
                                 <option value="">-- Pilih Komoditas --</option>
                                 @foreach($komoditas as $k)
-                                    <option value="{{ $k->id }}" {{ old('komoditas_id') == $k->id ? 'selected' : '' }}>{{ $k->nama_komoditas }}</option>
+                                    <option value="{{ $k->id }}" {{ old('komoditas_id', request('komoditas_id')) == $k->id ? 'selected' : '' }}>{{ $k->nama_komoditas }}</option>
                                 @endforeach
                             </select>
                             <x-input-error :messages="$errors->get('komoditas_id')" class="mt-2" />
@@ -77,17 +77,17 @@
                             <select id="opt_id" name="opt_id" x-ref="opt" @change="filterJenisOpt(); loadHistory()" class="block w-full px-4 py-3 rounded-lg border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm transition-colors cursor-pointer" required>
                                 <option value="">-- Pilih OPT --</option>
                                 @foreach($opts as $o)
-                                    <option value="{{ $o->id }}" {{ old('opt_id') == $o->id ? 'selected' : '' }}>{{ $o->nama_opt }}</option>
+                                    <option value="{{ $o->id }}" {{ old('opt_id', request('opt_id')) == $o->id ? 'selected' : '' }}>{{ $o->nama_opt }}</option>
                                 @endforeach
                             </select>
                             <x-input-error :messages="$errors->get('opt_id')" class="mt-2" />
                             <div id="jenis-opt-wrapper" class="mt-4">
                                 <label for="jenis_opt_id" class="block text-sm font-bold text-gray-700 mb-2">Jenis turunan <span class="text-red-500">*</span></label>
-                                <select id="jenis_opt_id" name="jenis_opt_id" x-ref="jenisOpt" @change="loadHistory()" class="block w-full px-4 py-3 rounded-lg border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm" data-selected="{{ old('jenis_opt_id') }}">
+                                <select id="jenis_opt_id" name="jenis_opt_id" x-ref="jenisOpt" @change="loadHistory()" class="block w-full px-4 py-3 rounded-lg border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm" data-selected="{{ old('jenis_opt_id', request('jenis_opt_id')) }}">
                                     <option value="">-- Pilih jenis turunan --</option>
                                     @foreach($opts as $o)
                                         @foreach($o->jenisOpts as $jenis)
-                                            <option value="{{ $jenis->id }}" data-opt="{{ $o->id }}" {{ old('jenis_opt_id') == $jenis->id ? 'selected' : '' }}>{{ $jenis->nama_jenis_opt }}</option>
+                                            <option value="{{ $jenis->id }}" data-opt="{{ $o->id }}" {{ old('jenis_opt_id', request('jenis_opt_id')) == $jenis->id ? 'selected' : '' }}>{{ $jenis->nama_jenis_opt }}</option>
                                         @endforeach
                                     @endforeach
                                 </select>
@@ -122,7 +122,7 @@
                             <p>Luas komoditi terakhir: <strong x-text="Number(history.luas_komoditi_ha).toFixed(2)"></strong> Ha</p>
                             <p>Keadaan serangan: <strong x-text="Number(history.kondisi_serangan).toFixed(2)"></strong> Ha</p>
                         </div>
-                        <p class="text-sm text-emerald-900" x-show="historyReady && history.luas_komoditi_ha <= 0">Belum ada data tahun ini. Keadaan serangan dimulai dari 0 Ha.</p>
+                        <p class="text-sm text-emerald-900" x-show="historyReady && history.luas_komoditi_ha <= 0">Belum ada data pada periode ini (Februari–Januari). Keadaan serangan dimulai dari 0 Ha.</p>
                         <p class="text-sm text-emerald-800" x-show="loadingHistory">Memuat data sebelumnya...</p>
                     </div>
                     <p class="mb-6 text-sm font-medium text-red-700" x-show="historyError" x-text="historyError" x-cloak></p>
@@ -163,12 +163,12 @@
                         <p class="mb-6 text-xs text-gray-600 relative z-10">Isi luas pengendalian jika ada.</p>
                         <div class="grid grid-cols-2 md:grid-cols-4 gap-6 relative z-10">
                             <div>
-                                <label class="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wider">APBD Kab/Kota</label>
-                                <input type="number" step="0.01" min="0" name="kendali_apbd_kab" x-model="kendaliKab" class="block w-full px-4 py-2.5 rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500 text-sm font-medium transition-colors" placeholder="0.00">
+                                <label class="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wider">APBD I (Provinsi)</label>
+                                <input type="number" step="0.01" min="0" name="kendali_apbd_prov" x-model="kendaliProv" class="block w-full px-4 py-2.5 rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500 text-sm font-medium transition-colors" placeholder="0.00">
                             </div>
                             <div>
-                                <label class="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wider">APBD Provinsi</label>
-                                <input type="number" step="0.01" min="0" name="kendali_apbd_prov" x-model="kendaliProv" class="block w-full px-4 py-2.5 rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500 text-sm font-medium transition-colors" placeholder="0.00">
+                                <label class="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wider">APBD II (Kab/Kota)</label>
+                                <input type="number" step="0.01" min="0" name="kendali_apbd_kab" x-model="kendaliKab" class="block w-full px-4 py-2.5 rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500 text-sm font-medium transition-colors" placeholder="0.00">
                             </div>
                             <div>
                                 <label class="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wider">Swadaya/Masyarakat</label>
@@ -180,6 +180,9 @@
                             </div>
                         </div>
                         <p class="mt-5 text-sm font-bold text-blue-800 relative z-10">Jumlah total luas pengendalian: <span x-text="totalKendaliBaru.toFixed(2)"></span> Ha</p>
+                        <p class="mt-2 text-xs text-blue-900 relative z-10" x-show="historyReady">Batas maksimal pengendalian: <strong x-text="batasPengendalian.toFixed(2)"></strong> Ha (keadaan serangan sebelumnya + tambah serangan).</p>
+                        <p class="mt-2 text-sm font-semibold text-red-700 relative z-10" x-show="pengendalianMelebihiBatas" x-cloak>Pengendalian melebihi luas serangan yang ada.</p>
+                        <x-input-error :messages="$errors->get('pengendalian')" class="mt-2 relative z-10" />
                     </div>
 
                     <div class="mb-6 rounded-xl border border-blue-100 bg-white p-6 shadow-sm md:p-8">
@@ -200,7 +203,7 @@
                     <a href="{{ route('dashboard') }}" class="inline-flex items-center justify-center px-6 py-3.5 bg-white border border-gray-300 rounded-xl font-bold text-sm text-gray-700 shadow-sm hover:bg-gray-50 transition-colors">
                         Batal & Kembali
                     </a>
-                    <button type="submit" :disabled="loadingHistory || historyError || !historyReady" class="inline-flex items-center justify-center px-8 py-3.5 bg-emerald-600 hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50 text-white font-bold text-sm rounded-xl shadow-lg shadow-emerald-600/30 transition-all duration-200 transform hover:-translate-y-0.5">
+                    <button type="submit" :disabled="loadingHistory || historyError || !historyReady || pengendalianMelebihiBatas" class="inline-flex items-center justify-center px-8 py-3.5 bg-emerald-600 hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50 text-white font-bold text-sm rounded-xl shadow-lg shadow-emerald-600/30 transition-all duration-200 transform hover:-translate-y-0.5">
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
                         Simpan Data Pengamatan
                     </button>
