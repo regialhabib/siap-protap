@@ -229,7 +229,7 @@ class LaporanTest extends TestCase
 
         $response = $this->actingAs($admin)->get(route('laporan.tahunan', ['tahun' => 2026]));
 
-        $response->assertSee('Laporan Tahunan 2026')->assertSee('Kerugian Hasil (Rp 000)')->assertSee('Februari 2026 – Januari 2027');
+        $response->assertSee('Laporan Tahunan 2026')->assertDontSee('Kerugian Hasil')->assertSee('Februari 2026 – Januari 2027');
         $response->assertViewHas('data', function ($data): bool {
             $row = $data->first();
 
@@ -389,11 +389,9 @@ class LaporanTest extends TestCase
 
     public function test_quarterly_report_sums_three_months_per_kabupaten_and_compares_with_previous_quarter(): void
     {
-        $this->travelTo('2026-08-15');
         $admin = User::factory()->create(['role' => 'admin']);
         $uppt = $this->createUppt();
         $upptDua = Uppt::create(['nama_uppt' => 'UPPT Dua', 'kabupaten_id' => 1]);
-        Uppt::create(['nama_uppt' => 'UPPT Tiga', 'kabupaten_id' => 1]);
         $komoditas = Komoditas::create(['nama_komoditas' => 'Karet']);
         $opt = Opt::create(['nama_opt' => 'Gugur Daun']);
         foreach ([
@@ -418,8 +416,7 @@ class LaporanTest extends TestCase
             && $data->first()->serangan_jumlah === 6.0
             && $data->first()->kendali_apbd_kab === 4.0
             && $data->first()->kondisi_serangan_ha === 4.0);
-        $secondQuarter->assertViewHas('belumLapor', fn ($belumLapor): bool => $belumLapor['Mei 2026']->all() === ['UPPT Tiga']
-            && $belumLapor['Juli 2026']->all() === ['UPPT Dua', 'UPPT Tiga']);
+        $secondQuarter->assertDontSee('UPPT yang belum melapor');
     }
 
     public function test_quarterly_report_hides_chains_without_input_whose_condition_is_zero(): void

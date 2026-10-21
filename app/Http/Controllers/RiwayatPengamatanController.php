@@ -12,6 +12,7 @@ use App\Services\PengamatanHistoryService;
 use App\Services\PeriodePengamatan;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Validator as LaravelValidator;
@@ -50,15 +51,15 @@ class RiwayatPengamatanController extends Controller
 
         $hasFilters = collect(['tahun', 'kabupaten_id', 'uppt_id', 'kecamatan_id', 'komoditas_id', 'jenis_opt_id'])
             ->contains(fn (string $filter): bool => $request->filled($filter));
-        $rows = $hasFilters
-            ? $this->monthlyComparisonRows($history->monthlyChains($query->get(), $periode), $periode, $history)
+        $chains = $hasFilters
+            ? $this->chainHistories($history->monthlyChains($query->get(), $periode), $periode, $history)
             : collect();
 
         return view('pengamatan.riwayat', [
-            'data' => $this->paginateRows($rows, $request),
+            'data' => $this->paginateRows($chains, $request),
             'tahun' => $periode,
             'filters' => $filters,
-            'recordCount' => $rows->filter(fn (object $row): bool => ! $row->is_empty)->count(),
+            'hasFilters' => $hasFilters,
             'kabupatens' => Kabupaten::orderBy('nama_kabupaten')->get(),
             'uppts' => Uppt::with('kabupaten:id,nama_kabupaten')
                 ->orderBy('nama_uppt')
@@ -128,77 +129,61 @@ class RiwayatPengamatanController extends Controller
     }
 
     /**
-     * Baris per bulan (Feb–Jan) untuk setiap rantai aktif: posisi bulan lalu dibandingkan dengan bulan ini.
+     * Satu blok per rantai: identitas lokasi, 12 bulan (Feb–Jan), dan total periode.
+     * Bulan sebelum rantai dimulai dan bulan yang belum berjalan ditandai kosong.
      *
      * @param  Collection<string, object>  $chains
      * @return Collection<int, object>
      */
-    private function monthlyComparisonRows(Collection $chains, int $periode, PengamatanHistoryService $history): Collection
+    private function chainHistories(Collection $chains, int $periode, PengamatanHistoryService $history): Collection
     {
-        $rows = collect();
-        $previousKey = null;
+        $currentMonth = now()->startOfMonth();
 
-        foreach (PeriodePengamatan::months($periode) as $month) {
-            $monthKey = PeriodePengamatan::monthKey($month);
-            $monthRows = $chains
-                ->filter(fn (object $chain): bool => $chain->months[$monthKey] !== null)
-                ->map(function (object $chain) use ($month, $monthKey, $previousKey, $history): object {
-                    $current = $chain->months[$monthKey];
-                    $previous = $previousKey === null ? null : $chain->months[$previousKey];
+        return $chains
+            ->map(function (object $chain) use ($periode, $history, $currentMonth): object {
+                $months = [];
+                $visibleMonths = [];
 
-                    return (object) [
+                foreach (PeriodePengamatan::months($periode) as $month) {
+                    $state = $chain->months[PeriodePengamatan::monthKey($month)];
+                    $isBlank = $state === null || ($month->greaterThan($currentMonth) && ! $state['ada_input']);
+
+                    if (! $isBlank) {
+                        $visibleMonths[] = $month;
+                    }
+
+                    $months[] = (object) [
                         'bulan_label' => $month->translatedFormat('F Y'),
-                        'is_empty' => false,
-                        'ada_input' => $current['ada_input'],
-                        'kabupaten' => $chain->uppt?->kabupaten?->nama_kabupaten ?? '-',
-                        'uppt' => $chain->uppt?->nama_uppt ?? '-',
-                        'kecamatan' => $chain->kecamatan?->nama_kecamatan ?? '-',
-                        'komoditas' => $chain->komoditas?->nama_komoditas ?? '-',
-                        'opt' => $chain->opt?->nama_opt ?? '-',
-                        'jenis_opt' => $chain->jenisOpt?->nama_jenis_opt,
-                        'previous' => $previous === null ? null : [
-                            'ringan' => $previous['kumulatif_ringan'],
-                            'berat' => $previous['kumulatif_berat'],
-                            'jumlah' => $previous['kumulatif_jumlah'],
-                            'kondisi_serangan' => $previous['kondisi_akhir'],
-                        ],
-                        'current' => [
-                            'tambah_ringan' => $current['tambah_ringan'],
-                            'tambah_berat' => $current['tambah_berat'],
-                            'tambah_jumlah' => $current['tambah_jumlah'],
-                            'ringan' => $current['kumulatif_ringan'],
-                            'berat' => $current['kumulatif_berat'],
-                            'jumlah' => $current['kumulatif_jumlah'],
-                            'kendali_apbd_prov' => $current['kendali_apbd_prov'],
-                            'kendali_apbd_kab' => $current['kendali_apbd_kab'],
-                            'kendali_masyarakat' => $current['kendali_masyarakat'],
-                            'kendali_apbn' => $current['kendali_apbn'],
-                            'pengendalian' => $current['kendali_jumlah'],
-                            'kondisi_serangan' => $current['kondisi_akhir'],
-                            'kondisi_label' => $history->kondisiLabel($current['kondisi_awal'], $current['kondisi_akhir']),
-                        ],
+                        'is_blank' => $isBlank,
+                        'ada_input' => ! $isBlank && $state['ada_input'],
+                        'values' => $isBlank ? null : Arr::only($state, ['tambah_ringan', 'tambah_berat', 'tambah_jumlah', ...PengamatanHistoryService::CONTROL_FIELDS, 'kendali_jumlah']),
+                        'kondisi_label' => $isBlank ? null : $history->kondisiLabel($state['kondisi_awal'], $state['kondisi_akhir']),
                     ];
-                })
-                ->sortBy(fn (object $row): string => mb_strtolower(implode('|', [
-                    $row->kabupaten, $row->uppt, $row->kecamatan, $row->komoditas, $row->opt, $row->jenis_opt ?? '',
-                ])))
-                ->values();
+                }
 
-            if ($monthRows->isEmpty()) {
-                $monthRows->push((object) ['bulan_label' => $month->translatedFormat('F Y'), 'is_empty' => true]);
-            }
+                $total = $history->summarizeMonths($chain, $visibleMonths);
 
-            $rows = $rows->concat($monthRows);
-            $previousKey = $monthKey;
-        }
-
-        return $rows->values();
+                return (object) [
+                    'kabupaten' => $chain->uppt?->kabupaten?->nama_kabupaten ?? '-',
+                    'uppt' => $chain->uppt?->nama_uppt ?? '-',
+                    'kecamatan' => $chain->kecamatan?->nama_kecamatan ?? '-',
+                    'komoditas' => $chain->komoditas?->nama_komoditas ?? '-',
+                    'opt' => ($chain->opt?->nama_opt ?? '-').($chain->jenisOpt ? ' — '.$chain->jenisOpt->nama_jenis_opt : ''),
+                    'luas_komoditi_ha' => $total['luas_komoditi_ha'],
+                    'months' => $months,
+                    'total' => $total,
+                ];
+            })
+            ->sortBy(fn (object $chain): string => mb_strtolower(implode('|', [
+                $chain->kabupaten, $chain->uppt, $chain->kecamatan, $chain->komoditas, $chain->opt,
+            ])))
+            ->values();
     }
 
     /** @param Collection<int, object> $rows */
     private function paginateRows(Collection $rows, Request $request): LengthAwarePaginator
     {
-        $perPage = 50;
+        $perPage = 5;
         $currentPage = max(1, $request->integer('page', 1));
 
         return new LengthAwarePaginator(

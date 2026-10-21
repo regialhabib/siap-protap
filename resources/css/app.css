@@ -6,7 +6,6 @@
 
 html {
     scroll-behavior: smooth;
-    scrollbar-gutter: stable;
 }
 
 * {
@@ -34,8 +33,10 @@ html {
     background-color: #94a3b8;
 }
 
-.overflow-auto,
-.overflow-y-auto,
-.overflow-y-scroll {
-    scrollbar-gutter: stable;
+.sidebar-scroll {
+    scrollbar-color: #334155 transparent;
+}
+
+.sidebar-scroll::-webkit-scrollbar-thumb {
+    background-color: #334155;
 }

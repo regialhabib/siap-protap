@@ -76,7 +76,6 @@ class LaporanController extends Controller
         return view('laporan.triwulan', [
             'filters' => $filters,
             'data' => $this->paginateData($this->quarterlyRows($filters), $request),
-            'belumLapor' => $this->upptsWithoutReports($filters),
             'kabupatens' => Kabupaten::orderBy('nama_kabupaten')->get(),
         ]);
     }
@@ -248,29 +247,6 @@ class LaporanController extends Controller
         return $this->kabupatenRows($filters['tahun'], $months, $filters['kabupaten_id'])
             ->each(function (object $row): void {
                 $row->kondisi_label = $this->history->kondisiLabel($row->kondisi_awal, $row->kondisi_serangan_ha);
-            });
-    }
-
-    /**
-     * UPPT yang belum mengirim pengamatan pada setiap bulan triwulan yang sudah berjalan.
-     *
-     * @param  array{tahun: int, triwulan: int, kabupaten_id: string}  $filters
-     * @return Collection<string, Collection<int, string>>
-     */
-    private function upptsWithoutReports(array $filters): Collection
-    {
-        $uppts = Uppt::orderBy('nama_uppt')
-            ->when($filters['kabupaten_id'] !== '', fn (Builder $query) => $query->where('kabupaten_id', $filters['kabupaten_id']))
-            ->get();
-
-        return collect(PeriodePengamatan::quarterMonths($filters['tahun'], $filters['triwulan']))
-            ->filter(fn (CarbonImmutable $month): bool => $month->lessThanOrEqualTo(now()))
-            ->mapWithKeys(function (CarbonImmutable $month) use ($uppts): array {
-                $reported = Pengamatan::observedBetween($month, $month->endOfMonth())
-                    ->distinct()
-                    ->pluck('uppt_id');
-
-                return [$month->translatedFormat('F Y') => $uppts->whereNotIn('id', $reported)->pluck('nama_uppt')->values()];
             });
     }
 

@@ -35,28 +35,56 @@
                 <a href="{{ route('laporan.export.tahunan.excel', request()->query()) }}" class="inline-flex w-full items-center justify-center rounded-lg bg-emerald-600 px-4 py-2 text-sm font-bold text-white shadow-sm transition-colors hover:bg-emerald-700 sm:w-auto">Unduh Excel</a>
             </div>
         </div>
+        <x-keterangan-singkatan />
+        @php
+            $hektare = fn ($value) => \App\Services\PengamatanHistoryService::hektare((float) $value);
+        @endphp
         <div class="overflow-x-auto">
-            <table class="w-full min-w-[2000px] text-left text-xs">
+            <table class="w-full text-left text-sm">
                 <thead class="border-b border-gray-200 bg-gray-100/50 text-xs uppercase text-gray-700">
                     <tr>
-                        <th rowspan="2" class="border-r px-3 py-3">No</th><th rowspan="2" class="border-r px-3 py-3">Kabupaten/Kota</th><th rowspan="2" class="border-r px-3 py-3">Jenis Komoditas</th><th rowspan="2" class="border-r px-3 py-3">Luas Komoditas (Ha)</th><th rowspan="2" class="border-r px-3 py-3">Jenis OPT</th><th rowspan="2" class="border-r px-3 py-3">Luas Pengendalian (Ha)</th>
-                        <th colspan="3" class="border-b border-r px-3 py-2 text-center">Luas Serangan (Ha)</th><th colspan="5" class="border-b border-r px-3 py-2 text-center">Luas Pengendalian (Ha)</th><th rowspan="2" class="border-r px-3 py-3">Cara Pengendalian</th><th rowspan="2" class="px-3 py-3">Kerugian Hasil (Rp 000)</th>
+                        <th rowspan="2" class="sticky left-0 z-10 w-12 min-w-[3rem] border-r border-gray-200 bg-gray-50 px-3 py-3">No</th>
+                        <th rowspan="2" class="sticky left-12 z-10 min-w-[10rem] bg-gray-50 px-4 py-3 shadow-[inset_-1px_0_0_#e5e7eb]">Kabupaten/Kota</th>
+                        <th rowspan="2" class="border-r border-gray-200 px-4 py-3">Komoditas</th>
+                        <th rowspan="2" class="border-r border-gray-200 px-4 py-3">Luas (Ha)</th>
+                        <th rowspan="2" class="border-r border-gray-200 px-4 py-3">OPT</th>
+                        <th rowspan="2" class="border-r border-gray-200 px-4 py-3">Luas Pengendalian (Ha)</th>
+                        <th colspan="3" class="border-b border-r border-gray-200 px-4 py-2 text-center">Luas Serangan (Ha)</th>
+                        <th colspan="5" class="border-b border-r border-gray-200 px-4 py-2 text-center">Luas Pengendalian (Ha)</th>
+                        <th rowspan="2" class="min-w-[14rem] px-4 py-3">Cara Pengendalian</th>
                     </tr>
                     <tr>
-                        <th class="border-r px-3 py-2 text-center">Ringan</th><th class="border-r px-3 py-2 text-center">Berat</th><th class="border-r px-3 py-2 text-center">Jumlah</th>
-                        <th class="border-r px-3 py-2 text-center">APBD I</th><th class="border-r px-3 py-2 text-center">APBD II</th><th class="border-r px-3 py-2 text-center">Masyarakat</th><th class="border-r px-3 py-2 text-center">APBN</th><th class="border-r px-3 py-2 text-center">Jumlah</th>
+                        <th class="border-r border-gray-200 bg-yellow-50/50 px-3 py-2 text-center">R</th>
+                        <th class="border-r border-gray-200 bg-red-50/50 px-3 py-2 text-center">B</th>
+                        <th class="border-r border-gray-200 px-3 py-2 text-center font-bold">JML</th>
+                        <th class="border-r border-gray-200 bg-blue-50/50 px-3 py-2 text-center">APBD I</th>
+                        <th class="border-r border-gray-200 bg-blue-50/50 px-3 py-2 text-center">APBD II</th>
+                        <th class="border-r border-gray-200 bg-blue-50/50 px-3 py-2 text-center">Masy</th>
+                        <th class="border-r border-gray-200 bg-blue-50/50 px-3 py-2 text-center">APBN</th>
+                        <th class="border-r border-gray-200 px-3 py-2 text-center font-bold">JML</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($data as $row)
-                        <tr class="border-b border-gray-100 hover:bg-gray-50">
-                            <td class="border-r px-3 py-3 text-center">{{ $data->firstItem() + $loop->index }}</td><td class="border-r px-3 py-3">{{ $row->kabupaten }}</td><td class="border-r px-3 py-3">{{ $row->komoditas }}</td><td class="border-r px-3 py-3 text-center">{{ rtrim(rtrim(number_format($row->luas_komoditi_ha, 2), '0'), '.') }}</td><td class="border-r px-3 py-3">{{ $row->opt }}{{ $row->jenis_opt !== '' ? ' — '.$row->jenis_opt : '' }}</td><td class="border-r px-3 py-3 text-center">{{ rtrim(rtrim(number_format($row->kendali_jumlah, 2), '0'), '.') }}</td>
-                            <td class="border-r px-3 py-3 text-center">{{ rtrim(rtrim(number_format($row->serangan_ringan, 2), '0'), '.') }}</td><td class="border-r px-3 py-3 text-center">{{ rtrim(rtrim(number_format($row->serangan_berat, 2), '0'), '.') }}</td><td class="border-r px-3 py-3 text-center font-bold">{{ rtrim(rtrim(number_format($row->serangan_jumlah, 2), '0'), '.') }}</td>
-                            <td class="border-r px-3 py-3 text-center">{{ rtrim(rtrim(number_format($row->kendali_apbd_prov, 2), '0'), '.') }}</td><td class="border-r px-3 py-3 text-center">{{ rtrim(rtrim(number_format($row->kendali_apbd_kab, 2), '0'), '.') }}</td><td class="border-r px-3 py-3 text-center">{{ rtrim(rtrim(number_format($row->kendali_masyarakat, 2), '0'), '.') }}</td><td class="border-r px-3 py-3 text-center">{{ rtrim(rtrim(number_format($row->kendali_apbn, 2), '0'), '.') }}</td><td class="border-r px-3 py-3 text-center font-bold">{{ rtrim(rtrim(number_format($row->kendali_jumlah, 2), '0'), '.') }}</td>
-                            <td class="border-r px-3 py-3">{{ $row->cara_pengendalian }}</td><td class="px-3 py-3"></td>
+                        <tr class="group border-b border-gray-100 transition-colors hover:bg-gray-50">
+                            <td class="sticky left-0 z-10 w-12 min-w-[3rem] border-r border-gray-100 bg-white px-3 py-3 text-center group-hover:bg-gray-50">{{ $data->firstItem() + $loop->index }}</td>
+                            <td class="sticky left-12 z-10 min-w-[10rem] bg-white px-4 py-3 font-medium text-gray-900 shadow-[inset_-1px_0_0_#e5e7eb] group-hover:bg-gray-50">{{ $row->kabupaten }}</td>
+                            <td class="border-r border-gray-100 px-4 py-3">{{ $row->komoditas }}</td>
+                            <td class="border-r border-gray-100 px-4 py-3 text-center font-bold">{{ $hektare($row->luas_komoditi_ha) }}</td>
+                            <td class="border-r border-gray-100 px-4 py-3">{{ $row->opt }}{{ $row->jenis_opt !== '' ? ' — '.$row->jenis_opt : '' }}</td>
+                            <td class="border-r border-gray-100 px-4 py-3 text-center font-bold">{{ $hektare($row->kendali_jumlah) }}</td>
+                            <td class="border-r border-gray-100 px-3 py-3 text-center">{{ $hektare($row->serangan_ringan) }}</td>
+                            <td class="border-r border-gray-100 px-3 py-3 text-center">{{ $hektare($row->serangan_berat) }}</td>
+                            <td class="border-r border-gray-200 bg-gray-50 px-3 py-3 text-center font-bold">{{ $hektare($row->serangan_jumlah) }}</td>
+                            <td class="border-r border-gray-100 px-3 py-3 text-center">{{ $hektare($row->kendali_apbd_prov) }}</td>
+                            <td class="border-r border-gray-100 px-3 py-3 text-center">{{ $hektare($row->kendali_apbd_kab) }}</td>
+                            <td class="border-r border-gray-100 px-3 py-3 text-center">{{ $hektare($row->kendali_masyarakat) }}</td>
+                            <td class="border-r border-gray-100 px-3 py-3 text-center">{{ $hektare($row->kendali_apbn) }}</td>
+                            <td class="border-r border-gray-200 bg-blue-50/50 px-3 py-3 text-center font-bold">{{ $hektare($row->kendali_jumlah) }}</td>
+                            <td class="min-w-[14rem] px-4 py-3">{{ $row->cara_pengendalian }}</td>
                         </tr>
                     @empty
-                        <tr><td colspan="16" class="px-6 py-12 text-center text-gray-500">Belum ada data pengamatan pada tahun dan filter ini.</td></tr>
+                        <tr><td colspan="15" class="px-6 py-12 text-center text-gray-500">Belum ada data pengamatan pada tahun dan filter ini.</td></tr>
                     @endforelse
                 </tbody>
             </table>

@@ -207,7 +207,7 @@
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-8">
         <div class="p-6 border-b border-gray-100">
             <h3 class="text-lg font-bold text-gray-900">Laporan Bulan Ini ({{ now()->isoFormat('MMMM Y') }})</h3>
-            <p class="mt-1 text-sm text-gray-500">Rantai pengamatan aktif pada periode {{ \App\Services\PeriodePengamatan::current() }} (Februari–Januari). Rantai yang belum dilaporkan tetap dibawa dengan tambah serangan 0.</p>
+            <p class="mt-1 text-sm text-gray-500">Periode {{ \App\Services\PeriodePengamatan::current() }} (Februari–Januari). Data yang belum dilaporkan bulan ini tetap dibawa dengan tambah serangan 0.</p>
         </div>
         <div class="overflow-x-auto">
             <table class="w-full text-sm text-left">
@@ -239,7 +239,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="px-6 py-6 text-center text-gray-500">Belum ada rantai pengamatan pada periode ini.</td>
+                            <td colspan="5" class="px-6 py-6 text-center text-gray-500">Belum ada data pengamatan pada periode ini.</td>
                         </tr>
                     @endforelse
                 </tbody>

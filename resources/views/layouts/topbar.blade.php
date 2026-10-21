@@ -1,5 +1,5 @@
 <header class="bg-white border-b border-gray-200">
-    <div class="flex items-center justify-between px-4 sm:px-6 lg:px-8 h-20">
+    <div class="flex items-center justify-between px-4 sm:px-6 lg:px-8 h-16">
         
         <!-- Mobile menu button -->
         <button @click="sidebarOpen = true" class="text-gray-500 focus:outline-none lg:hidden">

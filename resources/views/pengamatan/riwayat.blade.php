@@ -2,7 +2,7 @@
     <div class="mb-6 mt-6 overflow-visible rounded-xl border border-gray-200 bg-white shadow-sm">
         <div class="rounded-t-xl border-b border-gray-100 bg-gray-50/50 px-6 py-4">
             <h1 class="text-xl font-bold leading-tight tracking-tight text-gray-800">Riwayat Pengamatan Periode</h1>
-            <p class="mt-1 text-sm text-gray-500">Baca rantai pengamatan setiap bulan selama periode Februari {{ $tahun }} – Januari {{ $tahun + 1 }}.</p>
+            <p class="mt-1 text-sm text-gray-500">Data pengamatan setiap bulan selama periode Februari {{ $tahun }} – Januari {{ $tahun + 1 }}.</p>
         </div>
 
         <form method="GET" action="{{ route('pengamatan.riwayat.index') }}" class="grid grid-cols-1 gap-4 p-6 md:grid-cols-3 xl:grid-cols-4"
@@ -117,86 +117,102 @@
     </div>
 
     @php
-        $hektare = fn ($value) => number_format((float) $value, 2);
+        $hektare = fn ($value) => \App\Services\PengamatanHistoryService::hektare((float) $value);
+        $attackFields = ['tambah_ringan', 'tambah_berat'];
+        $controlFields = \App\Services\PengamatanHistoryService::CONTROL_FIELDS;
     @endphp
-    <div class="mb-8 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+    <div class="mb-6 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
         <div class="border-b border-gray-100 bg-gray-50/50 px-6 py-4">
             <h2 class="font-bold text-gray-900">Data Pengamatan Periode {{ $tahun }} (Februari {{ $tahun }} – Januari {{ $tahun + 1 }})</h2>
-            <p class="mt-1 text-sm text-gray-500">{{ $recordCount }} baris rantai · luas dalam hektare. Bulan tanpa input tetap ditampilkan dengan tambah serangan dan pengendalian 0.</p>
+            <p class="mt-1 text-sm text-gray-500">{{ $data->total() }} data pengamatan · luas dalam hektare. Setiap kotak menampilkan perjalanan satu lokasi dari Februari sampai Januari.</p>
         </div>
-        <div class="overflow-x-auto">
-            <table class="w-full min-w-[2200px] text-left text-sm">
-                <thead class="border-b border-gray-200 bg-gray-100/70 text-xs uppercase text-gray-700">
-                    <tr>
-                        <th rowspan="2" class="border-r px-3 py-3">Bulan</th>
-                        <th rowspan="2" class="border-r px-3 py-3">Kabupaten/Kota</th>
-                        <th rowspan="2" class="border-r px-3 py-3">UPPT</th>
-                        <th rowspan="2" class="border-r px-3 py-3">Kecamatan</th>
-                        <th rowspan="2" class="border-r px-3 py-3">Komoditas</th>
-                        <th rowspan="2" class="border-r px-3 py-3">Jenis OPT</th>
-                        <th colspan="4" class="border-r border-b px-3 py-2 text-center">Bulan Lalu</th>
-                        <th colspan="3" class="border-r border-b px-3 py-2 text-center">Tambah Serangan Bulan Ini</th>
-                        <th colspan="3" class="border-r border-b px-3 py-2 text-center">Serangan Kumulatif</th>
-                        <th colspan="5" class="border-r border-b px-3 py-2 text-center">Pengendalian Bulan Ini</th>
-                        <th rowspan="2" class="px-3 py-3 text-center">Kondisi Serangan</th>
-                    </tr>
-                    <tr>
-                        <th class="border-r px-3 py-2 text-center">Ringan</th>
-                        <th class="border-r px-3 py-2 text-center">Berat</th>
-                        <th class="border-r px-3 py-2 text-center">Jumlah</th>
-                        <th class="border-r px-3 py-2 text-center">Kondisi</th>
-                        <th class="border-r px-3 py-2 text-center">Ringan</th>
-                        <th class="border-r px-3 py-2 text-center">Berat</th>
-                        <th class="border-r px-3 py-2 text-center">Jumlah</th>
-                        <th class="border-r px-3 py-2 text-center">Ringan</th>
-                        <th class="border-r px-3 py-2 text-center">Berat</th>
-                        <th class="border-r px-3 py-2 text-center">Jumlah</th>
-                        <th class="border-r px-3 py-2 text-center">APBD I</th>
-                        <th class="border-r px-3 py-2 text-center">APBD II</th>
-                        <th class="border-r px-3 py-2 text-center">Masyarakat</th>
-                        <th class="border-r px-3 py-2 text-center">APBN</th>
-                        <th class="border-r px-3 py-2 text-center">Jumlah</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($data as $row)
-                        @if($row->is_empty)
-                            <tr class="border-b border-gray-100 bg-gray-50/70">
-                                <td class="whitespace-nowrap border-r px-3 py-3 font-semibold text-gray-700">{{ $row->bulan_label }}</td>
-                                <td colspan="21" class="px-3 py-3 text-center text-gray-500">Belum ada data pengamatan pada bulan ini.</td>
-                            </tr>
-                        @else
-                            <tr class="border-b border-gray-100 hover:bg-gray-50/70">
-                                <td class="whitespace-nowrap border-r px-3 py-3 font-semibold text-gray-700">
-                                    {{ $row->bulan_label }}
-                                    @unless($row->ada_input)
-                                        <span class="mt-1 block text-xs font-normal text-amber-700">Tidak ada input</span>
-                                    @endunless
-                                </td>
-                                <td class="border-r px-3 py-3">{{ $row->kabupaten }}</td>
-                                <td class="border-r px-3 py-3">{{ $row->uppt }}</td>
-                                <td class="border-r px-3 py-3">{{ $row->kecamatan }}</td>
-                                <td class="border-r px-3 py-3">{{ $row->komoditas }}</td>
-                                <td class="border-r px-3 py-3">{{ $row->opt }}{{ $row->jenis_opt ? ' — '.$row->jenis_opt : '' }}</td>
-                                @foreach(['ringan', 'berat', 'jumlah', 'kondisi_serangan'] as $field)
-                                    <td class="border-r px-3 py-3 text-center {{ $field === 'jumlah' ? 'font-bold' : '' }}">
-                                        {{ $row->previous === null ? '—' : $hektare($row->previous[$field]) }}
-                                    </td>
-                                @endforeach
-                                @foreach(['tambah_ringan', 'tambah_berat', 'tambah_jumlah', 'ringan', 'berat', 'jumlah', 'kendali_apbd_prov', 'kendali_apbd_kab', 'kendali_masyarakat', 'kendali_apbn', 'pengendalian'] as $field)
-                                    <td class="border-r px-3 py-3 text-center {{ in_array($field, ['tambah_jumlah', 'jumlah', 'pengendalian'], true) ? 'font-bold' : '' }}">
-                                        {{ $hektare($row->current[$field]) }}
-                                    </td>
-                                @endforeach
-                                <td class="whitespace-nowrap px-3 py-3 text-center font-semibold">{{ $row->current['kondisi_label'] }}</td>
-                            </tr>
-                        @endif
-                    @endforeach
-                </tbody>
-            </table>
-        </div>
-        @if($data->hasPages())
-            <div class="border-t border-gray-100 px-4 py-3">{{ $data->links() }}</div>
-        @endif
+        <x-keterangan-singkatan :bordered="false" />
     </div>
+
+    @forelse($data as $chain)
+        <div class="mb-6 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+            <div class="flex flex-col gap-1 border-b border-gray-100 bg-gray-50/50 px-6 py-4 md:flex-row md:items-center md:justify-between">
+                <div>
+                    <h3 class="font-bold text-gray-900">{{ $chain->uppt }} · Kec. {{ $chain->kecamatan }} · {{ $chain->kabupaten }}</h3>
+                    <p class="mt-1 text-sm text-gray-600">{{ $chain->komoditas }} — {{ $chain->opt }}</p>
+                </div>
+                <p class="text-sm text-gray-500">Luas komoditi <span class="font-bold text-gray-900">{{ $hektare($chain->luas_komoditi_ha) }} Ha</span></p>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm">
+                    <thead class="border-b border-gray-200 bg-gray-100/50 text-xs uppercase text-gray-700">
+                        <tr>
+                            <th rowspan="2" class="border-r border-gray-200 px-4 py-3">Bulan</th>
+                            <th colspan="3" class="border-b border-r border-gray-200 px-4 py-2 text-center">Serangan Bulan Ini (Ha)</th>
+                            <th colspan="5" class="border-b border-r border-gray-200 px-4 py-2 text-center">Pengendalian Bulan Ini (Ha)</th>
+                            <th rowspan="2" class="px-4 py-3">Kondisi Serangan</th>
+                        </tr>
+                        <tr>
+                            <th class="border-r border-gray-200 bg-yellow-50/50 px-3 py-2 text-center">R</th>
+                            <th class="border-r border-gray-200 bg-red-50/50 px-3 py-2 text-center">B</th>
+                            <th class="border-r border-gray-200 px-3 py-2 text-center font-bold">JML</th>
+                            <th class="border-r border-gray-200 bg-blue-50/50 px-3 py-2 text-center">APBD I</th>
+                            <th class="border-r border-gray-200 bg-blue-50/50 px-3 py-2 text-center">APBD II</th>
+                            <th class="border-r border-gray-200 bg-blue-50/50 px-3 py-2 text-center">Masy</th>
+                            <th class="border-r border-gray-200 bg-blue-50/50 px-3 py-2 text-center">APBN</th>
+                            <th class="border-r border-gray-200 px-3 py-2 text-center font-bold">JML</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($chain->months as $month)
+                            @if($month->is_blank)
+                                <tr class="border-b border-gray-100 bg-gray-50 text-gray-400">
+                                    <td class="whitespace-nowrap border-r border-gray-100 px-4 py-2.5">{{ $month->bulan_label }}</td>
+                                    @foreach(range(1, 8) as $column)
+                                        <td class="border-r border-gray-100 px-3 py-2.5 text-center">—</td>
+                                    @endforeach
+                                    <td class="px-4 py-2.5">—</td>
+                                </tr>
+                            @else
+                                <tr class="border-b border-gray-100 transition-colors hover:bg-gray-50">
+                                    <td class="whitespace-nowrap border-r border-gray-100 px-4 py-2.5 font-semibold text-gray-700">
+                                        {{ $month->bulan_label }}
+                                        @unless($month->ada_input)
+                                            <span class="block text-xs font-normal text-amber-700">Tidak ada input</span>
+                                        @endunless
+                                    </td>
+                                    @foreach($attackFields as $field)
+                                        <td class="border-r border-gray-100 px-3 py-2.5 text-center">{{ $hektare($month->values[$field]) }}</td>
+                                    @endforeach
+                                    <td class="border-r border-gray-200 bg-gray-50 px-3 py-2.5 text-center font-bold">{{ $hektare($month->values['tambah_jumlah']) }}</td>
+                                    @foreach($controlFields as $field)
+                                        <td class="border-r border-gray-100 px-3 py-2.5 text-center">{{ $hektare($month->values[$field]) }}</td>
+                                    @endforeach
+                                    <td class="border-r border-gray-200 bg-blue-50/50 px-3 py-2.5 text-center font-bold">{{ $hektare($month->values['kendali_jumlah']) }}</td>
+                                    <td class="whitespace-nowrap px-4 py-2.5 font-semibold">{{ $month->kondisi_label }}</td>
+                                </tr>
+                            @endif
+                        @endforeach
+                    </tbody>
+                    <tfoot class="border-t-2 border-gray-200 bg-gray-100/50 font-bold text-gray-900">
+                        <tr>
+                            <td class="border-r border-gray-200 px-4 py-3">Total Periode</td>
+                            @foreach($attackFields as $field)
+                                <td class="border-r border-gray-200 px-3 py-3 text-center">{{ $hektare($chain->total[$field]) }}</td>
+                            @endforeach
+                            <td class="border-r border-gray-200 px-3 py-3 text-center">{{ $hektare($chain->total['tambah_jumlah']) }}</td>
+                            @foreach($controlFields as $field)
+                                <td class="border-r border-gray-200 px-3 py-3 text-center">{{ $hektare($chain->total[$field]) }}</td>
+                            @endforeach
+                            <td class="border-r border-gray-200 px-3 py-3 text-center">{{ $hektare($chain->total['kendali_jumlah']) }}</td>
+                            <td class="whitespace-nowrap px-4 py-3">Akhir: {{ $hektare($chain->total['kondisi_akhir']) }} Ha</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    @empty
+        <div class="mb-6 rounded-xl border border-gray-200 bg-white px-6 py-12 text-center text-sm text-gray-500 shadow-sm">
+            {{ $hasFilters ? 'Belum ada data pengamatan pada periode dan filter ini.' : 'Pilih filter lalu tampilkan untuk membaca riwayat pengamatan.' }}
+        </div>
+    @endforelse
+
+    @if($data->hasPages())
+        <div class="mb-8 rounded-xl border border-gray-200 bg-white px-4 py-3 shadow-sm">{{ $data->links() }}</div>
+    @endif
 </x-app-layout>

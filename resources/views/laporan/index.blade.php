@@ -126,7 +126,7 @@
                 <h3 class="font-bold text-gray-900">
                     Laporan Bulanan {{ \Carbon\Carbon::create()->month((int) $bulan)->translatedFormat('F') }} {{ $tahun }}
                 </h3>
-                <p class="text-sm text-gray-500 mt-1">Ditemukan {{ $data->total() }} rantai pengamatan.</p>
+                <p class="text-sm text-gray-500 mt-1">Ditemukan {{ $data->total() }} data pengamatan.</p>
             </div>
 
             <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
@@ -145,6 +145,7 @@
             </div>
         </div>
 
+        <x-keterangan-singkatan />
         <div id="table-container" class="overflow-x-auto">
             <table class="w-full text-sm text-left">
                 <thead class="text-xs text-gray-700 uppercase bg-gray-100/50 border-b border-gray-200">
