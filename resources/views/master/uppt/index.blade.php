@@ -108,14 +108,15 @@
                                             </select>
                                         </div>
     
-                                        <div class="mt-6" x-data="{ kecamatans: {{ $u->kecamatans->pluck('nama_kecamatan')->toJson() }} }">
+                                        <div class="mt-6" x-data="{ kecamatans: @js($u->kecamatans->map(fn ($kecamatan) => ['id' => $kecamatan->id, 'nama' => $kecamatan->nama_kecamatan])->values()) }">
                                             <div class="flex items-center justify-between mb-2">
                                                 <label class="block text-sm font-semibold text-gray-700">Kecamatan (Opsional)</label>
-                                                <button type="button" @click="kecamatans.push('')" class="text-xs text-blue-600 hover:text-blue-700 font-semibold">+ Tambah Kecamatan</button>
+                                                <button type="button" @click="kecamatans.push({ id: null, nama: '' })" class="text-xs text-blue-600 hover:text-blue-700 font-semibold">+ Tambah Kecamatan</button>
                                             </div>
                                             <template x-for="(kecamatan, index) in kecamatans" :key="index">
                                                 <div class="flex items-center mb-2 gap-2">
-                                                    <input type="text" name="kecamatans[]" x-model="kecamatans[index]" class="block w-full px-4 py-2 rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="Nama Kecamatan">
+                                                    <input type="hidden" :name="`kecamatans[${index}][id]`" :value="kecamatan.id ?? ''">
+                                                    <input type="text" :name="`kecamatans[${index}][nama_kecamatan]`" x-model="kecamatan.nama" class="block w-full px-4 py-2 rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="Nama Kecamatan">
                                                     <button type="button" @click="kecamatans.splice(index, 1)" class="text-red-500 hover:text-red-700 p-2">
                                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                                                     </button>

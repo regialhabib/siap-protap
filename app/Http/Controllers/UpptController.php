@@ -6,6 +6,8 @@ use App\Models\Kabupaten;
 use App\Models\Uppt;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class UpptController extends Controller
 {
@@ -27,6 +29,8 @@ class UpptController extends Controller
         $request->validate([
             'nama_uppt' => 'required|string|max:255',
             'kabupaten_id' => 'required|exists:kabupatens,id',
+            'kecamatans' => 'nullable|array|max:50',
+            'kecamatans.*' => 'nullable|string|max:255|distinct:ignore_case',
         ]);
 
         try {
@@ -51,23 +55,39 @@ class UpptController extends Controller
 
     public function update(Request $request, Uppt $uppt)
     {
-        $request->validate([
+        $validated = $request->validate([
             'nama_uppt' => 'required|string|max:255',
             'kabupaten_id' => 'required|exists:kabupatens,id',
+            'kecamatans' => 'nullable|array|max:50',
+            'kecamatans.*.id' => ['nullable', 'integer', Rule::exists('kecamatans', 'id')->where('uppt_id', $uppt->id)],
+            'kecamatans.*.nama_kecamatan' => 'nullable|string|max:255|distinct:ignore_case',
         ]);
 
         try {
-            $uppt->update([
-                'nama_uppt' => $request->nama_uppt,
-                'kabupaten_id' => $request->kabupaten_id,
-            ]);
+            DB::transaction(function () use ($uppt, $validated): void {
+                $uppt->update([
+                    'nama_uppt' => $validated['nama_uppt'],
+                    'kabupaten_id' => $validated['kabupaten_id'],
+                ]);
 
-            $uppt->kecamatans()->delete();
-            if ($request->has('kecamatans')) {
-                foreach (array_filter($request->kecamatans) as $nama_kecamatan) {
-                    $uppt->kecamatans()->create(['nama_kecamatan' => $nama_kecamatan]);
+                // Sinkron per ID agar kecamatan yang dipertahankan tidak dihapus beserta pengamatannya.
+                $retainedKecamatanIds = [];
+                foreach ($validated['kecamatans'] ?? [] as $kecamatanData) {
+                    $namaKecamatan = trim($kecamatanData['nama_kecamatan'] ?? '');
+                    if ($namaKecamatan === '') {
+                        continue;
+                    }
+
+                    if (! empty($kecamatanData['id'])) {
+                        $uppt->kecamatans()->whereKey($kecamatanData['id'])->update(['nama_kecamatan' => $namaKecamatan]);
+                        $retainedKecamatanIds[] = (int) $kecamatanData['id'];
+                    } else {
+                        $retainedKecamatanIds[] = $uppt->kecamatans()->create(['nama_kecamatan' => $namaKecamatan])->id;
+                    }
                 }
-            }
+
+                $uppt->kecamatans()->whereNotIn('id', $retainedKecamatanIds)->delete();
+            });
 
             return redirect()->route('uppt.index')->with('success', 'Data UPPT berhasil diperbarui!');
         } catch (\Throwable $e) {
