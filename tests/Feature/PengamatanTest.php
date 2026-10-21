@@ -175,6 +175,28 @@ class PengamatanTest extends TestCase
         $response->assertOk()->assertJsonPath('summary.kondisi_serangan', 3);
     }
 
+    public function test_history_lists_the_last_entry_and_entries_in_the_same_month_of_the_chain(): void
+    {
+        $popt = $this->createPopt($this->createUppt());
+        $karet = Komoditas::create(['nama_komoditas' => 'Karet']);
+        $kelapa = Komoditas::create(['nama_komoditas' => 'Kelapa']);
+        $opt = Opt::create(['nama_opt' => 'Gugur Daun']);
+        $this->createObservation($popt, $karet, $opt, '2026-02-10', ['serangan_ringan' => 2]);
+        $march = $this->createObservation($popt, $karet, $opt, '2026-03-05', ['serangan_ringan' => 1]);
+        $this->createObservation($popt, $kelapa, $opt, '2026-03-07', ['serangan_ringan' => 4]);
+        $query = ['tanggal_pengamatan' => '2026-03-20', 'komoditas_id' => $karet->id, 'opt_id' => $opt->id];
+
+        $create = $this->actingAs($popt)->getJson(route('pengamatan.history', $query));
+        $edit = $this->getJson(route('pengamatan.history', [...$query, 'pengamatan_id' => $march->id]));
+
+        $create->assertOk()
+            ->assertJsonPath('terakhir', '05 Maret 2026')
+            ->assertJsonPath('bulan_sama', [['tanggal' => '05 Maret 2026', 'edit_url' => route('pengamatan.edit', $march)]]);
+        $edit->assertOk()
+            ->assertJsonPath('terakhir', '10 Februari 2026')
+            ->assertJsonPath('bulan_sama', []);
+    }
+
     public function test_calculates_condition_as_two_previous_plus_three_new_minus_two_control(): void
     {
         $popt = $this->createPopt($this->createUppt());
@@ -286,6 +308,16 @@ class PengamatanTest extends TestCase
         $response = $this->actingAs($this->createAdmin())->get(route('pengamatan.edit', $pengamatan));
 
         $response->assertOk()->assertSee('Kecamatan Pengamatan');
+    }
+
+    public function test_admin_edit_shows_the_region_of_the_observation(): void
+    {
+        $popt = $this->createPopt($this->createUppt());
+        $pengamatan = $this->createObservation($popt, Komoditas::create(['nama_komoditas' => 'Karet']), Opt::create(['nama_opt' => 'Gugur Daun']), '2026-02-10');
+
+        $response = $this->actingAs($this->createAdmin())->get(route('pengamatan.edit', $pengamatan));
+
+        $response->assertOk()->assertSee('Wilayah: UPPT Test');
     }
 
     public function test_rejects_update_with_kecamatan_from_another_uppt(): void

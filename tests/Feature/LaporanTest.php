@@ -144,7 +144,7 @@ class LaporanTest extends TestCase
             && $data->first()->kendali_jumlah === 3.0
             && $data->first()->kondisi_serangan_ha === 4.0);
 
-        $march->assertSee('4 Ha (Tetap)')->assertSee('Tidak ada input bulan ini');
+        $march->assertSee('4 Ha (Tetap)')->assertSee('Tidak ada pengamatan');
         $march->assertViewHas('data', fn ($data): bool => $data->count() === 1
             && $data->first()->serangan_jumlah === 0.0
             && $data->first()->kendali_jumlah === 0.0

@@ -2,7 +2,6 @@
     <div class="mb-6 mt-6 overflow-visible rounded-xl border border-gray-200 bg-white shadow-sm">
         <div class="rounded-t-xl border-b border-gray-100 bg-gray-50/50 px-6 py-4">
             <h1 class="text-xl font-bold leading-tight tracking-tight text-gray-800">Riwayat Pengamatan Periode</h1>
-            <p class="mt-1 text-sm text-gray-500">Data pengamatan setiap bulan selama periode Februari {{ $tahun }} – Januari {{ $tahun + 1 }}.</p>
         </div>
 
         <form method="GET" action="{{ route('pengamatan.riwayat.index') }}" class="grid grid-cols-1 gap-4 p-6 md:grid-cols-3 xl:grid-cols-4"
@@ -10,11 +9,17 @@
                 kabupatenId: @js($filters['kabupaten_id']),
                 upptId: @js($filters['uppt_id']),
                 kecamatanId: @js($filters['kecamatan_id']),
+                optId: @js($filters['opt_id']),
+                jenisOptId: @js($filters['jenis_opt_id']),
                 uppts: @js($uppts->map(fn ($uppt) => ['id' => (string) $uppt->id, 'kabupaten_id' => (string) $uppt->kabupaten_id, 'nama' => $uppt->nama_uppt])->values()),
                 kecamatans: @js($kecamatans->map(fn ($kecamatan) => ['id' => (string) $kecamatan->id, 'nama' => $kecamatan->nama_kecamatan])->values()),
+                opts: @js($opts->map(fn ($opt) => ['id' => (string) $opt->id, 'jenis' => $opt->jenisOpts->map(fn ($jenis) => ['id' => (string) $jenis->id, 'nama' => $jenis->nama_jenis_opt])->values()])->values()),
                 kecamatanEndpoint: @js(route('api.uppt.kecamatans', ['uppt' => '__UPPT__'])),
                 get filteredUppts() {
                     return this.uppts.filter((uppt) => !this.kabupatenId || uppt.kabupaten_id === this.kabupatenId);
+                },
+                get jenisOptions() {
+                    return this.opts.find((opt) => opt.id === this.optId)?.jenis ?? [];
                 },
                 onKabupatenChanged() {
                     this.upptId = '';
@@ -25,6 +30,9 @@
                     this.kecamatanId = '';
                     this.kecamatans = [];
                     await this.loadKecamatans(false);
+                },
+                onOptChanged() {
+                    this.jenisOptId = '';
                 },
                 async loadKecamatans(preserveSelection) {
                     if (!this.upptId) {
@@ -61,7 +69,7 @@
                     class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-emerald-500 focus:ring-emerald-500">
                     <option value="">Semua Kabupaten/Kota</option>
                     @foreach($kabupatens as $kabupaten)
-                        <option value="{{ $kabupaten->id }}">{{ $kabupaten->nama_kabupaten }}</option>
+                        <option value="{{ $kabupaten->id }}" @selected($filters['kabupaten_id'] == $kabupaten->id)>{{ $kabupaten->nama_kabupaten }}</option>
                     @endforeach
                 </select>
                 @error('kabupaten_id') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
@@ -72,7 +80,7 @@
                     class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-emerald-500 focus:ring-emerald-500">
                     <option value="">Semua UPPT</option>
                     <template x-for="uppt in filteredUppts" :key="uppt.id">
-                        <option :value="uppt.id" x-text="uppt.nama"></option>
+                        <option :value="uppt.id" :selected="uppt.id === upptId" x-text="uppt.nama"></option>
                     </template>
                 </select>
                 @error('uppt_id') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
@@ -83,7 +91,7 @@
                     class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-emerald-500 focus:ring-emerald-500 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500">
                     <option value="" x-text="kecamatans.length ? 'Semua Kecamatan' : 'Pilih UPPT terlebih dahulu'"></option>
                     <template x-for="kecamatan in kecamatans" :key="kecamatan.id">
-                        <option :value="kecamatan.id" x-text="kecamatan.nama"></option>
+                        <option :value="kecamatan.id" :selected="kecamatan.id === kecamatanId" x-text="kecamatan.nama"></option>
                     </template>
                 </select>
                 @error('kecamatan_id') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
@@ -99,19 +107,30 @@
                 @error('komoditas_id') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
             </div>
             <div>
-                <label for="jenis_opt_id" class="mb-2 block text-xs font-bold uppercase text-gray-500">Jenis OPT</label>
-                <select id="jenis_opt_id" name="jenis_opt_id" class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-emerald-500 focus:ring-emerald-500">
-                    <option value="">Semua Jenis OPT</option>
-                    @foreach($jenisOpts as $jenisOpt)
-                        <option value="{{ $jenisOpt->id }}" @selected($filters['jenis_opt_id'] == $jenisOpt->id)>
-                            {{ $jenisOpt->opt?->nama_opt }} — {{ $jenisOpt->nama_jenis_opt }}
-                        </option>
+                <label for="opt_id" class="mb-2 block text-xs font-bold uppercase text-gray-500">OPT</label>
+                <select id="opt_id" name="opt_id" x-model="optId" @change="onOptChanged()"
+                    class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-emerald-500 focus:ring-emerald-500">
+                    <option value="">Semua OPT</option>
+                    @foreach($opts as $opt)
+                        <option value="{{ $opt->id }}" @selected($filters['opt_id'] == $opt->id)>{{ $opt->nama_opt }}</option>
                     @endforeach
+                </select>
+                @error('opt_id') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+            </div>
+            <div>
+                <label for="jenis_opt_id" class="mb-2 block text-xs font-bold uppercase text-gray-500">Jenis OPT</label>
+                <select id="jenis_opt_id" name="jenis_opt_id" x-model="jenisOptId" :disabled="jenisOptions.length === 0"
+                    class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-emerald-500 focus:ring-emerald-500 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500">
+                    <option value="" x-text="jenisOptions.length ? 'Semua Jenis OPT' : (optId ? 'Tidak ada jenis turunan' : 'Pilih OPT terlebih dahulu')"></option>
+                    <template x-for="jenis in jenisOptions" :key="jenis.id">
+                        <option :value="jenis.id" :selected="jenis.id === jenisOptId" x-text="jenis.nama"></option>
+                    </template>
                 </select>
                 @error('jenis_opt_id') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
             </div>
-            <div class="flex items-end">
-                <button type="submit" class="inline-flex h-10 w-full items-center justify-center rounded-lg bg-emerald-600 px-4 text-sm font-bold text-white hover:bg-emerald-700">Tampilkan Riwayat</button>
+            <div class="flex items-end gap-2">
+                <button type="submit" class="inline-flex h-10 flex-1 items-center justify-center rounded-lg bg-emerald-600 px-4 text-sm font-bold text-white hover:bg-emerald-700">Tampilkan</button>
+                <a href="{{ route('pengamatan.riwayat.index') }}" class="inline-flex h-10 items-center justify-center rounded-lg border border-gray-300 bg-white px-4 text-sm font-bold text-gray-700 hover:bg-gray-50">Reset</a>
             </div>
         </form>
     </div>
@@ -124,10 +143,34 @@
     <div class="mb-6 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
         <div class="border-b border-gray-100 bg-gray-50/50 px-6 py-4">
             <h2 class="font-bold text-gray-900">Data Pengamatan Periode {{ $tahun }} (Februari {{ $tahun }} – Januari {{ $tahun + 1 }})</h2>
-            <p class="mt-1 text-sm text-gray-500">{{ $data->total() }} data pengamatan · luas dalam hektare. Setiap kotak menampilkan perjalanan satu lokasi dari Februari sampai Januari.</p>
         </div>
         <x-keterangan-singkatan :bordered="false" />
     </div>
+
+    @if($data->total() > 1)
+        <div class="mb-4 flex flex-col gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3 shadow-sm md:flex-row md:items-center" x-data>
+            <label for="chain-select" class="shrink-0 text-xs font-bold uppercase text-gray-500">Data Pengamatan</label>
+            <select id="chain-select" @change="window.location.href = $event.target.value"
+                class="block w-full flex-1 rounded-lg border-gray-300 text-sm shadow-sm focus:border-emerald-500 focus:ring-emerald-500">
+                @foreach($chainLabels as $index => $label)
+                    <option value="{{ $data->url($index + 1) }}" @selected($data->currentPage() === $index + 1)>{{ $index + 1 }}. {{ $label }}</option>
+                @endforeach
+            </select>
+            <div class="flex shrink-0 items-center gap-2">
+                @if($data->onFirstPage())
+                    <span class="inline-flex h-10 cursor-not-allowed items-center rounded-lg border border-gray-200 px-3 text-sm font-semibold text-gray-300">‹ Sebelumnya</span>
+                @else
+                    <a href="{{ $data->previousPageUrl() }}" class="inline-flex h-10 items-center rounded-lg border border-gray-300 px-3 text-sm font-semibold text-gray-700 hover:bg-gray-50">‹ Sebelumnya</a>
+                @endif
+                <span class="px-1 text-sm text-gray-500">{{ $data->currentPage() }} / {{ $data->total() }}</span>
+                @if($data->hasMorePages())
+                    <a href="{{ $data->nextPageUrl() }}" class="inline-flex h-10 items-center rounded-lg border border-gray-300 px-3 text-sm font-semibold text-gray-700 hover:bg-gray-50">Berikutnya ›</a>
+                @else
+                    <span class="inline-flex h-10 cursor-not-allowed items-center rounded-lg border border-gray-200 px-3 text-sm font-semibold text-gray-300">Berikutnya ›</span>
+                @endif
+            </div>
+        </div>
+    @endif
 
     @forelse($data as $chain)
         <div class="mb-6 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
@@ -173,7 +216,7 @@
                                     <td class="whitespace-nowrap border-r border-gray-100 px-4 py-2.5 font-semibold text-gray-700">
                                         {{ $month->bulan_label }}
                                         @unless($month->ada_input)
-                                            <span class="block text-xs font-normal text-amber-700">Tidak ada input</span>
+                                            <span class="block text-xs font-normal text-amber-700">Tidak ada pengamatan</span>
                                         @endunless
                                     </td>
                                     @foreach($attackFields as $field)
@@ -211,8 +254,4 @@
             {{ $hasFilters ? 'Belum ada data pengamatan pada periode dan filter ini.' : 'Pilih filter lalu tampilkan untuk membaca riwayat pengamatan.' }}
         </div>
     @endforelse
-
-    @if($data->hasPages())
-        <div class="mb-8 rounded-xl border border-gray-200 bg-white px-4 py-3 shadow-sm">{{ $data->links() }}</div>
-    @endif
 </x-app-layout>

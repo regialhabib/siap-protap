@@ -4,25 +4,82 @@ import Alpine from 'alpinejs';
 
 window.Alpine = Alpine;
 
-Alpine.data('pengamatanForm', (historyUrl, initialSummary, initialArea, editId = null, showInitialAttack = false, initialRingan = 0, initialBerat = 0, initialControls = {}) => ({
-    historyUrl,
-    history: initialSummary,
-    luasKomoditi: initialArea,
-    areaTouched: Boolean(editId || initialArea !== ''),
-    manualAreaTouched: Boolean(!editId && initialArea !== ''),
-    editId,
-    showAttack: showInitialAttack,
-    ringan: initialRingan,
-    berat: initialBerat,
-    kendaliKab: initialControls.kab || 0,
-    kendaliProv: initialControls.prov || 0,
-    kendaliMasyarakat: initialControls.masyarakat || 0,
-    kendaliApbn: initialControls.apbn || 0,
+Alpine.data('pengamatanForm', (config) => ({
+    historyUrl: config.historyUrl,
+    editId: config.editId ?? null,
+    opts: config.opts,
+    hasKecamatan: config.hasKecamatan,
+    tanggal: config.tanggal,
+    kecamatanId: config.kecamatanId,
+    komoditasId: config.komoditasId,
+    optId: config.optId,
+    jenisOptId: config.jenisOptId,
+    history: config.summary,
+    terakhir: null,
+    bulanSama: [],
+    luasKomoditi: config.luas,
+    areaTouched: Boolean(config.editId || config.luas !== ''),
+    manualAreaTouched: Boolean(!config.editId && config.luas !== ''),
+    showAttack: config.showAttack,
+    ringan: config.ringan,
+    berat: config.berat,
+    kendaliKab: config.controls.kab || 0,
+    kendaliProv: config.controls.prov || 0,
+    kendaliMasyarakat: config.controls.masyarakat || 0,
+    kendaliApbn: config.controls.apbn || 0,
     loadingHistory: false,
     historyReady: false,
     historyError: '',
     historyRequest: 0,
     currentKey: '',
+
+    init() {
+        this.$nextTick(() => this.loadHistory());
+    },
+
+    get jenisOptions() {
+        return this.opts.find((opt) => opt.id === this.optId)?.jenis ?? [];
+    },
+
+    get lokasiLengkap() {
+        return Boolean(this.tanggal && this.komoditasId && this.optId
+            && (!this.hasKecamatan || this.kecamatanId)
+            && (this.jenisOptions.length === 0 || this.jenisOptId));
+    },
+
+    get submitBlocker() {
+        if (!this.lokasiLengkap) {
+            return 'Lengkapi lokasi & jenis pengamatan terlebih dahulu.';
+        }
+        if (this.historyError) {
+            return 'Data sebelumnya belum berhasil dimuat.';
+        }
+        if (this.loadingHistory || !this.historyReady) {
+            return 'Memuat data sebelumnya...';
+        }
+        if (this.pengendalianMelebihiBatas) {
+            return 'Pengendalian melebihi batas maksimal.';
+        }
+
+        return '';
+    },
+
+    onOptChanged() {
+        this.jenisOptId = '';
+        this.loadHistory();
+    },
+
+    toggleAttack() {
+        if (this.showAttack) {
+            this.ringan = 0;
+            this.berat = 0;
+        }
+        this.showAttack = !this.showAttack;
+    },
+
+    formatHa(value) {
+        return `${this.toNumber(value).toFixed(2)} Ha`;
+    },
 
     get totalSeranganBaru() {
         return this.toNumber(this.ringan) + this.toNumber(this.berat);
@@ -49,6 +106,18 @@ Alpine.data('pengamatanForm', (historyUrl, initialSummary, initialArea, editId =
         return this.batasPengendalian - this.totalKendaliBaru;
     },
 
+    get statusKondisi() {
+        const selisih = Math.round((this.totalSeranganBaru - this.totalKendaliBaru) * 100) / 100;
+        if (selisih > 0) {
+            return { label: `Bertambah ${this.formatHa(selisih)}`, classes: 'bg-red-50 text-red-700' };
+        }
+        if (selisih < 0) {
+            return { label: `Berkurang ${this.formatHa(-selisih)}`, classes: 'bg-emerald-50 text-emerald-700' };
+        }
+
+        return { label: 'Tetap', classes: 'bg-gray-100 text-gray-600' };
+    },
+
     periodeOf(date) {
         const [year, month] = date.split('-').map(Number);
 
@@ -61,16 +130,18 @@ Alpine.data('pengamatanForm', (historyUrl, initialSummary, initialArea, editId =
 
     async loadHistory() {
         const requestId = ++this.historyRequest;
-        const date = this.$refs.tanggal.value;
-        const komoditasId = this.$refs.komoditas.value;
-        const optId = this.$refs.opt.value;
-        const jenisOptId = this.$refs.jenisOpt.value;
-        const kecamatanId = this.$refs.kecamatan?.value || '';
+        const date = this.tanggal;
+        const komoditasId = this.komoditasId;
+        const optId = this.optId;
+        const jenisOptId = this.jenisOptId;
+        const kecamatanId = this.hasKecamatan ? this.kecamatanId : '';
 
-        if (!date || !komoditasId || !optId || (this.$refs.jenisOpt.required && !jenisOptId)) {
+        if (!this.lokasiLengkap) {
             this.historyReady = false;
             this.historyError = '';
             this.loadingHistory = false;
+            this.terakhir = null;
+            this.bulanSama = [];
             return;
         }
 
@@ -119,6 +190,8 @@ Alpine.data('pengamatanForm', (historyUrl, initialSummary, initialArea, editId =
                 return;
             }
             this.history = payload.summary;
+            this.terakhir = payload.terakhir;
+            this.bulanSama = payload.bulan_sama;
             this.historyReady = true;
             if (!this.areaTouched) {
                 this.luasKomoditi = Number(this.history.luas_komoditi_ha) > 0

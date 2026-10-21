@@ -41,22 +41,24 @@
                                     <div class="flex items-center justify-center space-x-2">
                                         <button type="button" 
                                             data-item="{{ json_encode([
-                                                'id' => $item->id,
-                                                'tanggal_raw' => \Carbon\Carbon::parse($item->tanggal_pengamatan)->format('Y-m-d'),
-                                                'tanggal' => \Carbon\Carbon::parse($item->tanggal_pengamatan)->isoFormat('D MMMM Y'),
+                                                'tanggal' => $item->tanggal_pengamatan->translatedFormat('d F Y'),
                                                 'uppt' => $item->uppt->nama_uppt ?? '-',
                                                 'kecamatan' => $item->kecamatan->nama_kecamatan ?? '-',
                                                 'komoditas' => $item->komoditas->nama_komoditas ?? '-',
                                                 'opt' => ($item->opt->nama_opt ?? '-').($item->jenisOpt ? ' — '.$item->jenisOpt->nama_jenis_opt : ''),
-                                                'luas_komoditi_num' => number_format($item->luas_komoditi_ha, 2),
+                                                'luas_komoditi' => number_format($item->luas_komoditi_ha, 2).' Ha',
                                                 'kondisi' => number_format($item->kondisi_serangan_ha, 2).' Ha',
+                                                'tambah_ringan' => number_format($item->serangan_ringan, 2),
+                                                'tambah_berat' => number_format($item->serangan_berat, 2),
+                                                'tambah_jumlah' => number_format($item->serangan_ringan + $item->serangan_berat, 2),
                                                 'serangan_ringan_num' => number_format($item->serangan_ringan_berjalan, 2),
                                                 'serangan_berat_num' => number_format($item->serangan_berat_berjalan, 2),
                                                 'serangan_total_num' => number_format($item->serangan_jumlah_berjalan, 2),
-                                                'kendali_apbd_kab' => number_format($item->kendali_apbd_kab, 2),
                                                 'kendali_apbd_prov' => number_format($item->kendali_apbd_prov, 2),
+                                                'kendali_apbd_kab' => number_format($item->kendali_apbd_kab, 2),
+                                                'kendali_masyarakat' => number_format($item->kendali_masyarakat, 2),
                                                 'kendali_apbn' => number_format($item->kendali_apbn, 2),
-                                                'kendali_masyarakat' => number_format($item->kendali_masyarakat, 2)
+                                                'kendali_jumlah' => number_format($item->kendali_jumlah, 2),
                                             ]) }}"
                                             @click.prevent="modalData = JSON.parse($event.currentTarget.dataset.item); showModal = true" 
                                             title="Lihat" class="bg-blue-500 hover:bg-blue-600 text-white p-1.5 rounded-md transition-colors">
@@ -105,7 +107,6 @@
                                 <td colspan="7" class="px-6 py-8 text-center text-gray-500 bg-gray-50/50">
                                     <svg class="w-10 h-10 mx-auto text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                                     <p class="text-base font-medium text-gray-600 mb-1">Belum ada data pengamatan</p>
-                                    <p class="text-sm">Anda belum melaporkan data pengamatan bulan ini.</p>
                                 </td>
                             </tr>
                         @endforelse

@@ -1,6 +1,5 @@
 <x-app-layout>
     @php
-        $periode = \App\Services\PeriodePengamatan::forDate(\Carbon\Carbon::create($tahun, $bulan, 1));
         $hektare = fn ($value) => \App\Services\PengamatanHistoryService::hektare((float) $value);
     @endphp
 
@@ -10,7 +9,6 @@
             <h2 class="font-bold text-xl text-gray-800 leading-tight tracking-tight">
                 Filter Laporan Bulanan
             </h2>
-            <p class="mt-1 text-sm text-gray-500">Luas serangan dan pengendalian bulan ini saja; kondisi serangan adalah posisi akhir bulan pada periode {{ $periode }} (Februari–Januari).</p>
         </div>
         <div class="p-6">
             <form id="filterForm" method="GET" action="{{ route('laporan.index') }}" class="grid grid-cols-1 md:grid-cols-5 gap-4" autocomplete="off"
@@ -104,7 +102,7 @@
                 <select name="kecamatan_id" x-model="kecamatan_id" :disabled="kecamatans.length === 0" class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 text-sm disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500">
                     <option value="" x-text="kecamatans.length > 0 ? '-- Semua Kecamatan --' : 'Pilih UPPT terlebih dahulu'"></option>
                     <template x-for="kec in kecamatans" :key="kec.id">
-                        <option :value="kec.id" x-text="kec.nama_kecamatan"></option>
+                        <option :value="kec.id" :selected="String(kec.id) === String(kecamatan_id)" x-text="kec.nama_kecamatan"></option>
                     </template>
                 </select>
             </div>
@@ -178,7 +176,7 @@
                             <td class="px-4 py-3 border-r border-gray-100 font-medium text-gray-900">
                                 {{ $d->uppt->nama_uppt ?? '-' }}{{ $d->kecamatan ? ' / ' . $d->kecamatan->nama_kecamatan : '' }}
                                 @unless($d->ada_input)
-                                    <span class="mt-1 block text-xs font-normal text-amber-700">Tidak ada input bulan ini</span>
+                                    <span class="mt-1 block text-xs font-normal text-amber-700">Tidak ada pengamatan</span>
                                 @endunless
                             </td>
                             <td class="px-4 py-3 border-r border-gray-100">{{ $d->komoditas->nama_komoditas ?? '-' }}</td>

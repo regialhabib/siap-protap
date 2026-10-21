@@ -2,7 +2,6 @@
     <div class="mb-6 mt-6 overflow-visible rounded-xl border border-gray-200 bg-white shadow-sm">
         <div class="rounded-t-xl border-b border-gray-100 bg-gray-50/50 px-6 py-4">
             <h2 class="text-xl font-bold leading-tight tracking-tight text-gray-800">Filter Laporan Tahunan</h2>
-            <p class="mt-1 text-sm text-gray-500">Rekapitulasi serangan dan pengendalian per Kabupaten/Kota selama periode Februari {{ $tahun }} – Januari {{ $tahun + 1 }}.</p>
         </div>
         <form method="GET" action="{{ route('laporan.tahunan') }}" class="grid grid-cols-1 gap-4 p-6 md:grid-cols-2 xl:grid-cols-3">
             <div>
@@ -28,7 +27,7 @@
         <div class="flex flex-col items-start justify-between gap-4 border-b border-gray-100 bg-gray-50/50 px-6 py-4 md:flex-row md:items-center">
             <div>
                 <h3 class="font-bold text-gray-900">Laporan Tahunan {{ $tahun }}</h3>
-                <p class="mt-1 text-sm text-gray-500">{{ $data->total() }} kelompok data · Februari {{ $tahun }} – Januari {{ $tahun + 1 }} · Provinsi Jambi</p>
+                <p class="mt-1 text-sm text-gray-500">Februari {{ $tahun }} – Januari {{ $tahun + 1 }}</p>
             </div>
             <div class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
                 <a href="{{ route('laporan.export.tahunan.pdf', request()->query()) }}" target="_blank" rel="noopener noreferrer" class="inline-flex w-full items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-bold text-gray-700 shadow-sm transition-colors hover:bg-gray-50 sm:w-auto">Cetak PDF</a>

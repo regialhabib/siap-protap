@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Services\PengamatanHistoryService;
 use App\Services\PeriodePengamatan;
 use Carbon\Carbon;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
@@ -17,16 +18,19 @@ class DashboardController extends Controller
     public function index(Request $request, PengamatanHistoryService $history)
     {
         $user = Auth::user();
+        $isPopt = $user->role === 'popt';
 
-        $currentMonth = $request->input('bulan', now()->month);
-        $currentYear = $request->input('tahun', now()->year);
+        // POPT selalu melihat bulan berjalan; filter bulan/tahun hanya untuk admin.
+        $filters = $isPopt ? [] : $request->validate([
+            'bulan' => ['nullable', 'integer', 'between:1,12'],
+            'tahun' => ['nullable', 'integer', 'min:2000', 'max:2100'],
+        ]);
+        $currentMonth = (int) ($filters['bulan'] ?? now()->month);
+        $currentYear = (int) ($filters['tahun'] ?? now()->year);
 
         $statsQuery = Pengamatan::whereMonth('tanggal_pengamatan', $currentMonth)
-            ->whereYear('tanggal_pengamatan', $currentYear);
-
-        if ($user->role === 'popt') {
-            $statsQuery->where('uppt_id', $user->uppt_id);
-        }
+            ->whereYear('tanggal_pengamatan', $currentYear)
+            ->when($isPopt, fn ($query) => $query->where('uppt_id', $user->uppt_id));
 
         $stats = [
             'total_pengamatan' => $statsQuery->count(),
@@ -34,33 +38,42 @@ class DashboardController extends Controller
             'komoditas_terdampak' => $statsQuery->distinct('komoditas_id')->count('komoditas_id'),
         ];
 
-        // Table Query
-        $tableQuery = Pengamatan::with(['komoditas', 'opt', 'jenisOpt', 'uppt', 'kecamatan'])
-            ->latest('tanggal_pengamatan');
+        $pengamatans = $isPopt ? $this->recentObservations($user, $history) : null;
+        $chartData = $isPopt ? null : $this->complianceData($currentMonth, $currentYear);
 
-        if ($user->role === 'popt') {
-            $tableQuery->where('uppt_id', $user->uppt_id);
-        } else {
-            $tableQuery->whereMonth('tanggal_pengamatan', $currentMonth)
-                ->whereYear('tanggal_pengamatan', $currentYear);
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'stats' => $stats,
+                'chartData' => $chartData,
+                'table_html' => $pengamatans ? view('partials.dashboard-table', compact('pengamatans'))->render() : null,
+            ]);
         }
 
-        $historyQuery = Pengamatan::query()->with(['komoditas', 'opt', 'jenisOpt', 'uppt', 'kecamatan']);
-        if ($user->role === 'popt') {
-            $historyQuery->where('uppt_id', $user->uppt_id);
-        } else {
-            $selectedMonth = Carbon::create((int) $currentYear, (int) $currentMonth, 1);
-            $historyQuery->observedBetween(
-                PeriodePengamatan::start(PeriodePengamatan::forDate($selectedMonth)),
-                $selectedMonth->copy()->endOfMonth(),
-            );
-        }
+        $activeChains = $this->activeChains($user, $history);
 
-        $historyRows = $historyQuery->orderBy('tanggal_pengamatan')->orderBy('id')->get();
+        return view('dashboard', compact('stats', 'chartData', 'pengamatans', 'activeChains'));
+    }
+
+    /**
+     * Riwayat pengamatan terbaru milik UPPT petugas beserta angka berjalan rantainya.
+     *
+     * @return LengthAwarePaginator<int, Pengamatan>
+     */
+    private function recentObservations(User $user, PengamatanHistoryService $history): LengthAwarePaginator
+    {
+        $historyRows = Pengamatan::where('uppt_id', $user->uppt_id)
+            ->orderBy('tanggal_pengamatan')
+            ->orderBy('id')
+            ->get();
         $history->attachRunningTotals($historyRows);
         $historyById = $historyRows->keyBy('id');
 
-        $pengamatans = $tableQuery->paginate(5)->withQueryString();
+        $pengamatans = Pengamatan::with(['komoditas', 'opt', 'jenisOpt', 'uppt', 'kecamatan'])
+            ->where('uppt_id', $user->uppt_id)
+            ->latest('tanggal_pengamatan')
+            ->paginate(5)
+            ->withQueryString();
+
         $pengamatans->getCollection()->each(function (Pengamatan $pengamatan) use ($historyById): void {
             $historyRecord = $historyById->get($pengamatan->id);
             foreach (['serangan_ringan_berjalan', 'serangan_berat_berjalan', 'serangan_jumlah_berjalan', 'kendali_jumlah', 'kondisi_serangan_ha'] as $attribute) {
@@ -68,12 +81,21 @@ class DashboardController extends Controller
             }
         });
 
-        // Hitung Kepatuhan UPPT (Bulan Ini)
+        return $pengamatans;
+    }
+
+    /**
+     * Kepatuhan UPPT: sudah/belum ada input pengamatan pada bulan terpilih.
+     *
+     * @return array<string, mixed>
+     */
+    private function complianceData(int $month, int $year): array
+    {
         $allUppt = Uppt::orderBy('nama_uppt', 'asc')->get();
         $allUpptCount = $allUppt->count();
 
-        $upptIdsWithPengamatan = Pengamatan::whereMonth('tanggal_pengamatan', $currentMonth)
-            ->whereYear('tanggal_pengamatan', $currentYear)
+        $upptIdsWithPengamatan = Pengamatan::whereMonth('tanggal_pengamatan', $month)
+            ->whereYear('tanggal_pengamatan', $year)
             ->distinct('uppt_id')
             ->pluck('uppt_id')
             ->toArray();
@@ -84,31 +106,16 @@ class DashboardController extends Controller
         $totalSudah = $upptSudah->count();
         $totalBelum = $upptBelum->count();
 
-        $persentaseSudah = $allUpptCount > 0 ? round(($totalSudah / $allUpptCount) * 100, 1) : 0;
-        $persentaseBelum = $allUpptCount > 0 ? round(($totalBelum / $allUpptCount) * 100, 1) : 0;
-
-        $chartData = [
+        return [
             'sudah' => $upptSudah,
             'belum' => $upptBelum,
             'total_sudah' => $totalSudah,
             'total_belum' => $totalBelum,
-            'persentase_sudah' => $persentaseSudah,
-            'persentase_belum' => $persentaseBelum,
+            'persentase_sudah' => $allUpptCount > 0 ? round(($totalSudah / $allUpptCount) * 100, 1) : 0,
+            'persentase_belum' => $allUpptCount > 0 ? round(($totalBelum / $allUpptCount) * 100, 1) : 0,
             'total' => $allUpptCount,
-            'bulan_ini' => Carbon::createFromDate($currentYear, $currentMonth, 1)->isoFormat('MMMM Y'),
+            'bulan_ini' => Carbon::createFromDate($year, $month, 1)->isoFormat('MMMM Y'),
         ];
-
-        if ($request->ajax() || $request->wantsJson()) {
-            return response()->json([
-                'stats' => $stats,
-                'chartData' => $chartData,
-                'table_html' => view('partials.dashboard-table', compact('pengamatans'))->render(),
-            ]);
-        }
-
-        $activeChains = $this->activeChains($user, $history);
-
-        return view('dashboard', compact('stats', 'chartData', 'pengamatans', 'activeChains'));
     }
 
     /**

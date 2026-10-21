@@ -34,6 +34,26 @@ class PengamatanHistoryService
     }
 
     /**
+     * Konteks rantai untuk formulir: entri terakhir sebelum kandidat dan entri lain pada bulan yang sama.
+     *
+     * @param  array<string, mixed>  $attributes
+     * @return array{terakhir: ?Pengamatan, bulan_sama: Collection<int, Pengamatan>}
+     */
+    public function chainContext(array $attributes, ?int $excludeId = null): array
+    {
+        $candidate = $this->candidate($attributes, $excludeId);
+        $observations = $this->sorted($this->chainObservations($candidate, $excludeId));
+        $monthKey = PeriodePengamatan::monthKey($candidate->tanggal_pengamatan);
+
+        return [
+            'terakhir' => $observations->last(fn (Pengamatan $pengamatan): bool => $this->sortKey($pengamatan) < $this->sortKey($candidate)),
+            'bulan_sama' => $observations
+                ->filter(fn (Pengamatan $pengamatan): bool => PeriodePengamatan::monthKey($pengamatan->tanggal_pengamatan) === $monthKey)
+                ->values(),
+        ];
+    }
+
+    /**
      * Cari entri pertama yang membuat kondisi serangan rantai menjadi minus jika perubahan diterapkan.
      * $existing = entri yang diubah/dihapus, $attributes = data baru (null untuk hapus).
      *

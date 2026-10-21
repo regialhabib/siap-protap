@@ -55,12 +55,17 @@ class PengamatanController extends Controller
             'kecamatan_id' => ['nullable', Rule::exists('kecamatans', 'id')->where('uppt_id', $upptId)],
         ]);
 
-        $summary = $history->previousSummary([
-            ...$validated,
-            'uppt_id' => $upptId,
-        ], $pengamatanId);
+        $attributes = [...$validated, 'uppt_id' => $upptId];
+        $context = $history->chainContext($attributes, $pengamatanId);
 
-        return response()->json(['summary' => $summary]);
+        return response()->json([
+            'summary' => $history->previousSummary($attributes, $pengamatanId),
+            'terakhir' => $context['terakhir']?->tanggal_pengamatan->translatedFormat('d F Y'),
+            'bulan_sama' => $context['bulan_sama']->map(fn (Pengamatan $pengamatan): array => [
+                'tanggal' => $pengamatan->tanggal_pengamatan->translatedFormat('d F Y'),
+                'edit_url' => route('pengamatan.edit', $pengamatan),
+            ])->values(),
+        ]);
     }
 
     public function store(PengamatanRequest $request)
@@ -83,6 +88,7 @@ class PengamatanController extends Controller
     {
         Gate::authorize('update', $pengamatan);
 
+        $pengamatan->loadMissing('uppt');
         $komoditas = Komoditas::orderBy('nama_komoditas')->get();
         $opts = Opt::with('jenisOpts')->orderBy('nama_opt')->get();
         $kecamatans = Kecamatan::where('uppt_id', $pengamatan->uppt_id)->orderBy('nama_kecamatan')->get();

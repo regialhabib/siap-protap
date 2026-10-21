@@ -210,4 +210,54 @@ class DashboardTest extends TestCase
         $response->assertViewHas('activeChains', fn ($chains): bool => $chains->pluck('komoditas')->all() === ['Kakao']
             && $chains[0]->sudah_lapor === true);
     }
+
+    public function test_admin_dashboard_rejects_invalid_month_and_year_filters(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        $this->actingAs($admin)->get('/dashboard?bulan=abc&tahun=abc')
+            ->assertRedirect()
+            ->assertSessionHasErrors(['bulan', 'tahun']);
+        $this->getJson('/dashboard?bulan=13')->assertUnprocessable()->assertJsonValidationErrors('bulan');
+    }
+
+    public function test_popt_dashboard_ignores_month_filters_and_hides_other_uppt_status(): void
+    {
+        DB::table('kabupatens')->insert(['id' => 1, 'nama_kabupaten' => 'Test Kab']);
+        $uppt = Uppt::create(['nama_uppt' => 'UPPT Petugas', 'kabupaten_id' => 1]);
+        Uppt::create(['nama_uppt' => 'UPPT Tetangga', 'kabupaten_id' => 1]);
+        $popt = User::factory()->create(['role' => 'popt', 'uppt_id' => $uppt->id]);
+
+        $response = $this->actingAs($popt)->get('/dashboard?bulan=abc');
+
+        $response->assertOk()
+            ->assertDontSee('UPPT Tetangga')
+            ->assertViewHas('chartData', null);
+    }
+
+    public function test_popt_dashboard_renders_one_delete_form_and_entry_details_per_observation(): void
+    {
+        DB::table('kabupatens')->insert(['id' => 1, 'nama_kabupaten' => 'Test Kab']);
+        $uppt = Uppt::create(['nama_uppt' => 'Test UPPT', 'kabupaten_id' => 1]);
+        $popt = User::factory()->create(['role' => 'popt', 'uppt_id' => $uppt->id]);
+        $pengamatan = Pengamatan::create([
+            'user_id' => $popt->id,
+            'uppt_id' => $uppt->id,
+            'komoditas_id' => Komoditas::create(['nama_komoditas' => 'Karet'])->id,
+            'opt_id' => Opt::create(['nama_opt' => 'Gugur Daun'])->id,
+            'tanggal_pengamatan' => '2026-02-10',
+            'luas_komoditi_ha' => 10,
+            'serangan_ringan' => 3,
+            'serangan_jumlah' => 3,
+            'kendali_apbd_prov' => 1,
+        ]);
+
+        $response = $this->actingAs($popt)->get('/dashboard');
+
+        $response->assertOk()
+            ->assertSee('"tanggal":"10 Februari 2026"')
+            ->assertSee('"tambah_jumlah":"3.00"')
+            ->assertSee('"kendali_jumlah":"1.00"');
+        $this->assertSame(1, substr_count($response->getContent(), 'action="'.route('pengamatan.destroy', $pengamatan).'"'));
+    }
 }

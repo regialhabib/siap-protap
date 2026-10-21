@@ -75,28 +75,70 @@ class RiwayatPengamatanTest extends TestCase
         $this->createObservation($admin, $uppt, $kecamatan, $karet, $opt, $jenisOpt, '2026-02-25', 1.5, 0.75, 1.25);
         $this->createObservation($admin, $uppt, $kecamatan, $kelapa, $opt, $jenisOpt, '2026-03-10', 4, 0);
 
-        $response = $this->actingAs($admin)->get(route('pengamatan.riwayat.index', [
+        $filters = [
             'tahun' => 2026,
             'kabupaten_id' => $kabupaten->id,
             'uppt_id' => $uppt->id,
             'kecamatan_id' => $kecamatan->id,
-        ]));
+        ];
+        $firstPage = $this->actingAs($admin)->get(route('pengamatan.riwayat.index', $filters));
+        $secondPage = $this->get(route('pengamatan.riwayat.index', [...$filters, 'page' => 2]));
 
-        $chains = $response->viewData('data')->getCollection();
-        $this->assertSame(['Karet', 'Kelapa'], $chains->pluck('komoditas')->all());
+        $data = $firstPage->viewData('data');
+        $this->assertSame(2, $data->total());
+        $this->assertCount(1, $data->getCollection());
+        $this->assertCount(2, $firstPage->viewData('chainLabels'));
+        $karet = $data->first();
+        $this->assertSame('Karet', $karet->komoditas);
 
-        $karetMonths = collect($chains[0]->months)->keyBy('bulan_label');
+        $karetMonths = collect($karet->months)->keyBy('bulan_label');
         $this->assertSame(['tambah_jumlah' => 3.0, 'kendali_jumlah' => 1.25], array_intersect_key($karetMonths['Februari 2026']->values, array_flip(['tambah_jumlah', 'kendali_jumlah'])));
         $this->assertSame('1.75 Ha (Bertambah 1.75 Ha)', $karetMonths['Februari 2026']->kondisi_label);
         $this->assertFalse($karetMonths['Maret 2026']->ada_input);
         $this->assertSame('1.75 Ha (Tetap)', $karetMonths['April 2026']->kondisi_label);
         $this->assertTrue($karetMonths['Mei 2026']->is_blank);
-        $this->assertSame(3.0, $chains[0]->total['tambah_jumlah']);
-        $this->assertSame(1.25, $chains[0]->total['kendali_jumlah']);
-        $this->assertSame(1.75, $chains[0]->total['kondisi_akhir']);
+        $this->assertSame(3.0, $karet->total['tambah_jumlah']);
+        $this->assertSame(1.25, $karet->total['kendali_jumlah']);
+        $this->assertSame(1.75, $karet->total['kondisi_akhir']);
 
-        $this->assertTrue($chains[1]->months[0]->is_blank);
-        $this->assertSame('4 Ha (Bertambah 4 Ha)', $chains[1]->months[1]->kondisi_label);
+        $kelapa = $secondPage->viewData('data')->first();
+        $this->assertSame('Kelapa', $kelapa->komoditas);
+        $this->assertTrue($kelapa->months[0]->is_blank);
+        $this->assertSame('4 Ha (Bertambah 4 Ha)', $kelapa->months[1]->kondisi_label);
+    }
+
+    public function test_filters_by_opt_and_rejects_a_child_type_of_another_opt(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $kabupaten = Kabupaten::create(['nama_kabupaten' => 'Kabupaten Uji']);
+        $uppt = Uppt::create(['nama_uppt' => 'UPPT Uji', 'kabupaten_id' => $kabupaten->id]);
+        $kecamatan = Kecamatan::create(['nama_kecamatan' => 'Kecamatan Uji', 'uppt_id' => $uppt->id]);
+        $karet = Komoditas::create(['nama_komoditas' => 'Karet']);
+        $gugurDaun = Opt::create(['nama_opt' => 'Gugur Daun']);
+        $jamurAkar = Opt::create(['nama_opt' => 'Jamur Akar Putih']);
+        $corynespora = JenisOpt::create(['opt_id' => $gugurDaun->id, 'nama_jenis_opt' => 'Corynespora']);
+        $this->createObservation($admin, $uppt, $kecamatan, $karet, $gugurDaun, $corynespora, '2026-02-05', 1, 0);
+        Pengamatan::create([
+            'user_id' => $admin->id, 'uppt_id' => $uppt->id, 'kecamatan_id' => $kecamatan->id, 'komoditas_id' => $karet->id,
+            'opt_id' => $jamurAkar->id, 'tanggal_pengamatan' => '2026-02-10', 'luas_komoditi_ha' => 10, 'serangan_ringan' => 2, 'serangan_jumlah' => 2,
+        ]);
+
+        $filtered = $this->actingAs($admin)->get(route('pengamatan.riwayat.index', ['tahun' => 2026, 'opt_id' => $jamurAkar->id]));
+
+        $filtered->assertViewHas('data', fn ($data): bool => $data->total() === 1 && $data->first()->opt === 'Jamur Akar Putih');
+
+        $this->get(route('pengamatan.riwayat.index', ['tahun' => 2026, 'opt_id' => $jamurAkar->id, 'jenis_opt_id' => $corynespora->id]))
+            ->assertRedirect()
+            ->assertSessionHasErrors(['jenis_opt_id' => 'Jenis OPT tidak termasuk OPT yang dipilih.']);
+    }
+
+    public function test_invalid_filter_shows_an_indonesian_validation_message(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        $this->actingAs($admin)->get(route('pengamatan.riwayat.index', ['tahun' => 2026, 'opt_id' => 999]))
+            ->assertRedirect()
+            ->assertSessionHasErrors(['opt_id' => 'OPT yang dipilih tidak valid.']);
     }
 
     public function test_filter_values_must_belong_to_the_selected_location(): void
