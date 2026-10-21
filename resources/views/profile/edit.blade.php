@@ -23,14 +23,5 @@
                 </div>
             </div>
         </div>
-
-        <!-- Danger Zone: Hapus Akun -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-            <div class="p-6 sm:p-8">
-                <div class="max-w-xl">
-                    @include('profile.partials.delete-user-form')
-                </div>
-            </div>
-        </div>
     </div>
 </x-app-layout>
