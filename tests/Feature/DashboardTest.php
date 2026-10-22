@@ -211,6 +211,33 @@ class DashboardTest extends TestCase
             && $chains[0]->sudah_lapor === true);
     }
 
+    public function test_admin_dashboard_stats_include_both_month_edges_only(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        DB::table('kabupatens')->insert(['id' => 1, 'nama_kabupaten' => 'Test Kab']);
+        $uppt = Uppt::create(['nama_uppt' => 'Test UPPT', 'kabupaten_id' => 1]);
+        $komoditas = Komoditas::create(['nama_komoditas' => 'Karet']);
+        $opt = Opt::create(['nama_opt' => 'Gugur Daun']);
+
+        foreach (['2026-04-30', '2026-05-01', '2026-05-31', '2026-06-01'] as $tanggal) {
+            Pengamatan::create([
+                'user_id' => $admin->id,
+                'uppt_id' => $uppt->id,
+                'komoditas_id' => $komoditas->id,
+                'opt_id' => $opt->id,
+                'tanggal_pengamatan' => $tanggal,
+                'luas_komoditi_ha' => 10,
+                'serangan_ringan' => 1,
+                'serangan_berat' => 0,
+                'serangan_jumlah' => 1,
+            ]);
+        }
+
+        $this->actingAs($admin)->get('/dashboard?bulan=5&tahun=2026')
+            ->assertOk()
+            ->assertViewHas('stats', fn (array $stats): bool => $stats['total_pengamatan'] === 2);
+    }
+
     public function test_admin_dashboard_rejects_invalid_month_and_year_filters(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);

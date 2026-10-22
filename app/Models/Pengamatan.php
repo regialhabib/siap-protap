@@ -27,12 +27,15 @@ class Pengamatan extends Model
 
     /**
      * Batasi pengamatan pada rentang tanggal (inklusif di kedua ujung).
+     *
+     * Memakai rentang setengah-terbuka tanpa fungsi DATE() agar index kolom
+     * tetap terpakai dan nilai bertimestamp pada hari terakhir tetap ikut.
      */
     #[Scope]
     protected function observedBetween(Builder $query, CarbonInterface $from, CarbonInterface $until): void
     {
-        $query->whereDate('tanggal_pengamatan', '>=', $from->toDateString())
-            ->whereDate('tanggal_pengamatan', '<=', $until->toDateString());
+        $query->where('tanggal_pengamatan', '>=', $from->toDateString())
+            ->where('tanggal_pengamatan', '<', $until->copy()->addDay()->toDateString());
     }
 
     public function uppt(): BelongsTo

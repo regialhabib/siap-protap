@@ -30,8 +30,8 @@ class DashboardController extends Controller
         $currentMonth = (int) ($filters['bulan'] ?? now()->month);
         $currentYear = (int) ($filters['tahun'] ?? now()->year);
 
-        $statsQuery = Pengamatan::whereMonth('tanggal_pengamatan', $currentMonth)
-            ->whereYear('tanggal_pengamatan', $currentYear)
+        $monthStart = Carbon::create($currentYear, $currentMonth, 1);
+        $statsQuery = Pengamatan::observedBetween($monthStart, $monthStart->copy()->endOfMonth())
             ->when($isPopt, fn ($query) => $query->where('uppt_id', $user->uppt_id));
 
         $stats = [
@@ -96,8 +96,8 @@ class DashboardController extends Controller
         $allUppt = Uppt::orderBy('nama_uppt', 'asc')->get();
         $allUpptCount = $allUppt->count();
 
-        $upptIdsWithPengamatan = Pengamatan::whereMonth('tanggal_pengamatan', $month)
-            ->whereYear('tanggal_pengamatan', $year)
+        $monthStart = Carbon::create($year, $month, 1);
+        $upptIdsWithPengamatan = Pengamatan::observedBetween($monthStart, $monthStart->copy()->endOfMonth())
             ->distinct('uppt_id')
             ->pluck('uppt_id')
             ->toArray();
