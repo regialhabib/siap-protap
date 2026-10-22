@@ -12,10 +12,14 @@ use App\Services\PeriodePengamatan;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
+use Illuminate\View\View;
 use Maatwebsite\Excel\Facades\Excel;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class LaporanController extends Controller
 {
@@ -23,7 +27,7 @@ class LaporanController extends Controller
 
     public function __construct(private PengamatanHistoryService $history) {}
 
-    public function index(Request $request)
+    public function index(Request $request): View|RedirectResponse
     {
         if ($request->input('jenis') === 'triwulan') {
             return redirect()->route('laporan.triwulan', $this->queryWithoutJenis($request));
@@ -41,7 +45,7 @@ class LaporanController extends Controller
         ]);
     }
 
-    public function exportExcel(Request $request)
+    public function exportExcel(Request $request): BinaryFileResponse|RedirectResponse
     {
         if ($request->input('jenis') === 'triwulan') {
             return redirect()->route('laporan.export.triwulan.excel', $this->queryWithoutJenis($request));
@@ -55,7 +59,7 @@ class LaporanController extends Controller
         );
     }
 
-    public function exportPdf(Request $request)
+    public function exportPdf(Request $request): Response|RedirectResponse
     {
         if ($request->input('jenis') === 'triwulan') {
             return redirect()->route('laporan.export.triwulan.pdf', $this->queryWithoutJenis($request));
@@ -68,7 +72,7 @@ class LaporanController extends Controller
         return $pdf->stream($this->monthlyFilename($filters, 'pdf'));
     }
 
-    public function quarterly(Request $request)
+    public function quarterly(Request $request): View
     {
         $filters = $this->quarterlyFilters($request);
 
@@ -79,7 +83,7 @@ class LaporanController extends Controller
         ]);
     }
 
-    public function exportQuarterlyExcel(Request $request)
+    public function exportQuarterlyExcel(Request $request): BinaryFileResponse
     {
         $filters = $this->quarterlyFilters($request);
 
@@ -89,7 +93,7 @@ class LaporanController extends Controller
         );
     }
 
-    public function exportQuarterlyPdf(Request $request)
+    public function exportQuarterlyPdf(Request $request): Response
     {
         $filters = $this->quarterlyFilters($request);
         $pdf = Pdf::loadView('laporan.pdf-triwulan', ['filters' => $filters, 'data' => $this->quarterlyRows($filters)])
@@ -98,7 +102,7 @@ class LaporanController extends Controller
         return $pdf->stream($this->quarterlyFilename($filters, 'pdf'));
     }
 
-    public function historyTahunan(Request $request)
+    public function historyTahunan(Request $request): View
     {
         $filters = $this->annualFilters($request);
 
@@ -110,7 +114,7 @@ class LaporanController extends Controller
         ]);
     }
 
-    public function exportAnnualExcel(Request $request)
+    public function exportAnnualExcel(Request $request): BinaryFileResponse
     {
         $filters = $this->annualFilters($request);
 
@@ -120,7 +124,7 @@ class LaporanController extends Controller
         );
     }
 
-    public function exportAnnualPdf(Request $request)
+    public function exportAnnualPdf(Request $request): Response
     {
         $filters = $this->annualFilters($request);
         $pdf = Pdf::loadView('laporan.pdf-tahunan', ['tahun' => $filters['tahun'], 'data' => $this->annualRows($filters)])

@@ -9,13 +9,15 @@ use App\Services\PengamatanHistoryService;
 use App\Services\PeriodePengamatan;
 use Carbon\Carbon;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\View\View;
 
 class DashboardController extends Controller
 {
-    public function index(Request $request, PengamatanHistoryService $history)
+    public function index(Request $request, PengamatanHistoryService $history): View|JsonResponse
     {
         $user = Auth::user();
         $isPopt = $user->isPopt();

@@ -8,10 +8,11 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Illuminate\View\View;
 
 class OptController extends Controller
 {
-    public function index()
+    public function index(): View
     {
         $query = Opt::query();
 
@@ -53,7 +54,7 @@ class OptController extends Controller
         return redirect()->route('opt.index')->with('success', 'Jenis turunan OPT berhasil dihapus.');
     }
 
-    public function store(Request $request)
+    public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
             'nama_opt' => 'required|string|max:255|unique:opts',
@@ -63,28 +64,22 @@ class OptController extends Controller
             'jenis_opts.*.distinct' => 'Nama jenis turunan OPT tidak boleh duplikat.',
         ]);
 
-        try {
-            DB::transaction(function () use ($validated): void {
-                $opt = Opt::create(['nama_opt' => $validated['nama_opt']]);
-                $jenisOpts = array_values(array_filter(
-                    $validated['jenis_opts'] ?? [],
-                    fn (?string $namaJenisOpt): bool => filled($namaJenisOpt),
-                ));
+        DB::transaction(function () use ($validated): void {
+            $opt = Opt::create(['nama_opt' => $validated['nama_opt']]);
+            $jenisOpts = array_values(array_filter(
+                $validated['jenis_opts'] ?? [],
+                fn (?string $namaJenisOpt): bool => filled($namaJenisOpt),
+            ));
 
-                foreach ($jenisOpts as $namaJenisOpt) {
-                    $opt->jenisOpts()->create(['nama_jenis_opt' => $namaJenisOpt]);
-                }
-            });
+            foreach ($jenisOpts as $namaJenisOpt) {
+                $opt->jenisOpts()->create(['nama_jenis_opt' => $namaJenisOpt]);
+            }
+        });
 
-            return redirect()->route('opt.index')->with('success', 'OPT dan jenis turunannya berhasil ditambahkan!');
-        } catch (\Throwable $e) {
-            report($e);
-
-            return back()->withInput()->with('error', 'Terjadi kesalahan saat menyimpan data. Silakan coba lagi.');
-        }
+        return redirect()->route('opt.index')->with('success', 'OPT dan jenis turunannya berhasil ditambahkan!');
     }
 
-    public function update(Request $request, Opt $opt)
+    public function update(Request $request, Opt $opt): RedirectResponse
     {
         $validated = $request->validate([
             'nama_opt' => 'required|string|max:255|unique:opts,nama_opt,'.$opt->id,
@@ -96,55 +91,43 @@ class OptController extends Controller
             'jenis_opts.*.nama_jenis_opt.distinct' => 'Nama jenis turunan OPT tidak boleh duplikat.',
         ]);
 
-        try {
-            DB::transaction(function () use ($opt, $validated): void {
-                $opt->update(['nama_opt' => $validated['nama_opt']]);
+        DB::transaction(function () use ($opt, $validated): void {
+            $opt->update(['nama_opt' => $validated['nama_opt']]);
 
-                if (! array_key_exists('jenis_opts_present', $validated)) {
-                    return;
+            if (! array_key_exists('jenis_opts_present', $validated)) {
+                return;
+            }
+
+            $retainedJenisOptIds = [];
+            foreach ($validated['jenis_opts'] ?? [] as $jenisOptData) {
+                $namaJenisOpt = trim($jenisOptData['nama_jenis_opt'] ?? '');
+                if ($namaJenisOpt === '') {
+                    continue;
                 }
 
-                $retainedJenisOptIds = [];
-                foreach ($validated['jenis_opts'] ?? [] as $jenisOptData) {
-                    $namaJenisOpt = trim($jenisOptData['nama_jenis_opt'] ?? '');
-                    if ($namaJenisOpt === '') {
-                        continue;
-                    }
-
-                    if (! empty($jenisOptData['id'])) {
-                        $opt->jenisOpts()->whereKey($jenisOptData['id'])->update(['nama_jenis_opt' => $namaJenisOpt]);
-                        $retainedJenisOptIds[] = (int) $jenisOptData['id'];
-                    } else {
-                        $jenisOpt = $opt->jenisOpts()->create(['nama_jenis_opt' => $namaJenisOpt]);
-                        $retainedJenisOptIds[] = $jenisOpt->id;
-                    }
+                if (! empty($jenisOptData['id'])) {
+                    $opt->jenisOpts()->whereKey($jenisOptData['id'])->update(['nama_jenis_opt' => $namaJenisOpt]);
+                    $retainedJenisOptIds[] = (int) $jenisOptData['id'];
+                } else {
+                    $jenisOpt = $opt->jenisOpts()->create(['nama_jenis_opt' => $namaJenisOpt]);
+                    $retainedJenisOptIds[] = $jenisOpt->id;
                 }
+            }
 
-                $jenisOptsToDelete = $opt->jenisOpts();
-                if ($retainedJenisOptIds !== []) {
-                    $jenisOptsToDelete->whereNotIn('id', $retainedJenisOptIds);
-                }
-                $jenisOptsToDelete->delete();
-            });
+            $jenisOptsToDelete = $opt->jenisOpts();
+            if ($retainedJenisOptIds !== []) {
+                $jenisOptsToDelete->whereNotIn('id', $retainedJenisOptIds);
+            }
+            $jenisOptsToDelete->delete();
+        });
 
-            return redirect()->route('opt.index')->with('success', 'OPT dan jenis turunannya berhasil diperbarui!');
-        } catch (\Throwable $e) {
-            report($e);
-
-            return back()->withInput()->with('error', 'Terjadi kesalahan saat memperbarui data. Silakan coba lagi.');
-        }
+        return redirect()->route('opt.index')->with('success', 'OPT dan jenis turunannya berhasil diperbarui!');
     }
 
-    public function destroy(Opt $opt)
+    public function destroy(Opt $opt): RedirectResponse
     {
-        try {
-            $opt->delete();
+        $opt->delete();
 
-            return redirect()->route('opt.index')->with('success', 'OPT berhasil dihapus!');
-        } catch (\Throwable $e) {
-            report($e);
-
-            return back()->with('error', 'Terjadi kesalahan saat menghapus data. Silakan coba lagi.');
-        }
+        return redirect()->route('opt.index')->with('success', 'OPT berhasil dihapus!');
     }
 }

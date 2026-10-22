@@ -9,14 +9,16 @@ use App\Models\Opt;
 use App\Models\Pengamatan;
 use App\Services\PengamatanHistoryService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
+use Illuminate\View\View;
 
 class PengamatanController extends Controller
 {
-    public function create()
+    public function create(): View
     {
         // Otorisasi melalui Policy
         Gate::authorize('create', Pengamatan::class);
@@ -68,7 +70,7 @@ class PengamatanController extends Controller
         ]);
     }
 
-    public function store(PengamatanRequest $request)
+    public function store(PengamatanRequest $request): RedirectResponse
     {
         $user = Auth::user();
 
@@ -84,7 +86,7 @@ class PengamatanController extends Controller
         return redirect()->route('dashboard')->with('success', 'Data pengamatan lapangan berhasil dikirim dan disimpan!');
     }
 
-    public function edit(Pengamatan $pengamatan, PengamatanHistoryService $history)
+    public function edit(Pengamatan $pengamatan, PengamatanHistoryService $history): View
     {
         Gate::authorize('update', $pengamatan);
 
@@ -100,7 +102,7 @@ class PengamatanController extends Controller
         return view('pengamatan.edit', compact('pengamatan', 'komoditas', 'opts', 'kecamatans', 'historySummary'));
     }
 
-    public function update(PengamatanRequest $request, Pengamatan $pengamatan)
+    public function update(PengamatanRequest $request, Pengamatan $pengamatan): RedirectResponse
     {
         Gate::authorize('update', $pengamatan);
 
@@ -109,7 +111,7 @@ class PengamatanController extends Controller
         return redirect()->route('dashboard')->with('success', 'Data pengamatan berhasil diperbarui!');
     }
 
-    public function destroy(Pengamatan $pengamatan, PengamatanHistoryService $history)
+    public function destroy(Pengamatan $pengamatan, PengamatanHistoryService $history): RedirectResponse
     {
         Gate::authorize('delete', $pengamatan);
 
@@ -119,14 +121,8 @@ class PengamatanController extends Controller
                 .$violation['tanggal']->translatedFormat('d F Y').' akan menjadi minus. Ubah pengendalian pada tanggal tersebut terlebih dahulu.');
         }
 
-        try {
-            $pengamatan->delete();
+        $pengamatan->delete();
 
-            return redirect()->route('dashboard')->with('success', 'Data pengamatan berhasil dihapus!');
-        } catch (\Throwable $e) {
-            report($e);
-
-            return back()->with('error', 'Gagal menghapus data. Silakan coba lagi.');
-        }
+        return redirect()->route('dashboard')->with('success', 'Data pengamatan berhasil dihapus!');
     }
 }
