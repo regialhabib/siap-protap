@@ -9,7 +9,6 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RiwayatPengamatanController;
 use App\Http\Controllers\UpptController;
 use App\Http\Controllers\UserController;
-use App\Http\Middleware\IsAdminMiddleware;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -37,7 +36,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     // Fitur Khusus Admin (Laporan & Master Data)
-    Route::middleware([IsAdminMiddleware::class])->group(function () {
+    Route::middleware('can:admin')->group(function () {
         Route::get('/data-pengamatan', [RiwayatPengamatanController::class, 'index'])->name('pengamatan.riwayat.index');
 
         // Laporan

@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Enums\UserRole;
+use App\Enums\UserStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Uppt;
 use App\Models\User;
@@ -44,8 +46,8 @@ class RegisteredUserController extends Controller
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'uppt_id' => $request->uppt_id,
-            'status' => 'nonaktif',
-            'role' => 'popt',
+            'status' => UserStatus::Nonaktif,
+            'role' => UserRole::Popt,
         ]);
 
         event(new Registered($user));

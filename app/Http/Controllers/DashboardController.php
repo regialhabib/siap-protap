@@ -18,7 +18,7 @@ class DashboardController extends Controller
     public function index(Request $request, PengamatanHistoryService $history)
     {
         $user = Auth::user();
-        $isPopt = $user->role === 'popt';
+        $isPopt = $user->isPopt();
 
         // POPT selalu melihat bulan berjalan; filter bulan/tahun hanya untuk admin.
         $filters = $isPopt ? [] : $request->validate([
@@ -125,7 +125,7 @@ class DashboardController extends Controller
      */
     private function activeChains(User $user, PengamatanHistoryService $history): Collection
     {
-        if ($user->role !== 'popt' || ! $user->uppt_id) {
+        if (! $user->isPopt() || ! $user->uppt_id) {
             return collect();
         }
 

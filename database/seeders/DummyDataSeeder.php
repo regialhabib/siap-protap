@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Enums\UserRole;
 use App\Models\JenisOpt;
 use App\Models\Komoditas;
 use App\Models\Opt;
@@ -63,7 +64,7 @@ class DummyDataSeeder extends Seeder
                 ['email' => "petugas{$i}@gmail.com"],
                 [
                     'name' => "Petugas POPT {$i}",
-                    'role' => 'popt',
+                    'role' => UserRole::Popt,
                     'password' => Hash::make('password'),
                 ]
             );

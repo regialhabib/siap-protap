@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Auth;
 
+use App\Enums\UserStatus;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -50,7 +51,7 @@ class LoginRequest extends FormRequest
             ]);
         }
 
-        if (Auth::user()->status === 'nonaktif') {
+        if (Auth::user()->status === UserStatus::Nonaktif) {
             Auth::logout();
             throw ValidationException::withMessages([
                 'email' => 'Akun Anda masih berstatus nonaktif. Silakan tunggu persetujuan admin.',

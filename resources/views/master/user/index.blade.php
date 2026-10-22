@@ -1,3 +1,4 @@
+@use('App\Enums\UserStatus')
 <x-app-layout>
 
     @if (session('success'))
@@ -76,10 +77,10 @@
                                 <div class="text-xs text-gray-500">{{ $u->email }}</div>
                             </td>
                             <td class="px-6 py-4 text-gray-500 searchable-col">
-                                {{ $u->role === 'admin' ? 'Semua Wilayah' : ($u->uppt->nama_uppt ?? 'Belum Ditugaskan') }}
+                                {{ $u->isAdmin() ? 'Semua Wilayah' : ($u->uppt->nama_uppt ?? 'Belum Ditugaskan') }}
                             </td>
                             <td class="px-6 py-4">
-                                @if($u->status === 'aktif')
+                                @if($u->status === UserStatus::Aktif)
                                     <span class="px-2.5 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold uppercase tracking-wider">Aktif</span>
                                 @else
                                     <span class="px-2.5 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-semibold uppercase tracking-wider">Nonaktif</span>
@@ -87,7 +88,7 @@
                             </td>
                             <td class="px-6 py-4 text-right flex items-center justify-end gap-2">
                                 <!-- Status Toggle -->
-                                @if($u->status === 'nonaktif')
+                                @if($u->status === UserStatus::Nonaktif)
                                     <form method="POST" action="{{ route('pengguna.status', $u->id) }}" class="inline">
                                         @csrf
                                         @method('PATCH')
@@ -194,8 +195,8 @@
                                                 <div class="col-span-2">
                                                     <label class="block text-sm font-semibold text-gray-700 mb-1">Status</label>
                                                     <select name="status" class="block w-full px-4 py-2 rounded-md border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm" required>
-                                                        <option value="aktif" {{ old('status', $u->status) === 'aktif' ? 'selected' : '' }}>Aktif</option>
-                                                        <option value="nonaktif" {{ old('status', $u->status) === 'nonaktif' ? 'selected' : '' }}>Nonaktif</option>
+                                                        <option value="aktif" @selected(old('status', $u->status->value) === UserStatus::Aktif->value)>Aktif</option>
+                                                        <option value="nonaktif" @selected(old('status', $u->status->value) === UserStatus::Nonaktif->value)>Nonaktif</option>
                                                     </select>
                                                 </div>
                                             </div>

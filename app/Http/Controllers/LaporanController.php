@@ -15,7 +15,6 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Facades\Excel;
 
 class LaporanController extends Controller
@@ -168,8 +167,6 @@ class LaporanController extends Controller
      */
     private function monthlyRows(array $filters): Collection
     {
-        $this->authorizeAdmin();
-
         $month = CarbonImmutable::create($filters['tahun'], $filters['bulan'], 1);
         $periode = PeriodePengamatan::forDate($month);
         $observations = $this->periodeQuery($periode, $month->endOfMonth())
@@ -240,8 +237,6 @@ class LaporanController extends Controller
      */
     private function quarterlyRows(array $filters): Collection
     {
-        $this->authorizeAdmin();
-
         $months = PeriodePengamatan::quarterMonths($filters['tahun'], $filters['triwulan']);
 
         return $this->kabupatenRows($filters['tahun'], $months, $filters['kabupaten_id'])
@@ -274,8 +269,6 @@ class LaporanController extends Controller
      */
     private function annualRows(array $filters): Collection
     {
-        $this->authorizeAdmin();
-
         $rows = $this->kabupatenRows($filters['tahun'], PeriodePengamatan::months($filters['tahun']), $filters['kabupaten_id']);
 
         if ($filters['search'] === '') {
@@ -358,11 +351,6 @@ class LaporanController extends Controller
                 ->orWhereHas('opt', fn (Builder $q) => $q->where('nama_opt', 'like', "%{$search}%"))
                 ->orWhereHas('jenisOpt', fn (Builder $q) => $q->where('nama_jenis_opt', 'like', "%{$search}%"));
         });
-    }
-
-    private function authorizeAdmin(): void
-    {
-        abort_if(Auth::user()->role !== 'admin', 403, 'Akses ditolak.');
     }
 
     private function queryWithoutJenis(Request $request): array

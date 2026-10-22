@@ -28,7 +28,7 @@ class PengamatanPolicy
      */
     public function create(User $user): bool
     {
-        return $user->role === 'popt';
+        return $user->isPopt();
     }
 
     /**
@@ -36,11 +36,11 @@ class PengamatanPolicy
      */
     public function update(User $user, Pengamatan $pengamatan): bool
     {
-        if ($user->role === 'admin') {
+        if ($user->isAdmin()) {
             return true;
         }
 
-        return $user->role === 'popt' && $user->uppt_id === $pengamatan->uppt_id;
+        return $user->isPopt() && $user->uppt_id === $pengamatan->uppt_id;
     }
 
     /**
@@ -48,11 +48,11 @@ class PengamatanPolicy
      */
     public function delete(User $user, Pengamatan $pengamatan): bool
     {
-        if ($user->role === 'admin') {
+        if ($user->isAdmin()) {
             return true;
         }
 
-        return $user->role === 'popt' && $user->uppt_id === $pengamatan->uppt_id;
+        return $user->isPopt() && $user->uppt_id === $pengamatan->uppt_id;
     }
 
     /**

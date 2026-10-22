@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Enums\UserStatus;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -16,7 +17,7 @@ class EnsureUserIsActive
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if ($request->user()?->status === 'nonaktif') {
+        if ($request->user()?->status === UserStatus::Nonaktif) {
             Auth::logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();
