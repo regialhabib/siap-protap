@@ -369,8 +369,9 @@
     </div>
     @endcan
 
-    <!-- Load Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    @can('admin')
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js"></script>
+    @endcan
     <script>
         document.addEventListener('alpine:init', () => {
             Alpine.data('dashboardFilter', () => ({
