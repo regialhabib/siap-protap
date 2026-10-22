@@ -29,20 +29,21 @@ class UserTest extends TestCase
     private function createUppt(): Uppt
     {
         $kabupaten = Kabupaten::create(['nama_kabupaten' => 'Kabupaten Test']);
+
         return Uppt::create(['nama_uppt' => 'UPPT Test', 'kabupaten_id' => $kabupaten->id]);
     }
 
     public function test_forbids_popt_from_accessing_index(): void
     {
         $response = $this->actingAs($this->createPopt($this->createUppt()))->get('/pengguna');
-        
+
         $response->assertForbidden();
     }
 
     public function test_renders_index_for_admin(): void
     {
         $response = $this->actingAs($this->createAdmin())->get('/pengguna');
-        
+
         $response->assertOk();
         $response->assertViewIs('master.user.index');
     }
@@ -57,6 +58,19 @@ class UserTest extends TestCase
         ]);
 
         $response->assertSessionHasErrors(['name', 'email', 'password', 'uppt_id']);
+    }
+
+    public function test_rejects_unknown_role(): void
+    {
+        $this->actingAs($this->createAdmin())->post('/pengguna', [
+            'name' => 'Petugas',
+            'email' => 'petugas@example.com',
+            'password' => 'password',
+            'password_confirmation' => 'password',
+            'role' => 'superadmin',
+        ])->assertSessionHasErrors('role');
+
+        $this->assertDatabaseMissing('users', ['email' => 'petugas@example.com']);
     }
 
     public function test_creates_popt_user_and_redirects(): void

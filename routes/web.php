@@ -51,7 +51,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/laporan/tahunan/export/pdf', [LaporanController::class, 'exportAnnualPdf'])->name('laporan.export.tahunan.pdf');
 
         // Master Data
-        Route::resource('komoditas', KomoditasController::class)->except(['create', 'show', 'edit']);
+        Route::resource('komoditas', KomoditasController::class)->parameters(['komoditas' => 'komoditas'])->except(['create', 'show', 'edit']);
         Route::resource('uppt', UpptController::class)->except(['create', 'show', 'edit']);
         Route::resource('pengguna', UserController::class)->parameters(['pengguna' => 'pengguna'])->except(['create', 'show', 'edit']);
         Route::patch('pengguna/{pengguna}/status', [UserController::class, 'updateStatus'])->name('pengguna.status');

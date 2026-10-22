@@ -2,68 +2,38 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\KomoditasRequest;
 use App\Models\Komoditas;
-use Illuminate\Http\Request;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\View\View;
 
 class KomoditasController extends Controller
 {
-    public function index()
+    public function index(): View
     {
-        $query = Komoditas::query();
-
-        $komoditas = $query->latest()->get();
+        $komoditas = Komoditas::latest()->get();
 
         return view('master.komoditas.index', compact('komoditas'));
     }
 
-    public function store(Request $request)
+    public function store(KomoditasRequest $request): RedirectResponse
     {
-        $request->validate([
-            'nama_komoditas' => 'required|string|max:255|unique:komoditas',
-        ]);
+        Komoditas::create($request->validated());
 
-        try {
-            Komoditas::create([
-                'nama_komoditas' => $request->nama_komoditas,
-            ]);
-
-            return redirect()->route('komoditas.index')->with('success', 'Komoditas berhasil ditambahkan!');
-        } catch (\Throwable $e) {
-            report($e);
-
-            return back()->withInput()->with('error', 'Terjadi kesalahan saat menyimpan data. Silakan coba lagi.');
-        }
+        return redirect()->route('komoditas.index')->with('success', 'Komoditas berhasil ditambahkan!');
     }
 
-    public function update(Request $request, Komoditas $komodita)
+    public function update(KomoditasRequest $request, Komoditas $komoditas): RedirectResponse
     {
-        $request->validate([
-            'nama_komoditas' => 'required|string|max:255|unique:komoditas,nama_komoditas,'.$komodita->id,
-        ]);
+        $komoditas->update($request->validated());
 
-        try {
-            $komodita->update([
-                'nama_komoditas' => $request->nama_komoditas,
-            ]);
-
-            return redirect()->route('komoditas.index')->with('success', 'Komoditas berhasil diperbarui!');
-        } catch (\Throwable $e) {
-            report($e);
-
-            return back()->withInput()->with('error', 'Terjadi kesalahan saat memperbarui data. Silakan coba lagi.');
-        }
+        return redirect()->route('komoditas.index')->with('success', 'Komoditas berhasil diperbarui!');
     }
 
-    public function destroy(Komoditas $komodita)
+    public function destroy(Komoditas $komoditas): RedirectResponse
     {
-        try {
-            $komodita->delete();
+        $komoditas->delete();
 
-            return redirect()->route('komoditas.index')->with('success', 'Komoditas berhasil dihapus!');
-        } catch (\Throwable $e) {
-            report($e);
-
-            return back()->with('error', 'Terjadi kesalahan saat menghapus data. Silakan coba lagi.');
-        }
+        return redirect()->route('komoditas.index')->with('success', 'Komoditas berhasil dihapus!');
     }
 }

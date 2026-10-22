@@ -59,7 +59,12 @@ class UpptTest extends TestCase
         $response = $this->actingAs($this->createAdmin())->post('/uppt', [
             'nama_uppt' => 'UPPT Wilayah I',
             'kabupaten_id' => $kabupaten->id,
-            'kecamatans' => ['Kecamatan A', 'Kecamatan B', null, ''],
+            'kecamatans' => [
+                ['nama_kecamatan' => 'Kecamatan A'],
+                ['nama_kecamatan' => 'Kecamatan B'],
+                ['nama_kecamatan' => null],
+                ['nama_kecamatan' => ''],
+            ],
         ]);
 
         $response->assertRedirect(route('uppt.index'));
@@ -80,6 +85,17 @@ class UpptTest extends TestCase
             'nama_kecamatan' => 'Kecamatan B',
         ]);
         $this->assertEquals(2, $uppt->kecamatans()->count());
+    }
+
+    public function test_rejects_kecamatans_sent_as_plain_strings(): void
+    {
+        $this->actingAs($this->createAdmin())->post('/uppt', [
+            'nama_uppt' => 'UPPT Wilayah I',
+            'kabupaten_id' => $this->createKabupaten()->id,
+            'kecamatans' => ['Kecamatan A'],
+        ])->assertSessionHasErrors('kecamatans.0');
+
+        $this->assertDatabaseMissing('uppts', ['nama_uppt' => 'UPPT Wilayah I']);
     }
 
     public function test_updates_uppt_and_syncs_kecamatans(): void
