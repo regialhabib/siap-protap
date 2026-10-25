@@ -41,10 +41,14 @@
 
     <main>
         <!-- Hero -->
-        <section class="relative overflow-hidden">
-            <div class="absolute inset-0 bg-gradient-to-br from-emerald-500 to-emerald-700"></div>
-            <div class="absolute -right-24 -top-24 w-96 h-96 rounded-full bg-white/10"></div>
-            <div class="absolute -left-32 bottom-0 w-80 h-80 rounded-full bg-emerald-400/20"></div>
+        <section class="relative overflow-hidden bg-emerald-900">
+            <img src="{{ asset('images/hero-kebun-teh-kerinci.jpg') }}" alt="" class="absolute inset-0 w-full h-full object-cover object-bottom">
+            <div class="absolute inset-0 bg-gradient-to-r from-emerald-950/90 via-emerald-900/70 to-emerald-900/30"></div>
+            <p class="absolute bottom-2 right-3 z-10 text-[10px] text-white/60">
+                Foto: Kebun teh Kayu Aro, Kerinci &mdash;
+                <a href="https://commons.wikimedia.org/wiki/File:Gunung_Kerinci_dari_kebun_teh.jpg" target="_blank" rel="noopener" class="underline hover:text-white">Muhamad Izzul Fiqih</a>,
+                <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener" class="underline hover:text-white">CC BY-SA 4.0</a>
+            </p>
 
             <div class="relative max-w-6xl mx-auto px-4 sm:px-6 py-16 md:py-24 grid gap-12 md:grid-cols-2 items-center">
                 <div class="text-center md:text-left">
