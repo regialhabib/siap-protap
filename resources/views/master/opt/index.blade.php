@@ -56,38 +56,38 @@
         </div>
         
         <div id="table-container">
-            <div class="overflow-x-auto px-6 pt-2 pb-8">
-                <table class="w-full text-sm text-left whitespace-nowrap">
+            <div class="overflow-x-auto pt-2 pb-8 sm:px-6">
+                <table class="w-full text-sm text-left md:whitespace-nowrap">
                     <thead class="text-xs text-gray-700 uppercase bg-gray-100 border-y border-gray-200">
                         <tr>
-                            <th class="px-6 py-4 font-bold tracking-wider w-16">No</th>
-                            <th class="px-6 py-4 font-bold tracking-wider">Nama OPT (Hama/Penyakit)</th>
+                            <th class="hidden px-6 py-4 font-bold tracking-wider w-16 sm:table-cell">No</th>
+                            <th class="px-4 py-4 font-bold tracking-wider sm:px-6">Nama OPT (Hama/Penyakit)</th>
                             @can('manage-opt')
-                                <th class="px-6 py-4 font-bold tracking-wider text-right w-32">Aksi</th>
+                                <th class="px-4 py-4 font-bold tracking-wider text-right w-32 sm:px-6">Aksi</th>
                             @endcan
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">
                         @forelse($opts as $index => $k)
                         <tr class="hover:bg-gray-50/50 transition-colors data-row">
-                            <td class="px-6 py-4 text-gray-500">
+                            <td class="hidden px-6 py-4 text-gray-500 sm:table-cell">
                                 {{ $loop->iteration }}
                             </td>
-                            <td class="px-6 py-4 searchable-col">
-                                <div class="flex items-center gap-2">
+                            <td class="px-4 py-4 searchable-col sm:px-6">
+                                <div class="flex flex-wrap items-center gap-2">
                                     <span class="font-semibold text-gray-900">{{ $k->nama_opt }}</span>
                                     <span class="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
                                         {{ $k->jenisOpts->count() }} jenis
                                     </span>
                                 </div>
                                 @if($k->jenisOpts->isNotEmpty())
-                                    <p class="mt-1 truncate text-xs text-gray-500">{{ $k->jenisOpts->pluck('nama_jenis_opt')->join(', ') }}</p>
+                                    <p class="mt-1 text-xs text-gray-500 md:truncate">{{ $k->jenisOpts->pluck('nama_jenis_opt')->join(', ') }}</p>
                                 @endif
                             </td>
                             @can('manage-opt')
-                            <td class="px-6 py-4 text-right">
+                            <td class="px-4 py-4 text-right sm:px-6">
                                 <!-- Edit Button (Triggers Modal) -->
-                                <button type="button" x-data="" x-on:click.prevent="$dispatch('open-modal', 'edit-opt-{{ $k->id }}')" class="inline-flex items-center rounded-md border px-3 py-1.5 text-sm font-semibold shadow-sm transition-colors bg-white border-gray-300 text-gray-700 hover:bg-gray-50 mr-2">
+                                <button type="button" x-data="" x-on:click.prevent="$dispatch('open-modal', 'edit-opt-{{ $k->id }}')" class="inline-flex items-center rounded-md border px-3 py-1.5 text-sm font-semibold shadow-sm transition-colors bg-white border-gray-300 text-gray-700 hover:bg-gray-50 mb-2 sm:mb-0 sm:mr-2">
                                     <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
                                     Edit
                                 </button>

@@ -231,7 +231,8 @@
                         </dl>
                         <div class="rounded-xl border border-gray-200 bg-white p-5">
                             <p class="text-sm text-gray-600">Sisa serangan setelah pengendalian</p>
-                            <div class="mt-1 flex flex-wrap items-center gap-3">
+                            <p class="mt-1 text-sm text-gray-500" x-show="!historyReady">Muncul setelah lokasi &amp; jenis pengamatan dipilih.</p>
+                            <div class="mt-1 flex flex-wrap items-center gap-3" x-show="historyReady" x-cloak>
                                 <p class="text-3xl font-bold" :class="kondisiBerjalan < 0 || kondisiMelebihiLuas ? 'text-red-700' : 'text-emerald-700'" x-text="formatHa(kondisiBerjalan)"></p>
                                 <span class="rounded-full px-3 py-1 text-sm font-semibold" :class="statusKondisi.classes" x-show="historyReady" x-text="statusKondisi.label" x-cloak></span>
                             </div>
