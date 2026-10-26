@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\LaporanExport;
 use App\Models\JenisOpt;
 use App\Models\Kabupaten;
 use App\Models\Kecamatan;
@@ -11,13 +12,18 @@ use App\Models\Pengamatan;
 use App\Models\Uppt;
 use App\Services\PengamatanHistoryService;
 use App\Services\PeriodePengamatan;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator as LaravelValidator;
 use Illuminate\View\View;
+use Maatwebsite\Excel\Facades\Excel;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class RiwayatPengamatanController extends Controller
 {
@@ -25,52 +31,11 @@ class RiwayatPengamatanController extends Controller
 
     public function index(Request $request, PengamatanHistoryService $history): View
     {
-        // POPT hanya membaca rantai UPPT-nya sendiri, jadi Kabupaten/Kota dan UPPT dikunci.
-        $ownUppt = $request->user()->isPopt() ? $request->user()->uppt()->with('kabupaten')->first() : null;
-        $lockedFilters = $ownUppt ? ['kabupaten_id' => (string) $ownUppt->kabupaten_id, 'uppt_id' => (string) $ownUppt->id] : [];
-
-        $hasFilters = collect(self::FILTERS)
-            ->diff(array_keys($lockedFilters))
-            ->contains(fn (string $filter): bool => $request->filled($filter));
-        $request->query->add($lockedFilters);
-        $filters = $hasFilters ? $this->validatedFilters($request) : [...$this->emptyFilters(), ...$lockedFilters];
-        $periode = $filters['tahun'];
-
-        $query = Pengamatan::query()
-            ->with(['uppt.kabupaten', 'kecamatan', 'komoditas', 'opt', 'jenisOpt'])
-            ->observedBetween(PeriodePengamatan::start($periode), PeriodePengamatan::end($periode));
-
-        if ($filters['kabupaten_id'] !== '') {
-            $query->whereHas('uppt', fn ($upptQuery) => $upptQuery->where('kabupaten_id', $filters['kabupaten_id']));
-        }
-
-        if ($filters['uppt_id'] !== '') {
-            $query->where('uppt_id', $filters['uppt_id']);
-        }
-
-        if ($filters['kecamatan_id'] !== '') {
-            $query->where('kecamatan_id', $filters['kecamatan_id']);
-        }
-
-        if ($filters['komoditas_id'] !== '') {
-            $query->where('komoditas_id', $filters['komoditas_id']);
-        }
-
-        if ($filters['opt_id'] !== '') {
-            $query->where('opt_id', $filters['opt_id']);
-        }
-
-        if ($filters['jenis_opt_id'] !== '') {
-            $query->where('jenis_opt_id', $filters['jenis_opt_id']);
-        }
-
-        $chain = $hasFilters
-            ? $this->chainHistories($history->monthlyChains($query->get(), $periode), $periode, $history)->first()
-            : null;
+        ['chain' => $chain, 'filters' => $filters, 'hasFilters' => $hasFilters, 'ownUppt' => $ownUppt] = $this->selectedChain($request, $history);
 
         return view('pengamatan.riwayat', [
             'chain' => $chain,
-            'tahun' => $periode,
+            'tahun' => $filters['tahun'],
             'filters' => $filters,
             'hasFilters' => $hasFilters,
             'ownUppt' => $ownUppt,
@@ -85,6 +50,83 @@ class RiwayatPengamatanController extends Controller
             'komoditasList' => Komoditas::orderBy('nama_komoditas')->get(),
             'opts' => Opt::with(['jenisOpts' => fn ($jenisQuery) => $jenisQuery->orderBy('nama_jenis_opt')])->orderBy('nama_opt')->get(),
         ]);
+    }
+
+    public function exportExcel(Request $request, PengamatanHistoryService $history): BinaryFileResponse
+    {
+        ['chain' => $chain, 'filters' => $filters] = $this->exportableChain($request, $history);
+
+        return Excel::download(
+            new LaporanExport(collect($chain->months)->where('ada_input', true)->values(), 'riwayat', ['chain' => $chain, 'tahun' => $filters['tahun']]),
+            $this->exportFilename($chain, $filters['tahun'], 'xlsx')
+        );
+    }
+
+    public function exportPdf(Request $request, PengamatanHistoryService $history): Response
+    {
+        ['chain' => $chain, 'filters' => $filters] = $this->exportableChain($request, $history);
+        $pdf = Pdf::loadView('laporan.pdf-riwayat', [
+            'chain' => $chain,
+            'tahun' => $filters['tahun'],
+            'data' => collect($chain->months)->where('ada_input', true)->values(),
+        ])->setPaper('a4', 'landscape');
+
+        return $pdf->stream($this->exportFilename($chain, $filters['tahun'], 'pdf'));
+    }
+
+    /**
+     * Rantai yang dipilih filter. POPT hanya membaca rantai UPPT-nya sendiri, jadi Kabupaten/Kota dan UPPT dikunci.
+     *
+     * @return array{chain: ?object, filters: array{tahun: int, kabupaten_id: string, uppt_id: string, kecamatan_id: string, komoditas_id: string, opt_id: string, jenis_opt_id: string}, hasFilters: bool, ownUppt: ?Uppt}
+     */
+    private function selectedChain(Request $request, PengamatanHistoryService $history): array
+    {
+        $ownUppt = $request->user()->isPopt() ? $request->user()->uppt()->with('kabupaten')->first() : null;
+        $lockedFilters = $ownUppt ? ['kabupaten_id' => (string) $ownUppt->kabupaten_id, 'uppt_id' => (string) $ownUppt->id] : [];
+
+        $hasFilters = collect(self::FILTERS)
+            ->diff(array_keys($lockedFilters))
+            ->contains(fn (string $filter): bool => $request->filled($filter));
+        $request->query->add($lockedFilters);
+        $filters = $hasFilters ? $this->validatedFilters($request) : [...$this->emptyFilters(), ...$lockedFilters];
+        $periode = $filters['tahun'];
+
+        if (! $hasFilters) {
+            return ['chain' => null, 'filters' => $filters, 'hasFilters' => false, 'ownUppt' => $ownUppt];
+        }
+
+        $observations = Pengamatan::query()
+            ->with(['uppt.kabupaten', 'kecamatan', 'komoditas', 'opt', 'jenisOpt'])
+            ->observedBetween(PeriodePengamatan::start($periode), PeriodePengamatan::end($periode))
+            ->where('uppt_id', $filters['uppt_id'])
+            ->where('komoditas_id', $filters['komoditas_id'])
+            ->where('opt_id', $filters['opt_id'])
+            ->when($filters['kecamatan_id'] !== '', fn ($query) => $query->where('kecamatan_id', $filters['kecamatan_id']))
+            ->when($filters['jenis_opt_id'] !== '', fn ($query) => $query->where('jenis_opt_id', $filters['jenis_opt_id']))
+            ->get();
+
+        return [
+            'chain' => $this->chainHistories($history->monthlyChains($observations, $periode), $periode, $history)->first(),
+            'filters' => $filters,
+            'hasFilters' => true,
+            'ownUppt' => $ownUppt,
+        ];
+    }
+
+    /**
+     * @return array{chain: object, filters: array{tahun: int, kabupaten_id: string, uppt_id: string, kecamatan_id: string, komoditas_id: string, opt_id: string, jenis_opt_id: string}}
+     */
+    private function exportableChain(Request $request, PengamatanHistoryService $history): array
+    {
+        ['chain' => $chain, 'filters' => $filters] = $this->selectedChain($request, $history);
+        abort_if($chain === null, 404);
+
+        return ['chain' => $chain, 'filters' => $filters];
+    }
+
+    private function exportFilename(object $chain, int $tahun, string $ext): string
+    {
+        return 'Riwayat_Pengamatan_'.Str::slug("{$chain->uppt} {$chain->komoditas} {$chain->opt} {$chain->jenis_opt}", '_')."_{$tahun}.{$ext}";
     }
 
     /**

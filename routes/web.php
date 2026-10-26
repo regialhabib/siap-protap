@@ -38,6 +38,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Fitur Khusus Admin (Laporan & Master Data)
     Route::middleware('can:admin')->group(function () {
+        Route::get('/data-pengamatan/export/excel', [RiwayatPengamatanController::class, 'exportExcel'])->name('pengamatan.riwayat.export.excel');
+        Route::get('/data-pengamatan/export/pdf', [RiwayatPengamatanController::class, 'exportPdf'])->name('pengamatan.riwayat.export.pdf');
+
         // Laporan
         Route::get('/laporan', [LaporanController::class, 'index'])->name('laporan.index');
         Route::get('/laporan/triwulan', [LaporanController::class, 'quarterly'])->name('laporan.triwulan');

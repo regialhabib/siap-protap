@@ -45,6 +45,37 @@ class RiwayatPengamatanTest extends TestCase
                 && $chain->months[11]->bulan_label === 'Januari 2027');
     }
 
+    public function test_admin_exports_the_selected_chain_and_popt_cannot(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $kabupaten = Kabupaten::create(['nama_kabupaten' => 'Kabupaten Uji']);
+        $uppt = Uppt::create(['nama_uppt' => 'UPPT Uji', 'kabupaten_id' => $kabupaten->id]);
+        $kecamatan = Kecamatan::create(['nama_kecamatan' => 'Kecamatan Uji', 'uppt_id' => $uppt->id]);
+        $opt = Opt::create(['nama_opt' => 'Gugur Daun']);
+        $jenisOpt = JenisOpt::create(['opt_id' => $opt->id, 'nama_jenis_opt' => 'Corynespora']);
+        $karet = Komoditas::create(['nama_komoditas' => 'Karet']);
+        $this->createObservation($admin, $uppt, $kecamatan, $karet, $opt, $jenisOpt, '2026-02-05', 1, 0);
+        $filters = [
+            'tahun' => 2026, 'kabupaten_id' => $kabupaten->id, 'uppt_id' => $uppt->id, 'kecamatan_id' => $kecamatan->id,
+            'komoditas_id' => $karet->id, 'opt_id' => $opt->id, 'jenis_opt_id' => $jenisOpt->id,
+        ];
+
+        $this->actingAs($admin)->get(route('pengamatan.riwayat.index', $filters))
+            ->assertSee(route('pengamatan.riwayat.export.pdf', $filters));
+        $this->get(route('pengamatan.riwayat.export.excel', $filters))
+            ->assertOk()
+            ->assertHeader('content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+            ->assertHeader('content-disposition', 'attachment; filename=Riwayat_Pengamatan_uppt_uji_karet_gugur_daun_corynespora_2026.xlsx');
+        $this->get(route('pengamatan.riwayat.export.pdf', $filters))
+            ->assertOk()
+            ->assertHeader('content-type', 'application/pdf');
+        $this->get(route('pengamatan.riwayat.export.pdf', [...$filters, 'tahun' => 2025]))->assertNotFound();
+
+        $popt = User::factory()->create(['role' => 'popt', 'uppt_id' => $uppt->id]);
+        $this->actingAs($popt)->get(route('pengamatan.riwayat.index', $filters))->assertDontSee('Unduh Excel');
+        $this->get(route('pengamatan.riwayat.export.excel', $filters))->assertForbidden();
+    }
+
     public function test_observation_history_is_empty_until_a_filter_is_applied(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);

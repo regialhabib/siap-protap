@@ -14,7 +14,7 @@ class LaporanExport implements FromView, WithColumnWidths, WithEvents
 {
     /**
      * @param  Collection<int, object>  $data
-     * @param  'bulanan'|'triwulan'|'tahunan'  $jenis
+     * @param  'bulanan'|'triwulan'|'tahunan'|'riwayat'  $jenis
      * @param  array<string, mixed>  $viewData
      */
     public function __construct(
@@ -28,6 +28,7 @@ class LaporanExport implements FromView, WithColumnWidths, WithEvents
         return view(match ($this->jenis) {
             'tahunan' => 'laporan.excel-tahunan',
             'triwulan' => 'laporan.excel-triwulan',
+            'riwayat' => 'laporan.excel-riwayat',
             default => 'laporan.excel',
         }, [
             ...$this->viewData,
@@ -38,6 +39,13 @@ class LaporanExport implements FromView, WithColumnWidths, WithEvents
 
     public function columnWidths(): array
     {
+        if ($this->jenis === 'riwayat') {
+            return [
+                'A' => 18.0, 'B' => 14.0, 'C' => 10.0, 'D' => 10.0, 'E' => 10.0, 'F' => 10.0, 'G' => 10.0,
+                'H' => 10.0, 'I' => 10.0, 'J' => 10.0, 'K' => 14.0, 'L' => 22.0,
+            ];
+        }
+
         if ($this->jenis === 'tahunan') {
             return [
                 'A' => 3.0, 'B' => 6.5, 'C' => 25.0, 'D' => 22.0, 'E' => 16.0,

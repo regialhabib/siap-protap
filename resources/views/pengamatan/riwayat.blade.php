@@ -190,7 +190,15 @@
                         @endif
                     </div>
                 </div>
-                <p class="text-sm text-gray-600">Luas komoditi <span class="font-bold text-gray-900">{{ $hektare($chain->luas_komoditi_ha) }} Ha</span></p>
+                <div class="flex flex-col gap-3 md:items-end">
+                    <p class="text-sm text-gray-600">Luas komoditi <span class="font-bold text-gray-900">{{ $hektare($chain->luas_komoditi_ha) }} Ha</span></p>
+                    @can('admin')
+                        <div class="flex gap-2">
+                            <a href="{{ route('pengamatan.riwayat.export.pdf', request()->query()) }}" target="_blank" rel="noopener noreferrer" class="inline-flex flex-1 items-center justify-center whitespace-nowrap rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-bold text-gray-700 shadow-sm transition-colors hover:bg-gray-50">Cetak PDF</a>
+                            <a href="{{ route('pengamatan.riwayat.export.excel', request()->query()) }}" class="inline-flex flex-1 items-center justify-center whitespace-nowrap rounded-lg bg-emerald-600 px-4 py-2 text-sm font-bold text-white shadow-sm transition-colors hover:bg-emerald-700">Unduh Excel</a>
+                        </div>
+                    @endcan
+                </div>
             </div>
 
             {{-- Ringkasan periode: awal + serangan − pengendalian = akhir --}}
