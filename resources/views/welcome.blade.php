@@ -92,11 +92,11 @@
                                 </div>
                             @endforeach
                         </div>
-                        <p class="mt-5 text-[11px] font-semibold text-gray-500">Kondisi Serangan</p>
+                        <p class="mt-5 text-[11px] font-semibold text-gray-500">Serangan Tambahan (Ha)</p>
                         <div class="mt-2 grid grid-cols-3 gap-2 text-center text-xs font-semibold">
                             <div class="rounded-md bg-amber-50 text-amber-700 py-2">Ringan</div>
-                            <div class="rounded-md bg-orange-50 text-orange-700 py-2">Sedang</div>
                             <div class="rounded-md bg-red-50 text-red-700 py-2">Berat</div>
+                            <div class="rounded-md bg-gray-100 text-gray-700 py-2">Jumlah</div>
                         </div>
                         <p class="mt-5 text-[11px] font-semibold text-gray-500">Luas Pengendalian per Sumber (Ha)</p>
                         <div class="mt-2 grid grid-cols-4 gap-2 text-center text-[11px] font-medium text-gray-600">
