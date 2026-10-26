@@ -11,7 +11,6 @@ use Carbon\Carbon;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
@@ -34,12 +33,10 @@ class DashboardController extends Controller
         $statsQuery = Pengamatan::observedBetween($monthStart, $monthStart->copy()->endOfMonth())
             ->when($isPopt, fn ($query) => $query->where('uppt_id', $user->uppt_id));
 
-        $activeChains = $this->activeChains($user, $history);
-
         $stats = [
             'total_pengamatan' => $statsQuery->count(),
             'total_luas_serangan' => $statsQuery->sum('serangan_jumlah'),
-            'kondisi_serangan' => round($activeChains->sum('kondisi_serangan_ha'), 2),
+            'kondisi_serangan' => $this->currentAttackCondition($user, $history),
             'komoditas_terdampak' => $statsQuery->distinct('komoditas_id')->count('komoditas_id'),
         ];
 
@@ -54,7 +51,7 @@ class DashboardController extends Controller
             ]);
         }
 
-        return view('dashboard', compact('stats', 'chartData', 'pengamatans', 'activeChains'));
+        return view('dashboard', compact('stats', 'chartData', 'pengamatans'));
     }
 
     /**
@@ -125,39 +122,21 @@ class DashboardController extends Controller
     }
 
     /**
-     * Rantai aktif periode berjalan milik UPPT petugas beserta status input bulan ini.
-     *
-     * @return Collection<int, object>
+     * Total kondisi serangan bulan berjalan dari semua rantai UPPT petugas pada periode ini.
      */
-    private function activeChains(User $user, PengamatanHistoryService $history): Collection
+    private function currentAttackCondition(User $user, PengamatanHistoryService $history): float
     {
         if (! $user->isPopt() || ! $user->uppt_id) {
-            return collect();
+            return 0.0;
         }
 
         $periode = PeriodePengamatan::current();
         $monthKey = PeriodePengamatan::monthKey(now());
-        $observations = Pengamatan::with(['kecamatan', 'komoditas', 'opt', 'jenisOpt'])
-            ->where('uppt_id', $user->uppt_id)
+        $observations = Pengamatan::where('uppt_id', $user->uppt_id)
             ->observedBetween(PeriodePengamatan::start($periode), PeriodePengamatan::end($periode))
             ->get();
 
-        return $history->monthlyChains($observations, $periode)
-            ->filter(fn (object $chain): bool => $chain->months[$monthKey] !== null && ! $history->hasNothingToReport($chain->months[$monthKey]))
-            ->map(fn (object $chain): object => (object) [
-                'kecamatan' => $chain->kecamatan?->nama_kecamatan ?? '-',
-                'komoditas' => $chain->komoditas?->nama_komoditas ?? '-',
-                'opt' => ($chain->opt?->nama_opt ?? '-').($chain->jenisOpt ? ' — '.$chain->jenisOpt->nama_jenis_opt : ''),
-                'kondisi_serangan_ha' => $chain->months[$monthKey]['kondisi_akhir'],
-                'sudah_lapor' => $chain->months[$monthKey]['ada_input'],
-                'input_url' => route('pengamatan.create', array_filter([
-                    'kecamatan_id' => $chain->kecamatan_id,
-                    'komoditas_id' => $chain->komoditas_id,
-                    'opt_id' => $chain->opt_id,
-                    'jenis_opt_id' => $chain->jenis_opt_id,
-                ])),
-            ])
-            ->sortBy(fn (object $chain): string => mb_strtolower($chain->kecamatan.'|'.$chain->komoditas.'|'.$chain->opt))
-            ->values();
+        return round($history->monthlyChains($observations, $periode)
+            ->sum(fn (object $chain): float => $chain->months[$monthKey]['kondisi_akhir'] ?? 0.0), 2);
     }
 }
