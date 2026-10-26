@@ -1,4 +1,5 @@
 @php
+    $blankZero = fn ($value) => (float) $value > 0 ? $value : '';
     $formConfig = [
         'historyUrl' => route('pengamatan.history'),
         'editId' => $pengamatan?->id,
@@ -9,13 +10,13 @@
         'optId' => (string) old('opt_id', $pengamatan?->opt_id ?? request('opt_id')),
         'jenisOptId' => (string) old('jenis_opt_id', $pengamatan?->jenis_opt_id ?? request('jenis_opt_id')),
         'luas' => old('luas_komoditi_ha', $pengamatan?->luas_komoditi_ha ?? ''),
-        'ringan' => (float) old('serangan_ringan', $pengamatan?->serangan_ringan ?? 0),
-        'berat' => (float) old('serangan_berat', $pengamatan?->serangan_berat ?? 0),
+        'ringan' => $blankZero(old('serangan_ringan', $pengamatan?->serangan_ringan)),
+        'berat' => $blankZero(old('serangan_berat', $pengamatan?->serangan_berat)),
         'controls' => [
-            'prov' => old('kendali_apbd_prov', $pengamatan?->kendali_apbd_prov ?? 0),
-            'kab' => old('kendali_apbd_kab', $pengamatan?->kendali_apbd_kab ?? 0),
-            'masyarakat' => old('kendali_masyarakat', $pengamatan?->kendali_masyarakat ?? 0),
-            'apbn' => old('kendali_apbn', $pengamatan?->kendali_apbn ?? 0),
+            'prov' => $blankZero(old('kendali_apbd_prov', $pengamatan?->kendali_apbd_prov)),
+            'kab' => $blankZero(old('kendali_apbd_kab', $pengamatan?->kendali_apbd_kab)),
+            'masyarakat' => $blankZero(old('kendali_masyarakat', $pengamatan?->kendali_masyarakat)),
+            'apbn' => $blankZero(old('kendali_apbn', $pengamatan?->kendali_apbn)),
         ],
         'hasKecamatan' => $kecamatans->isNotEmpty(),
         'opts' => $opts->map(fn ($opt) => [
@@ -23,11 +24,10 @@
             'jenis' => $opt->jenisOpts->map(fn ($jenis) => ['id' => (string) $jenis->id, 'nama' => $jenis->nama_jenis_opt])->values(),
         ])->values(),
     ];
-    $formConfig['showAttack'] = $formConfig['ringan'] > 0 || $formConfig['berat'] > 0 || $errors->hasAny(['serangan_ringan', 'serangan_berat']);
     $controlFields = [
         'kendali_apbd_prov' => ['label' => 'APBD I (Provinsi)', 'model' => 'kendaliProv'],
         'kendali_apbd_kab' => ['label' => 'APBD II (Kab/Kota)', 'model' => 'kendaliKab'],
-        'kendali_masyarakat' => ['label' => 'Swadaya/Masyarakat', 'model' => 'kendaliMasyarakat'],
+        'kendali_masyarakat' => ['label' => 'Swadaya Masyarakat', 'model' => 'kendaliMasyarakat'],
         'kendali_apbn' => ['label' => 'APBN Pusat', 'model' => 'kendaliApbn'],
     ];
 @endphp
@@ -48,16 +48,12 @@
     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-12">
 
         <!-- Header Banner -->
-        <div class="p-6 md:p-8 border-b border-gray-100 bg-emerald-700 text-white flex flex-col md:flex-row md:justify-between md:items-center gap-4 relative overflow-hidden">
-            <div class="absolute top-0 right-0 opacity-10">
-                <svg class="w-48 h-48 -mr-10 -mt-10" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L2 22h20L12 2z"></path></svg>
-            </div>
-
-            <div class="relative z-10">
+        <div class="p-6 md:p-8 border-b border-gray-100 bg-emerald-700 text-white flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+            <div>
                 <h1 class="text-2xl font-bold tracking-tight">Formulir Pengamatan Lapangan</h1>
                 <p class="text-emerald-100 mt-1.5 text-sm md:text-base">Isi data lokasi, serangan tambahan, dan pengendalian.</p>
             </div>
-            <div class="relative z-10 inline-flex items-center bg-white/20 px-4 py-2.5 rounded-lg border border-white/30 backdrop-blur-sm">
+            <div class="inline-flex items-center self-start md:self-auto bg-white/20 px-4 py-2.5 rounded-lg border border-white/30 backdrop-blur-sm">
                 <svg class="w-5 h-5 mr-2.5 text-emerald-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                 <span class="text-sm font-semibold text-white tracking-wide">Wilayah: {{ $pengamatan?->uppt?->nama_uppt ?? Auth::user()->uppt?->nama_uppt ?? 'Belum Ditentukan' }}</span>
             </div>
@@ -114,9 +110,9 @@
                         </select>
                         <x-input-error :messages="$errors->get('opt_id')" class="mt-2" />
                         <div class="mt-4" x-show="jenisOptions.length > 0" x-cloak>
-                            <label for="jenis_opt_id" class="block text-sm font-bold text-gray-700 mb-2">Jenis turunan <span class="text-red-500">*</span></label>
+                            <label for="jenis_opt_id" class="block text-sm font-bold text-gray-700 mb-2">Jenis OPT <span class="text-red-500">*</span></label>
                             <select id="jenis_opt_id" name="jenis_opt_id" x-model="jenisOptId" @change="loadHistory()" :required="jenisOptions.length > 0" class="block w-full px-4 py-3 rounded-lg border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm">
-                                <option value="">-- Pilih jenis turunan --</option>
+                                <option value="">-- Pilih Jenis OPT --</option>
                                 <template x-for="jenis in jenisOptions" :key="jenis.id">
                                     <option :value="jenis.id" :selected="jenis.id === jenisOptId" x-text="jenis.nama"></option>
                                 </template>
@@ -141,7 +137,7 @@
                             <li><span x-text="entri.tanggal"></span> · <a :href="entri.edit_url" class="font-semibold underline hover:text-amber-700">Edit</a></li>
                         </template>
                     </ul>
-                    <p class="mt-2 text-xs">Data baru akan ditambahkan, bukan menggantikan.</p>
+                    <p class="mt-2">Data baru akan ditambahkan, bukan menggantikan.</p>
                 </div>
 
                 <div class="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 p-5" x-show="loadingHistory || historyReady" x-cloak>
@@ -169,30 +165,24 @@
                             <span class="text-gray-400 font-bold">Ha</span>
                         </div>
                     </div>
-                    <p class="text-xs text-gray-500 mt-3 font-medium">Terisi otomatis dari data terakhir dan dapat diubah.</p>
+                    <p class="text-sm text-gray-600 mt-3">Terisi otomatis dari data terakhir dan dapat diubah.</p>
                     <x-input-error :messages="$errors->get('luas_komoditi_ha')" class="mt-2" />
                 </div>
 
-                <div class="bg-red-50/30 p-6 md:p-8 rounded-xl border border-red-100 relative overflow-hidden">
-                    <div class="absolute top-0 right-0 w-32 h-32 bg-red-100 rounded-bl-full -mr-8 -mt-8 opacity-50 pointer-events-none"></div>
-                    <p class="text-sm font-bold text-red-800 mb-6 relative z-10">Serangan Tambahan (Ha)</p>
-
-                    <div class="mb-5 relative z-10">
-                        <button type="button" @click="toggleAttack()" class="inline-flex items-center rounded-lg bg-red-600 px-4 py-2 text-sm font-bold text-white hover:bg-red-700">
-                            <span x-text="showAttack ? 'Batal Tambah Serangan' : 'Tambah Serangan'"></span>
-                        </button>
-                        <p class="mt-2 text-xs text-gray-600">Isi luas serangan tambahan sejak pengamatan terakhir.</p>
-                    </div>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 relative z-10" x-show="showAttack" x-cloak>
+                <div class="bg-red-50/40 p-6 md:p-8 rounded-xl border border-red-100">
+                    <p class="text-base font-bold text-red-800">Serangan Tambahan (Ha)</p>
+                    <p class="mt-1 mb-6 text-sm text-gray-600">Isi luas serangan baru sejak pengamatan terakhir. Kosongkan jika tidak ada.</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                        @foreach(['serangan_ringan' => ['label' => 'Ringan', 'model' => 'ringan'], 'serangan_berat' => ['label' => 'Berat', 'model' => 'berat']] as $field => $attack)
+                            <div>
+                                <label for="{{ $field }}" class="block text-sm font-bold text-gray-700 mb-2">{{ $attack['label'] }}</label>
+                                <input id="{{ $field }}" type="number" inputmode="decimal" step="0.01" min="0" name="{{ $field }}" x-model="{{ $attack['model'] }}" class="block w-full px-4 py-3 rounded-lg border-gray-300 focus:ring-red-500 focus:border-red-500 text-base font-medium transition-colors" placeholder="0">
+                                <x-input-error :messages="$errors->get($field)" class="mt-2" />
+                            </div>
+                        @endforeach
                         <div>
-                            <label for="serangan_ringan" class="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wider">Ringan</label>
-                            <input id="serangan_ringan" type="number" step="0.01" min="0" name="serangan_ringan" x-model="ringan" class="block w-full px-4 py-2.5 rounded-lg border-gray-300 focus:ring-red-500 focus:border-red-500 text-sm font-medium transition-colors" placeholder="0.00">
-                            <x-input-error :messages="$errors->get('serangan_ringan')" class="mt-2" />
-                        </div>
-                        <div>
-                            <label for="serangan_berat" class="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wider">Berat</label>
-                            <input id="serangan_berat" type="number" step="0.01" min="0" name="serangan_berat" x-model="berat" class="block w-full px-4 py-2.5 rounded-lg border-gray-300 focus:ring-red-500 focus:border-red-500 text-sm font-medium transition-colors" placeholder="0.00">
-                            <x-input-error :messages="$errors->get('serangan_berat')" class="mt-2" />
+                            <p class="block text-sm font-bold text-gray-700 mb-2">Jumlah</p>
+                            <p class="flex h-[50px] items-center rounded-lg bg-white/70 px-4 text-base font-bold text-red-700 ring-1 ring-inset ring-red-100" x-text="formatHa(totalSeranganBaru)"></p>
                         </div>
                     </div>
                 </div>
@@ -205,23 +195,24 @@
                     3. Pengendalian
                 </h3>
 
-                <div class="bg-blue-50/30 p-6 md:p-8 rounded-xl border border-blue-100 mb-6 relative overflow-hidden">
-                    <div class="absolute top-0 right-0 w-32 h-32 bg-blue-100 rounded-bl-full -mr-8 -mt-8 opacity-50 pointer-events-none"></div>
-                    <p class="text-sm font-bold text-blue-800 mb-2 relative z-10">Luas Pengendalian per Sumber (Ha)</p>
-                    <p class="mb-6 text-xs text-gray-600 relative z-10">Isi luas pengendalian jika ada.</p>
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-6 relative z-10">
+                <div class="bg-blue-50/40 p-6 md:p-8 rounded-xl border border-blue-100 mb-6">
+                    <p class="text-base font-bold text-blue-800">Luas Pengendalian per Sumber Dana (Ha)</p>
+                    <p class="mt-1 mb-6 text-sm text-gray-600">Isi luas pengendalian jika ada. Kosongkan sumber dana yang tidak dipakai.</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                         @foreach($controlFields as $field => $control)
                             <div>
-                                <label for="{{ $field }}" class="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wider">{{ $control['label'] }}</label>
-                                <input id="{{ $field }}" type="number" step="0.01" min="0" name="{{ $field }}" x-model="{{ $control['model'] }}" class="block w-full px-4 py-2.5 rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500 text-sm font-medium transition-colors" placeholder="0.00">
+                                <label for="{{ $field }}" class="block text-sm font-bold text-gray-700 mb-2">{{ $control['label'] }}</label>
+                                <input id="{{ $field }}" type="number" inputmode="decimal" step="0.01" min="0" name="{{ $field }}" x-model="{{ $control['model'] }}" class="block w-full px-4 py-3 rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500 text-base font-medium transition-colors" placeholder="0">
                                 <x-input-error :messages="$errors->get($field)" class="mt-2" />
                             </div>
                         @endforeach
                     </div>
-                    <p class="mt-5 text-sm font-bold text-blue-800 relative z-10">Jumlah total luas pengendalian: <span x-text="totalKendaliBaru.toFixed(2)"></span> Ha</p>
-                    <p class="mt-2 text-xs text-blue-900 relative z-10" x-show="historyReady">Batas maksimal pengendalian: <strong x-text="batasPengendalian.toFixed(2)"></strong> Ha</p>
-                    <p class="mt-2 text-sm font-semibold text-red-700 relative z-10" x-show="pengendalianMelebihiBatas" x-cloak>Pengendalian melebihi luas serangan yang ada.</p>
-                    <x-input-error :messages="$errors->get('pengendalian')" class="mt-2 relative z-10" />
+                    <div class="mt-6 flex flex-col gap-1 border-t border-blue-100 pt-4 text-sm sm:flex-row sm:items-center sm:justify-between">
+                        <p class="font-bold text-blue-800">Jumlah pengendalian: <span x-text="formatHa(totalKendaliBaru)"></span></p>
+                        <p class="text-blue-900" x-show="historyReady">Maksimal: <strong x-text="formatHa(batasPengendalian)"></strong></p>
+                    </div>
+                    <p class="mt-2 text-sm font-semibold text-red-700" x-show="pengendalianMelebihiBatas" x-cloak>Pengendalian melebihi luas serangan yang ada.</p>
+                    <x-input-error :messages="$errors->get('pengendalian')" class="mt-2" />
                 </div>
 
                 <div class="mb-6 rounded-xl border border-blue-100 bg-white p-6 shadow-sm md:p-8">
@@ -230,18 +221,22 @@
                     <x-input-error :messages="$errors->get('cara_pengendalian')" class="mt-2" />
                 </div>
 
-                <div class="bg-gray-50/50 p-6 md:p-8 rounded-xl border border-gray-100">
-                    <p class="block text-sm font-bold text-gray-700 mb-3">Kondisi Serangan</p>
-                    <dl class="mb-3 max-w-sm space-y-1 text-sm text-gray-600" x-show="historyReady" x-cloak>
-                        <div class="flex justify-between gap-4"><dt>Kondisi sebelumnya</dt><dd class="font-medium" x-text="formatHa(history.kondisi_serangan)"></dd></div>
-                        <div class="flex justify-between gap-4"><dt>+ Tambah serangan</dt><dd class="font-medium text-red-700" x-text="formatHa(totalSeranganBaru)"></dd></div>
-                        <div class="flex justify-between gap-4 border-b border-gray-200 pb-1"><dt>− Pengendalian</dt><dd class="font-medium text-blue-700" x-text="formatHa(totalKendaliBaru)"></dd></div>
-                    </dl>
-                    <div class="flex flex-wrap items-center gap-3">
-                        <p class="text-2xl font-bold" :class="kondisiBerjalan < 0 ? 'text-red-700' : 'text-emerald-700'"><span x-text="kondisiBerjalan.toFixed(2)"></span> Ha</p>
-                        <span class="rounded-full px-3 py-1 text-xs font-semibold" :class="statusKondisi.classes" x-show="historyReady" x-text="statusKondisi.label" x-cloak></span>
+                <div class="bg-gray-50 p-6 md:p-8 rounded-xl border border-gray-200">
+                    <p class="text-base font-bold text-gray-800 mb-4">Kondisi Serangan</p>
+                    <div class="grid grid-cols-1 gap-6 md:grid-cols-2 md:items-center">
+                        <dl class="space-y-2 text-base text-gray-700" x-show="historyReady" x-cloak>
+                            <div class="flex justify-between gap-4"><dt>Kondisi sebelumnya</dt><dd class="font-semibold" x-text="formatHa(history.kondisi_serangan)"></dd></div>
+                            <div class="flex justify-between gap-4"><dt>+ Serangan tambahan</dt><dd class="font-semibold text-red-700" x-text="formatHa(totalSeranganBaru)"></dd></div>
+                            <div class="flex justify-between gap-4 border-b border-gray-300 pb-2"><dt>− Pengendalian</dt><dd class="font-semibold text-blue-700" x-text="formatHa(totalKendaliBaru)"></dd></div>
+                        </dl>
+                        <div class="rounded-xl border border-gray-200 bg-white p-5">
+                            <p class="text-sm text-gray-600">Sisa serangan setelah pengendalian</p>
+                            <div class="mt-1 flex flex-wrap items-center gap-3">
+                                <p class="text-3xl font-bold" :class="kondisiBerjalan < 0 ? 'text-red-700' : 'text-emerald-700'" x-text="formatHa(kondisiBerjalan)"></p>
+                                <span class="rounded-full px-3 py-1 text-sm font-semibold" :class="statusKondisi.classes" x-show="historyReady" x-text="statusKondisi.label" x-cloak></span>
+                            </div>
+                        </div>
                     </div>
-                    <p class="text-xs text-gray-500 mt-2">Sisa serangan setelah pengendalian.</p>
                 </div>
             </div>
 

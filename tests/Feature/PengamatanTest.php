@@ -50,7 +50,7 @@ class PengamatanTest extends TestCase
         $response = $this->actingAs($this->createPopt($this->createUppt()))->get('/pengamatan/create');
 
         $response->assertOk();
-        $response->assertSee('Tambah Serangan')->assertDontSee('Sedang');
+        $response->assertSee('Serangan Tambahan')->assertDontSee('Sedang');
     }
 
     public function test_rejects_creation_when_required_fields_are_missing(): void

@@ -20,13 +20,12 @@ Alpine.data('pengamatanForm', (config) => ({
     luasKomoditi: config.luas,
     areaTouched: Boolean(config.editId || config.luas !== ''),
     manualAreaTouched: Boolean(!config.editId && config.luas !== ''),
-    showAttack: config.showAttack,
     ringan: config.ringan,
     berat: config.berat,
-    kendaliKab: config.controls.kab || 0,
-    kendaliProv: config.controls.prov || 0,
-    kendaliMasyarakat: config.controls.masyarakat || 0,
-    kendaliApbn: config.controls.apbn || 0,
+    kendaliKab: config.controls.kab,
+    kendaliProv: config.controls.prov,
+    kendaliMasyarakat: config.controls.masyarakat,
+    kendaliApbn: config.controls.apbn,
     loadingHistory: false,
     historyReady: false,
     historyError: '',
@@ -69,16 +68,8 @@ Alpine.data('pengamatanForm', (config) => ({
         this.loadHistory();
     },
 
-    toggleAttack() {
-        if (this.showAttack) {
-            this.ringan = 0;
-            this.berat = 0;
-        }
-        this.showAttack = !this.showAttack;
-    },
-
     formatHa(value) {
-        return `${this.toNumber(value).toFixed(2)} Ha`;
+        return `${new Intl.NumberFormat('id-ID', { maximumFractionDigits: 2 }).format(this.toNumber(value))} Ha`;
     },
 
     get totalSeranganBaru() {
@@ -147,13 +138,12 @@ Alpine.data('pengamatanForm', (config) => ({
 
         const key = [this.periodeOf(date), kecamatanId, komoditasId, optId, jenisOptId].join(':');
         if (!this.editId && this.currentKey && this.currentKey !== key) {
-            this.ringan = 0;
-            this.berat = 0;
-            this.kendaliKab = 0;
-            this.kendaliProv = 0;
-            this.kendaliMasyarakat = 0;
-            this.kendaliApbn = 0;
-            this.showAttack = false;
+            this.ringan = '';
+            this.berat = '';
+            this.kendaliKab = '';
+            this.kendaliProv = '';
+            this.kendaliMasyarakat = '';
+            this.kendaliApbn = '';
             if (!this.manualAreaTouched) {
                 this.areaTouched = false;
             }
