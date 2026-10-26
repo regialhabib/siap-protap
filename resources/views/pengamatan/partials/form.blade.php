@@ -165,7 +165,7 @@
                 <div class="mb-6 bg-white p-6 md:p-8 rounded-xl border border-gray-200 shadow-sm">
                     <label for="luas_komoditi_ha" class="block text-sm font-bold text-gray-700 mb-3">Luas Komoditi (Ha) <span class="text-red-500">*</span></label>
                     <div class="relative w-full">
-                        <input id="luas_komoditi_ha" type="number" step="0.01" min="0.01" max="99999999.99" name="luas_komoditi_ha" x-model="luasKomoditi" @input="areaTouched = true; manualAreaTouched = true" class="block w-full pl-5 pr-14 py-3.5 rounded-xl border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 text-lg font-bold text-gray-900 transition-colors" placeholder="0.00" required>
+                        <input id="luas_komoditi_ha" type="number" inputmode="decimal" step="0.01" min="0.01" max="99999999.99" name="luas_komoditi_ha" x-model="luasKomoditi" @input="areaTouched = true; manualAreaTouched = true" class="block w-full pl-5 pr-14 py-3.5 rounded-xl border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 text-lg font-bold text-gray-900 transition-colors" placeholder="0.00" required>
                         <div class="absolute inset-y-0 right-0 pr-5 flex items-center pointer-events-none">
                             <span class="text-gray-400 font-bold">Ha</span>
                         </div>
