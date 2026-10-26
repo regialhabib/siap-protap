@@ -198,7 +198,7 @@ class PengamatanHistoryService
 
     public static function hektare(float $value): string
     {
-        return rtrim(rtrim(number_format($value, 2), '0'), '.');
+        return rtrim(rtrim(number_format($value, 2, ',', '.'), '0'), ',');
     }
 
     public function chainKey(Pengamatan $pengamatan): string

@@ -93,9 +93,9 @@ class RiwayatPengamatanTest extends TestCase
 
         $karetMonths = collect($karet->months)->keyBy('bulan_label');
         $this->assertSame(['tambah_jumlah' => 3.0, 'kendali_jumlah' => 1.25], array_intersect_key($karetMonths['Februari 2026']->values, array_flip(['tambah_jumlah', 'kendali_jumlah'])));
-        $this->assertSame('1.75 Ha (Bertambah 1.75 Ha)', $karetMonths['Februari 2026']->kondisi_label);
+        $this->assertSame('1,75 Ha (Bertambah 1,75 Ha)', $karetMonths['Februari 2026']->kondisi_label);
         $this->assertFalse($karetMonths['Maret 2026']->ada_input);
-        $this->assertSame('1.75 Ha (Tetap)', $karetMonths['April 2026']->kondisi_label);
+        $this->assertSame('1,75 Ha (Tetap)', $karetMonths['April 2026']->kondisi_label);
         $this->assertTrue($karetMonths['Mei 2026']->is_blank);
         $this->assertSame(3.0, $karet->total['tambah_jumlah']);
         $this->assertSame(1.25, $karet->total['kendali_jumlah']);
