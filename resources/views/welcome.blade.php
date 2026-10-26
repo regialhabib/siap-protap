@@ -17,7 +17,7 @@
     <header class="sticky top-0 z-30 bg-white/90 backdrop-blur border-b border-gray-100">
         <div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
             <a href="{{ route('home') }}" class="flex items-center">
-                <img src="{{ asset('images/logo_final.jpg') }}" alt="Logo SIAP-PROTAP" class="w-9 h-9 rounded-full border-2 border-emerald-100 shadow-sm">
+                <img src="{{ asset('images/logo_160.jpg') }}" alt="Logo SIAP-PROTAP" class="w-9 h-9 rounded-full border-2 border-emerald-100 shadow-sm">
                 <span class="ml-3 text-lg font-extrabold tracking-wide text-emerald-700">SIAP-PROTAP</span>
             </a>
 

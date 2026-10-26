@@ -18,7 +18,7 @@
         <div class="min-h-screen flex flex-col sm:justify-center items-center pt-6 sm:pt-0 bg-gray-50">
             <div class="w-full sm:max-w-md px-6 text-center">
                 <a href="/" class="flex flex-col items-center justify-center space-y-2">
-                    <img src="{{ asset('images/logo_final.jpg') }}" alt="Logo SIAP-PROTAP" class="w-16 h-16 rounded-full shadow-lg border-2 border-emerald-100">
+                    <img src="{{ asset('images/logo_160.jpg') }}" alt="Logo SIAP-PROTAP" class="w-16 h-16 rounded-full shadow-lg border-2 border-emerald-100">
                     <h1 class="text-3xl font-extrabold text-emerald-700 tracking-tight">SIAP-PROTAP</h1>
                     <p class="text-sm text-gray-500 font-medium">Sistem Informasi Administrasi Pelaporan Proteksi Tanaman Perkebunan</p>
                 </a>
