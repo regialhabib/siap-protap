@@ -57,11 +57,40 @@ class RiwayatPengamatanTest extends TestCase
             ->assertViewHas('chain', null);
     }
 
-    public function test_popt_cannot_access_the_admin_observation_history(): void
+    public function test_popt_without_an_uppt_cannot_open_the_observation_history(): void
     {
-        $popt = User::factory()->create(['role' => 'popt']);
+        $popt = User::factory()->create(['role' => 'popt', 'uppt_id' => null]);
 
         $this->actingAs($popt)->get(route('pengamatan.riwayat.index'))->assertForbidden();
+    }
+
+    public function test_popt_reads_only_the_chains_of_their_own_uppt(): void
+    {
+        $kabupaten = Kabupaten::create(['nama_kabupaten' => 'Kabupaten Uji']);
+        $ownUppt = Uppt::create(['nama_uppt' => 'UPPT Sendiri', 'kabupaten_id' => $kabupaten->id]);
+        $otherUppt = Uppt::create(['nama_uppt' => 'UPPT Lain', 'kabupaten_id' => Kabupaten::create(['nama_kabupaten' => 'Kabupaten Lain'])->id]);
+        $ownKecamatan = Kecamatan::create(['nama_kecamatan' => 'Kecamatan Sendiri', 'uppt_id' => $ownUppt->id]);
+        $otherKecamatan = Kecamatan::create(['nama_kecamatan' => 'Kecamatan Lain', 'uppt_id' => $otherUppt->id]);
+        $popt = User::factory()->create(['role' => 'popt', 'uppt_id' => $ownUppt->id]);
+        $karet = Komoditas::create(['nama_komoditas' => 'Karet']);
+        $opt = Opt::create(['nama_opt' => 'Gugur Daun']);
+        $jenisOpt = JenisOpt::create(['opt_id' => $opt->id, 'nama_jenis_opt' => 'Corynespora']);
+        $this->createObservation($popt, $ownUppt, $ownKecamatan, $karet, $opt, $jenisOpt, '2026-02-05', 2, 0);
+        $this->createObservation($popt, $otherUppt, $otherKecamatan, $karet, $opt, $jenisOpt, '2026-02-05', 7, 0);
+        $chain = ['tahun' => 2026, 'komoditas_id' => $karet->id, 'opt_id' => $opt->id, 'jenis_opt_id' => $jenisOpt->id];
+
+        $this->actingAs($popt)->get(route('pengamatan.riwayat.index'))
+            ->assertOk()
+            ->assertSee('UPPT Sendiri · Kabupaten Uji')
+            ->assertDontSee('-- Pilih UPPT --')
+            ->assertViewHas('chain', null);
+
+        $this->get(route('pengamatan.riwayat.index', [...$chain, 'kecamatan_id' => $ownKecamatan->id]))
+            ->assertViewHas('chain', fn ($chain): bool => $chain->uppt === 'UPPT Sendiri' && $chain->total['tambah_jumlah'] === 2.0);
+
+        $this->get(route('pengamatan.riwayat.index', [...$chain, 'kabupaten_id' => $otherUppt->kabupaten_id, 'uppt_id' => $otherUppt->id, 'kecamatan_id' => $otherKecamatan->id]))
+            ->assertRedirect()
+            ->assertSessionHasErrors(['kecamatan_id' => 'Kecamatan tidak berada di wilayah yang dipilih.']);
     }
 
     public function test_a_chain_lists_twelve_months_with_totals_and_blank_months(): void

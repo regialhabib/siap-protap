@@ -25,8 +25,15 @@ class RiwayatPengamatanController extends Controller
 
     public function index(Request $request, PengamatanHistoryService $history): View
     {
-        $hasFilters = collect(self::FILTERS)->contains(fn (string $filter): bool => $request->filled($filter));
-        $filters = $hasFilters ? $this->validatedFilters($request) : $this->emptyFilters();
+        // POPT hanya membaca rantai UPPT-nya sendiri, jadi Kabupaten/Kota dan UPPT dikunci.
+        $ownUppt = $request->user()->isPopt() ? $request->user()->uppt()->with('kabupaten')->first() : null;
+        $lockedFilters = $ownUppt ? ['kabupaten_id' => (string) $ownUppt->kabupaten_id, 'uppt_id' => (string) $ownUppt->id] : [];
+
+        $hasFilters = collect(self::FILTERS)
+            ->diff(array_keys($lockedFilters))
+            ->contains(fn (string $filter): bool => $request->filled($filter));
+        $request->query->add($lockedFilters);
+        $filters = $hasFilters ? $this->validatedFilters($request) : [...$this->emptyFilters(), ...$lockedFilters];
         $periode = $filters['tahun'];
 
         $query = Pengamatan::query()
@@ -66,8 +73,10 @@ class RiwayatPengamatanController extends Controller
             'tahun' => $periode,
             'filters' => $filters,
             'hasFilters' => $hasFilters,
-            'kabupatens' => Kabupaten::orderBy('nama_kabupaten')->get(),
+            'ownUppt' => $ownUppt,
+            'kabupatens' => $ownUppt ? collect() : Kabupaten::orderBy('nama_kabupaten')->get(),
             'uppts' => Uppt::with('kabupaten:id,nama_kabupaten')
+                ->when($ownUppt, fn ($upptQuery) => $upptQuery->whereKey($ownUppt->id))
                 ->orderBy('nama_uppt')
                 ->get(['id', 'nama_uppt', 'kabupaten_id']),
             'kecamatans' => $filters['uppt_id'] === ''

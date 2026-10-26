@@ -17,6 +17,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/api/uppt/{uppt}/kecamatans', [UpptController::class, 'getKecamatans'])->name('api.uppt.kecamatans');
     Route::get('/opt', [OptController::class, 'index'])->name('opt.index');
+    Route::get('/data-pengamatan', [RiwayatPengamatanController::class, 'index'])
+        ->middleware('can:view-observation-history')
+        ->name('pengamatan.riwayat.index');
 
     // Fitur Pengamatan (Input Data)
     Route::get('/pengamatan/riwayat', [PengamatanController::class, 'history'])->name('pengamatan.history');
@@ -35,8 +38,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Fitur Khusus Admin (Laporan & Master Data)
     Route::middleware('can:admin')->group(function () {
-        Route::get('/data-pengamatan', [RiwayatPengamatanController::class, 'index'])->name('pengamatan.riwayat.index');
-
         // Laporan
         Route::get('/laporan', [LaporanController::class, 'index'])->name('laporan.index');
         Route::get('/laporan/triwulan', [LaporanController::class, 'quarterly'])->name('laporan.triwulan');

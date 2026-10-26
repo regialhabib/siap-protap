@@ -4,6 +4,9 @@
     <div class="mb-6 overflow-visible rounded-xl border border-gray-200 bg-white shadow-sm">
         <div class="rounded-t-xl border-b border-gray-100 bg-gray-50/50 px-6 py-4">
             <h1 class="text-xl font-bold leading-tight tracking-tight text-gray-800">Riwayat Pengamatan Periode</h1>
+            @if($ownUppt)
+                <p class="mt-1 text-sm text-gray-600">{{ $ownUppt->nama_uppt }} · {{ $ownUppt->kabupaten?->nama_kabupaten }}</p>
+            @endif
         </div>
 
         <form method="GET" action="{{ route('pengamatan.riwayat.index') }}" class="grid grid-cols-1 gap-4 p-6 md:grid-cols-3 xl:grid-cols-4"
@@ -64,6 +67,7 @@
                 <x-tahun-select :selected="$tahun" />
                 @error('tahun') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
             </div>
+            @unless($ownUppt)
             <div>
                 <label for="kabupaten_id" class="mb-2 block text-sm font-semibold text-gray-700">Kabupaten/Kota <span class="text-red-500">*</span></label>
                 <select id="kabupaten_id" name="kabupaten_id" x-model="kabupatenId" @change="onKabupatenChanged()" required
@@ -86,6 +90,7 @@
                 </select>
                 @error('uppt_id') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
             </div>
+            @endunless
             <div>
                 <label for="kecamatan_id" class="mb-2 block text-sm font-semibold text-gray-700">Kecamatan <span class="text-red-500">*</span></label>
                 <select id="kecamatan_id" name="kecamatan_id" x-model="kecamatanId" :disabled="kecamatans.length === 0" :required="kecamatans.length > 0"

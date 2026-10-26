@@ -29,5 +29,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::define('popt', fn (User $user): bool => $user->isPopt());
 
         Gate::define('manage-opt', fn (User $user): bool => $user->isAdmin() || $user->isPopt());
+
+        Gate::define('view-observation-history', fn (User $user): bool => $user->isAdmin() || ($user->isPopt() && $user->uppt_id !== null));
     }
 }
