@@ -13,6 +13,9 @@ use Illuminate\Validation\Validator;
 
 class PengamatanRequest extends FormRequest
 {
+    /** Batas kolom decimal(10,2) agar angka terlalu besar ditolak validasi, bukan error database. */
+    private const MAX_HEKTARE = '99999999.99';
+
     /**
      * Cek hak akses sebelum validasi agar pesan validasi tidak membocorkan rantai milik UPPT lain.
      */
@@ -48,19 +51,19 @@ class PengamatanRequest extends FormRequest
                 'nullable',
                 Rule::exists('kecamatans', 'id')->where('uppt_id', $upptId),
             ],
-            'luas_komoditi_ha' => 'required|numeric|decimal:0,2|min:0',
-            'serangan_ringan' => 'nullable|numeric|decimal:0,2|min:0',
-            'serangan_berat' => 'nullable|numeric|decimal:0,2|min:0',
-            'kendali_apbd_kab' => 'nullable|numeric|decimal:0,2|min:0',
-            'kendali_apbd_prov' => 'nullable|numeric|decimal:0,2|min:0',
-            'kendali_apbn' => 'nullable|numeric|decimal:0,2|min:0',
-            'kendali_masyarakat' => 'nullable|numeric|decimal:0,2|min:0',
+            'luas_komoditi_ha' => 'required|numeric|decimal:0,2|gt:0|max:'.self::MAX_HEKTARE,
+            'serangan_ringan' => 'nullable|numeric|decimal:0,2|min:0|max:'.self::MAX_HEKTARE,
+            'serangan_berat' => 'nullable|numeric|decimal:0,2|min:0|max:'.self::MAX_HEKTARE,
+            'kendali_apbd_kab' => 'nullable|numeric|decimal:0,2|min:0|max:'.self::MAX_HEKTARE,
+            'kendali_apbd_prov' => 'nullable|numeric|decimal:0,2|min:0|max:'.self::MAX_HEKTARE,
+            'kendali_apbn' => 'nullable|numeric|decimal:0,2|min:0|max:'.self::MAX_HEKTARE,
+            'kendali_masyarakat' => 'nullable|numeric|decimal:0,2|min:0|max:'.self::MAX_HEKTARE,
             'cara_pengendalian' => ['nullable', 'string', 'max:2000'],
         ];
     }
 
     /**
-     * Tolak perubahan yang membuat kondisi serangan rantai menjadi minus.
+     * Tolak perubahan yang membuat kondisi serangan rantai menjadi minus atau melebihi luas komoditi.
      *
      * @return array<int, callable>
      */
@@ -72,7 +75,7 @@ class PengamatanRequest extends FormRequest
                     return;
                 }
 
-                $violation = app(PengamatanHistoryService::class)->firstNegativeCondition(
+                $violation = app(PengamatanHistoryService::class)->firstInvalidCondition(
                     $this->route('pengamatan'),
                     $this->observationAttributes(),
                 );
@@ -81,10 +84,22 @@ class PengamatanRequest extends FormRequest
                     return;
                 }
 
+                $tanggal = $violation['tanggal']->translatedFormat('d F Y');
                 $maksimal = PengamatanHistoryService::hektare($violation['maksimal']);
-                $validator->errors()->add('pengendalian', $violation['is_candidate']
-                    ? "Total pengendalian melebihi luas serangan yang ada. Maksimal {$maksimal} Ha (kondisi sebelumnya + tambah serangan)."
-                    : 'Perubahan ini membuat kondisi serangan pada pengamatan tanggal '.$violation['tanggal']->translatedFormat('d F Y')." menjadi minus (pengendalian maksimal di tanggal tersebut {$maksimal} Ha).");
+                $kondisi = PengamatanHistoryService::hektare($violation['kondisi']);
+                $luas = PengamatanHistoryService::hektare($violation['luas']);
+
+                if ($violation['masalah'] === 'minus') {
+                    $validator->errors()->add('pengendalian', $violation['is_candidate']
+                        ? "Total pengendalian melebihi luas serangan yang ada. Maksimal {$maksimal} Ha (kondisi sebelumnya + tambah serangan)."
+                        : "Perubahan ini membuat kondisi serangan pada pengamatan tanggal {$tanggal} menjadi minus (pengendalian maksimal di tanggal tersebut {$maksimal} Ha).");
+
+                    return;
+                }
+
+                $validator->errors()->add('kondisi', $violation['is_candidate']
+                    ? "Kondisi serangan ({$kondisi} Ha) melebihi luas komoditi ({$luas} Ha). Periksa kembali luas komoditi, serangan, atau pengendalian."
+                    : "Perubahan ini membuat kondisi serangan pada pengamatan tanggal {$tanggal} ({$kondisi} Ha) melebihi luas komoditinya ({$luas} Ha).");
             },
         ];
     }

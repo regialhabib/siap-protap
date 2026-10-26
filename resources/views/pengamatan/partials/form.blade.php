@@ -160,7 +160,7 @@
                 <div class="mb-6 bg-white p-6 md:p-8 rounded-xl border border-gray-200 shadow-sm">
                     <label for="luas_komoditi_ha" class="block text-sm font-bold text-gray-700 mb-3">Luas Komoditi (Ha) <span class="text-red-500">*</span></label>
                     <div class="relative w-full">
-                        <input id="luas_komoditi_ha" type="number" step="0.01" min="0" name="luas_komoditi_ha" x-model="luasKomoditi" @input="areaTouched = true; manualAreaTouched = true" class="block w-full pl-5 pr-14 py-3.5 rounded-xl border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 text-lg font-bold text-gray-900 transition-colors" placeholder="0.00" required>
+                        <input id="luas_komoditi_ha" type="number" step="0.01" min="0.01" max="99999999.99" name="luas_komoditi_ha" x-model="luasKomoditi" @input="areaTouched = true; manualAreaTouched = true" class="block w-full pl-5 pr-14 py-3.5 rounded-xl border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 text-lg font-bold text-gray-900 transition-colors" placeholder="0.00" required>
                         <div class="absolute inset-y-0 right-0 pr-5 flex items-center pointer-events-none">
                             <span class="text-gray-400 font-bold">Ha</span>
                         </div>
@@ -176,7 +176,7 @@
                         @foreach(['serangan_ringan' => ['label' => 'Ringan', 'model' => 'ringan'], 'serangan_berat' => ['label' => 'Berat', 'model' => 'berat']] as $field => $attack)
                             <div>
                                 <label for="{{ $field }}" class="block text-sm font-bold text-gray-700 mb-2">{{ $attack['label'] }}</label>
-                                <input id="{{ $field }}" type="number" inputmode="decimal" step="0.01" min="0" name="{{ $field }}" x-model="{{ $attack['model'] }}" class="block w-full px-4 py-3 rounded-lg border-gray-300 focus:ring-red-500 focus:border-red-500 text-base font-medium transition-colors" placeholder="0">
+                                <input id="{{ $field }}" type="number" inputmode="decimal" step="0.01" min="0" max="99999999.99" name="{{ $field }}" x-model="{{ $attack['model'] }}" class="block w-full px-4 py-3 rounded-lg border-gray-300 focus:ring-red-500 focus:border-red-500 text-base font-medium transition-colors" placeholder="0">
                                 <x-input-error :messages="$errors->get($field)" class="mt-2" />
                             </div>
                         @endforeach
@@ -202,7 +202,7 @@
                         @foreach($controlFields as $field => $control)
                             <div>
                                 <label for="{{ $field }}" class="block text-sm font-bold text-gray-700 mb-2">{{ $control['label'] }}</label>
-                                <input id="{{ $field }}" type="number" inputmode="decimal" step="0.01" min="0" name="{{ $field }}" x-model="{{ $control['model'] }}" class="block w-full px-4 py-3 rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500 text-base font-medium transition-colors" placeholder="0">
+                                <input id="{{ $field }}" type="number" inputmode="decimal" step="0.01" min="0" max="99999999.99" name="{{ $field }}" x-model="{{ $control['model'] }}" class="block w-full px-4 py-3 rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500 text-base font-medium transition-colors" placeholder="0">
                                 <x-input-error :messages="$errors->get($field)" class="mt-2" />
                             </div>
                         @endforeach
@@ -232,11 +232,15 @@
                         <div class="rounded-xl border border-gray-200 bg-white p-5">
                             <p class="text-sm text-gray-600">Sisa serangan setelah pengendalian</p>
                             <div class="mt-1 flex flex-wrap items-center gap-3">
-                                <p class="text-3xl font-bold" :class="kondisiBerjalan < 0 ? 'text-red-700' : 'text-emerald-700'" x-text="formatHa(kondisiBerjalan)"></p>
+                                <p class="text-3xl font-bold" :class="kondisiBerjalan < 0 || kondisiMelebihiLuas ? 'text-red-700' : 'text-emerald-700'" x-text="formatHa(kondisiBerjalan)"></p>
                                 <span class="rounded-full px-3 py-1 text-sm font-semibold" :class="statusKondisi.classes" x-show="historyReady" x-text="statusKondisi.label" x-cloak></span>
                             </div>
                         </div>
                     </div>
+                    <p class="mt-4 text-sm font-semibold text-red-700" x-show="kondisiMelebihiLuas" x-cloak>
+                        Sisa serangan <span x-text="formatHa(kondisiBerjalan)"></span> melebihi luas komoditi <span x-text="formatHa(luasKomoditi)"></span>. Periksa kembali luas komoditi, serangan, atau pengendalian.
+                    </p>
+                    <x-input-error :messages="$errors->get('kondisi')" class="mt-2" />
                 </div>
             </div>
 

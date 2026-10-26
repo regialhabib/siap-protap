@@ -54,12 +54,13 @@ class PengamatanHistoryService
     }
 
     /**
-     * Cari entri pertama yang membuat kondisi serangan rantai menjadi minus jika perubahan diterapkan.
+     * Cari entri pertama yang membuat kondisi serangan rantai menjadi minus atau melebihi
+     * luas komoditinya jika perubahan diterapkan.
      * $existing = entri yang diubah/dihapus, $attributes = data baru (null untuk hapus).
      *
-     * @return array{tanggal: CarbonImmutable, maksimal: float, is_candidate: bool}|null
+     * @return array{masalah: 'minus'|'melebihi_luas', tanggal: CarbonImmutable, maksimal: float, kondisi: float, luas: float, is_candidate: bool}|null
      */
-    public function firstNegativeCondition(?Pengamatan $existing, ?array $attributes): ?array
+    public function firstInvalidCondition(?Pengamatan $existing, ?array $attributes): ?array
     {
         $candidate = $attributes === null ? null : $this->candidate($attributes, $existing?->id);
         $references = collect([$existing, $candidate])
@@ -76,11 +77,15 @@ class PengamatanHistoryService
             foreach ($this->sorted($observations) as $observation) {
                 $batas = round($kondisi + $this->attackTotal($observation), 2);
                 $kondisi = round($batas - $this->controlTotal($observation), 2);
+                $luas = round((float) $observation->luas_komoditi_ha, 2);
 
-                if ($kondisi < 0) {
+                if ($kondisi < 0 || $kondisi > $luas) {
                     return [
+                        'masalah' => $kondisi < 0 ? 'minus' : 'melebihi_luas',
                         'tanggal' => CarbonImmutable::parse($observation->tanggal_pengamatan),
                         'maksimal' => $batas,
+                        'kondisi' => $kondisi,
+                        'luas' => $luas,
                         'is_candidate' => $observation === $candidate,
                     ];
                 }

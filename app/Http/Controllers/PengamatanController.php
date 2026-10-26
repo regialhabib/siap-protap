@@ -115,10 +115,13 @@ class PengamatanController extends Controller
     {
         Gate::authorize('delete', $pengamatan);
 
-        $violation = $history->firstNegativeCondition($pengamatan, null);
+        $violation = $history->firstInvalidCondition($pengamatan, null);
         if ($violation !== null) {
-            return back()->with('error', 'Data tidak dapat dihapus karena kondisi serangan pada pengamatan tanggal '
-                .$violation['tanggal']->translatedFormat('d F Y').' akan menjadi minus. Ubah pengendalian pada tanggal tersebut terlebih dahulu.');
+            $tanggal = $violation['tanggal']->translatedFormat('d F Y');
+
+            return back()->with('error', $violation['masalah'] === 'minus'
+                ? "Data tidak dapat dihapus karena kondisi serangan pada pengamatan tanggal {$tanggal} akan menjadi minus. Ubah pengendalian pada tanggal tersebut terlebih dahulu."
+                : "Data tidak dapat dihapus karena kondisi serangan pada pengamatan tanggal {$tanggal} akan melebihi luas komoditinya. Ubah data pada tanggal tersebut terlebih dahulu.");
         }
 
         $pengamatan->delete();

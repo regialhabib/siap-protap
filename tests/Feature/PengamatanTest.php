@@ -238,7 +238,26 @@ class PengamatanTest extends TestCase
         $this->assertDatabaseHas('pengamatans', ['kendali_apbd_kab' => 3, 'kendali_masyarakat' => 0, 'serangan_berat' => 1]);
     }
 
-    public function test_allows_attack_larger_than_commodity_area(): void
+    public function test_allows_cumulative_attack_larger_than_commodity_area_after_control(): void
+    {
+        $popt = $this->createPopt($this->createUppt());
+        $komoditas = Komoditas::create(['nama_komoditas' => 'Karet']);
+        $opt = Opt::create(['nama_opt' => 'Gugur Daun']);
+        $this->createObservation($popt, $komoditas, $opt, '2026-02-10', ['serangan_ringan' => 8, 'kendali_apbd_kab' => 8]);
+
+        $response = $this->actingAs($popt)->post('/pengamatan', [
+            'tanggal_pengamatan' => '2026-03-10',
+            'komoditas_id' => $komoditas->id,
+            'opt_id' => $opt->id,
+            'luas_komoditi_ha' => 10,
+            'serangan_berat' => 7,
+        ]);
+
+        $response->assertRedirect(route('dashboard'))->assertSessionHasNoErrors();
+        $this->assertDatabaseHas('pengamatans', ['serangan_berat' => 7, 'serangan_jumlah' => 7]);
+    }
+
+    public function test_rejects_condition_larger_than_commodity_area(): void
     {
         $popt = $this->createPopt($this->createUppt());
         $komoditas = Komoditas::create(['nama_komoditas' => 'Karet']);
@@ -253,8 +272,45 @@ class PengamatanTest extends TestCase
             'serangan_berat' => 7,
         ]);
 
-        $response->assertRedirect(route('dashboard'))->assertSessionHasNoErrors();
-        $this->assertDatabaseHas('pengamatans', ['serangan_berat' => 7, 'serangan_jumlah' => 7]);
+        $response->assertSessionHasErrors(['kondisi' => 'Kondisi serangan (15 Ha) melebihi luas komoditi (10 Ha). Periksa kembali luas komoditi, serangan, atau pengendalian.']);
+        $this->assertDatabaseCount('pengamatans', 1);
+    }
+
+    public function test_rejects_changes_that_push_a_later_condition_above_its_commodity_area(): void
+    {
+        $popt = $this->createPopt($this->createUppt());
+        $komoditas = Komoditas::create(['nama_komoditas' => 'Karet']);
+        $opt = Opt::create(['nama_opt' => 'Gugur Daun']);
+        $this->createObservation($popt, $komoditas, $opt, '2026-02-10', ['serangan_ringan' => 5]);
+        $march = $this->createObservation($popt, $komoditas, $opt, '2026-03-15', ['kendali_apbd_kab' => 3]);
+        $this->createObservation($popt, $komoditas, $opt, '2026-04-15', ['serangan_ringan' => 7]);
+
+        $this->actingAs($popt)->put(route('pengamatan.update', $march), [
+            'tanggal_pengamatan' => '2026-03-15',
+            'komoditas_id' => $komoditas->id,
+            'opt_id' => $opt->id,
+            'luas_komoditi_ha' => 10,
+        ])->assertSessionHasErrors(['kondisi' => 'Perubahan ini membuat kondisi serangan pada pengamatan tanggal 15 April 2026 (12 Ha) melebihi luas komoditinya (10 Ha).']);
+
+        $this->from(route('dashboard'))->delete(route('pengamatan.destroy', $march))
+            ->assertSessionHas('error', 'Data tidak dapat dihapus karena kondisi serangan pada pengamatan tanggal 15 April 2026 akan melebihi luas komoditinya. Ubah data pada tanggal tersebut terlebih dahulu.');
+        $this->assertSame(3.0, (float) $march->fresh()->kendali_apbd_kab);
+    }
+
+    public function test_rejects_zero_commodity_area_and_values_beyond_the_column_limit(): void
+    {
+        $popt = $this->createPopt($this->createUppt());
+
+        $response = $this->actingAs($popt)->post('/pengamatan', [
+            'tanggal_pengamatan' => '2026-03-10',
+            'komoditas_id' => Komoditas::create(['nama_komoditas' => 'Karet'])->id,
+            'opt_id' => Opt::create(['nama_opt' => 'Gugur Daun'])->id,
+            'luas_komoditi_ha' => 0,
+            'serangan_ringan' => 100000000,
+        ]);
+
+        $response->assertSessionHasErrors(['luas_komoditi_ha', 'serangan_ringan']);
+        $this->assertDatabaseCount('pengamatans', 0);
     }
 
     public function test_rejects_update_that_makes_a_later_condition_negative(): void

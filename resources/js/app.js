@@ -59,6 +59,9 @@ Alpine.data('pengamatanForm', (config) => ({
         if (this.pengendalianMelebihiBatas) {
             return 'Pengendalian melebihi batas maksimal.';
         }
+        if (this.kondisiMelebihiLuas) {
+            return 'Sisa serangan melebihi luas komoditi.';
+        }
 
         return '';
     },
@@ -95,6 +98,11 @@ Alpine.data('pengamatanForm', (config) => ({
 
     get kondisiBerjalan() {
         return this.batasPengendalian - this.totalKendaliBaru;
+    },
+
+    get kondisiMelebihiLuas() {
+        return this.historyReady && this.luasKomoditi !== ''
+            && this.kondisiBerjalan - this.toNumber(this.luasKomoditi) > 0.001;
     },
 
     get statusKondisi() {
