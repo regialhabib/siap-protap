@@ -50,7 +50,7 @@ class LaporanTest extends TestCase
         $response = $this->actingAs($admin)->get('/laporan');
 
         $response->assertOk();
-        $response->assertSee('Filter Laporan Bulanan')->assertSee('Pilih UPPT dan tampilkan laporan terlebih dahulu')->assertViewHas('uppt_id', '');
+        $response->assertSee('Filter Laporan Bulanan')->assertSee('untuk mencetak PDF atau mengunduh Excel')->assertViewHas('uppt_id', '');
     }
 
     public function test_monthly_and_quarterly_reports_have_separate_pages_and_sidebar_links(): void

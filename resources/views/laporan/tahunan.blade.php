@@ -1,15 +1,14 @@
 <x-app-layout title="Laporan Tahunan">
-    <div class="mb-6 mt-6 overflow-visible rounded-xl border border-gray-200 bg-white shadow-sm">
+    <div class="mb-6 overflow-visible rounded-xl border border-gray-200 bg-white shadow-sm">
         <div class="rounded-t-xl border-b border-gray-100 bg-gray-50/50 px-6 py-4">
             <h2 class="text-xl font-bold leading-tight tracking-tight text-gray-800">Filter Laporan Tahunan</h2>
         </div>
         <form method="GET" action="{{ route('laporan.tahunan') }}" class="grid grid-cols-1 gap-4 p-6 md:grid-cols-2 xl:grid-cols-3">
             <div>
-                <label for="tahun" class="mb-2 block text-xs font-bold uppercase text-gray-500">Tahun (Periode Feb–Jan)</label>
-                <input id="tahun" type="number" name="tahun" min="2000" max="2100" value="{{ $tahun }}" required class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-emerald-500 focus:ring-emerald-500">
+                <x-tahun-select :selected="$tahun" />
             </div>
             <div>
-                <label for="kabupaten_id" class="mb-2 block text-xs font-bold uppercase text-gray-500">Kabupaten/Kota</label>
+                <label for="kabupaten_id" class="mb-2 block text-sm font-semibold text-gray-700">Kabupaten/Kota</label>
                 <select id="kabupaten_id" name="kabupaten_id" class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-emerald-500 focus:ring-emerald-500">
                     <option value="">Semua Kabupaten/Kota</option>
                     @foreach($kabupatens as $kabupaten)
@@ -40,7 +39,7 @@
         @endphp
         <div class="overflow-x-auto">
             <table class="w-full text-left text-sm">
-                <thead class="border-b border-gray-200 bg-gray-100/50 text-xs uppercase text-gray-700">
+                <thead class="whitespace-nowrap border-b border-gray-200 bg-gray-100/50 text-xs uppercase text-gray-700">
                     <tr>
                         <th rowspan="2" class="sticky left-0 z-10 w-12 min-w-[3rem] border-r border-gray-200 bg-gray-50 px-3 py-3">No</th>
                         <th rowspan="2" class="sticky left-12 z-10 min-w-[10rem] bg-gray-50 px-4 py-3 shadow-[inset_-1px_0_0_#e5e7eb]">Kabupaten/Kota</th>
@@ -68,9 +67,9 @@
                         <tr class="group border-b border-gray-100 transition-colors hover:bg-gray-50">
                             <td class="sticky left-0 z-10 w-12 min-w-[3rem] border-r border-gray-100 bg-white px-3 py-3 text-center group-hover:bg-gray-50">{{ $data->firstItem() + $loop->index }}</td>
                             <td class="sticky left-12 z-10 min-w-[10rem] bg-white px-4 py-3 font-medium text-gray-900 shadow-[inset_-1px_0_0_#e5e7eb] group-hover:bg-gray-50">{{ $row->kabupaten }}</td>
-                            <td class="border-r border-gray-100 px-4 py-3">{{ $row->komoditas }}</td>
+                            <td class="whitespace-nowrap border-r border-gray-100 px-4 py-3">{{ $row->komoditas }}</td>
                             <td class="border-r border-gray-100 px-4 py-3 text-center font-bold">{{ $hektare($row->luas_komoditi_ha) }}</td>
-                            <td class="border-r border-gray-100 px-4 py-3">{{ $row->opt }}{{ $row->jenis_opt !== '' ? ' — '.$row->jenis_opt : '' }}</td>
+                            <td class="min-w-[12rem] border-r border-gray-100 px-4 py-3">{{ $row->opt }}{{ $row->jenis_opt !== '' ? ' — '.$row->jenis_opt : '' }}</td>
                             <td class="border-r border-gray-100 px-4 py-3 text-center font-bold">{{ $hektare($row->kendali_jumlah) }}</td>
                             <td class="border-r border-gray-100 px-3 py-3 text-center">{{ $hektare($row->serangan_ringan) }}</td>
                             <td class="border-r border-gray-100 px-3 py-3 text-center">{{ $hektare($row->serangan_berat) }}</td>

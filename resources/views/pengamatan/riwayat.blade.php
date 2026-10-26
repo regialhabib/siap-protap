@@ -1,5 +1,5 @@
 <x-app-layout title="Riwayat Pengamatan">
-    <div class="mb-6 mt-6 overflow-visible rounded-xl border border-gray-200 bg-white shadow-sm">
+    <div class="mb-6 overflow-visible rounded-xl border border-gray-200 bg-white shadow-sm">
         <div class="rounded-t-xl border-b border-gray-100 bg-gray-50/50 px-6 py-4">
             <h1 class="text-xl font-bold leading-tight tracking-tight text-gray-800">Riwayat Pengamatan Periode</h1>
         </div>
@@ -58,13 +58,11 @@
                 }
             }">
             <div>
-                <label for="tahun" class="mb-2 block text-xs font-bold uppercase text-gray-500">Tahun (Periode Feb–Jan)</label>
-                <input id="tahun" type="number" name="tahun" min="2000" max="2100" required value="{{ $tahun }}"
-                    class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-emerald-500 focus:ring-emerald-500">
+                <x-tahun-select :selected="$tahun" />
                 @error('tahun') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
             </div>
             <div>
-                <label for="kabupaten_id" class="mb-2 block text-xs font-bold uppercase text-gray-500">Kabupaten/Kota</label>
+                <label for="kabupaten_id" class="mb-2 block text-sm font-semibold text-gray-700">Kabupaten/Kota</label>
                 <select id="kabupaten_id" name="kabupaten_id" x-model="kabupatenId" @change="onKabupatenChanged()"
                     class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-emerald-500 focus:ring-emerald-500">
                     <option value="">Semua Kabupaten/Kota</option>
@@ -75,7 +73,7 @@
                 @error('kabupaten_id') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
             </div>
             <div>
-                <label for="uppt_id" class="mb-2 block text-xs font-bold uppercase text-gray-500">UPPT</label>
+                <label for="uppt_id" class="mb-2 block text-sm font-semibold text-gray-700">UPPT</label>
                 <select id="uppt_id" name="uppt_id" x-model="upptId" @change="onUpptChanged()"
                     class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-emerald-500 focus:ring-emerald-500">
                     <option value="">Semua UPPT</option>
@@ -86,10 +84,10 @@
                 @error('uppt_id') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
             </div>
             <div>
-                <label for="kecamatan_id" class="mb-2 block text-xs font-bold uppercase text-gray-500">Kecamatan</label>
+                <label for="kecamatan_id" class="mb-2 block text-sm font-semibold text-gray-700">Kecamatan</label>
                 <select id="kecamatan_id" name="kecamatan_id" x-model="kecamatanId" :disabled="kecamatans.length === 0"
                     class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-emerald-500 focus:ring-emerald-500 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500">
-                    <option value="" x-text="kecamatans.length ? 'Semua Kecamatan' : 'Pilih UPPT terlebih dahulu'"></option>
+                    <option value="" x-text="kecamatans.length ? 'Semua Kecamatan' : 'Pilih UPPT dulu'"></option>
                     <template x-for="kecamatan in kecamatans" :key="kecamatan.id">
                         <option :value="kecamatan.id" :selected="kecamatan.id === kecamatanId" x-text="kecamatan.nama"></option>
                     </template>
@@ -97,7 +95,7 @@
                 @error('kecamatan_id') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
             </div>
             <div>
-                <label for="komoditas_id" class="mb-2 block text-xs font-bold uppercase text-gray-500">Komoditas</label>
+                <label for="komoditas_id" class="mb-2 block text-sm font-semibold text-gray-700">Komoditas</label>
                 <select id="komoditas_id" name="komoditas_id" class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-emerald-500 focus:ring-emerald-500">
                     <option value="">Semua Komoditas</option>
                     @foreach($komoditasList as $komoditas)
@@ -107,7 +105,7 @@
                 @error('komoditas_id') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
             </div>
             <div>
-                <label for="opt_id" class="mb-2 block text-xs font-bold uppercase text-gray-500">OPT</label>
+                <label for="opt_id" class="mb-2 block text-sm font-semibold text-gray-700">OPT</label>
                 <select id="opt_id" name="opt_id" x-model="optId" @change="onOptChanged()"
                     class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-emerald-500 focus:ring-emerald-500">
                     <option value="">Semua OPT</option>
@@ -118,10 +116,10 @@
                 @error('opt_id') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
             </div>
             <div>
-                <label for="jenis_opt_id" class="mb-2 block text-xs font-bold uppercase text-gray-500">Jenis OPT</label>
+                <label for="jenis_opt_id" class="mb-2 block text-sm font-semibold text-gray-700">Jenis OPT</label>
                 <select id="jenis_opt_id" name="jenis_opt_id" x-model="jenisOptId" :disabled="jenisOptions.length === 0"
                     class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-emerald-500 focus:ring-emerald-500 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500">
-                    <option value="" x-text="jenisOptions.length ? 'Semua Jenis OPT' : (optId ? 'Tidak ada jenis turunan' : 'Pilih OPT terlebih dahulu')"></option>
+                    <option value="" x-text="jenisOptions.length ? 'Semua Jenis OPT' : (optId ? 'OPT ini tidak punya jenis' : 'Pilih OPT dulu')"></option>
                     <template x-for="jenis in jenisOptions" :key="jenis.id">
                         <option :value="jenis.id" :selected="jenis.id === jenisOptId" x-text="jenis.nama"></option>
                     </template>
@@ -140,16 +138,18 @@
         $attackFields = ['tambah_ringan', 'tambah_berat'];
         $controlFields = \App\Services\PengamatanHistoryService::CONTROL_FIELDS;
     @endphp
+    @if($data->isNotEmpty())
     <div class="mb-6 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
         <div class="border-b border-gray-100 bg-gray-50/50 px-6 py-4">
             <h2 class="font-bold text-gray-900">Data Pengamatan Periode {{ $tahun }} (Februari {{ $tahun }} – Januari {{ $tahun + 1 }})</h2>
         </div>
         <x-keterangan-singkatan :bordered="false" />
     </div>
+    @endif
 
     @if($data->total() > 1)
         <div class="mb-4 flex flex-col gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3 shadow-sm md:flex-row md:items-center" x-data>
-            <label for="chain-select" class="shrink-0 text-xs font-bold uppercase text-gray-500">Data Pengamatan</label>
+            <label for="chain-select" class="shrink-0 text-sm font-semibold text-gray-700">Data Pengamatan</label>
             <select id="chain-select" @change="window.location.href = $event.target.value"
                 class="block w-full flex-1 rounded-lg border-gray-300 text-sm shadow-sm focus:border-emerald-500 focus:ring-emerald-500">
                 @foreach($chainLabels as $index => $label)
@@ -158,15 +158,15 @@
             </select>
             <div class="flex shrink-0 items-center gap-2">
                 @if($data->onFirstPage())
-                    <span class="inline-flex h-10 cursor-not-allowed items-center rounded-lg border border-gray-200 px-3 text-sm font-semibold text-gray-300">‹ Sebelumnya</span>
+                    <span class="inline-flex h-10 cursor-not-allowed items-center rounded-lg border border-gray-200 bg-gray-50 px-3 text-sm font-semibold text-gray-400 sm:px-4">Sebelumnya</span>
                 @else
-                    <a href="{{ $data->previousPageUrl() }}" class="inline-flex h-10 items-center rounded-lg border border-gray-300 px-3 text-sm font-semibold text-gray-700 hover:bg-gray-50">‹ Sebelumnya</a>
+                    <a href="{{ $data->previousPageUrl() }}" rel="prev" class="inline-flex h-10 items-center rounded-lg border border-gray-300 bg-white px-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 sm:px-4">Sebelumnya</a>
                 @endif
-                <span class="px-1 text-sm text-gray-500">{{ $data->currentPage() }} / {{ $data->total() }}</span>
+                <span class="whitespace-nowrap px-1 text-sm text-gray-600 sm:px-2">Data <span class="font-semibold text-gray-800">{{ $data->currentPage() }}</span> dari {{ $data->total() }}</span>
                 @if($data->hasMorePages())
-                    <a href="{{ $data->nextPageUrl() }}" class="inline-flex h-10 items-center rounded-lg border border-gray-300 px-3 text-sm font-semibold text-gray-700 hover:bg-gray-50">Berikutnya ›</a>
+                    <a href="{{ $data->nextPageUrl() }}" rel="next" class="inline-flex h-10 items-center rounded-lg border border-gray-300 bg-white px-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 sm:px-4">Selanjutnya</a>
                 @else
-                    <span class="inline-flex h-10 cursor-not-allowed items-center rounded-lg border border-gray-200 px-3 text-sm font-semibold text-gray-300">Berikutnya ›</span>
+                    <span class="inline-flex h-10 cursor-not-allowed items-center rounded-lg border border-gray-200 bg-gray-50 px-3 text-sm font-semibold text-gray-400 sm:px-4">Selanjutnya</span>
                 @endif
             </div>
         </div>
@@ -183,7 +183,7 @@
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-left text-sm">
-                    <thead class="border-b border-gray-200 bg-gray-100/50 text-xs uppercase text-gray-700">
+                    <thead class="whitespace-nowrap border-b border-gray-200 bg-gray-100/50 text-xs uppercase text-gray-700">
                         <tr>
                             <th rowspan="2" class="border-r border-gray-200 px-4 py-3">Bulan</th>
                             <th colspan="3" class="border-b border-r border-gray-200 px-4 py-2 text-center">Serangan Bulan Ini (Ha)</th>
@@ -250,7 +250,7 @@
             </div>
         </div>
     @empty
-        <div class="mb-6 rounded-xl border border-gray-200 bg-white px-6 py-12 text-center text-sm text-gray-500 shadow-sm">
+        <div class="mb-6 rounded-xl border border-gray-200 bg-white px-6 py-12 text-center text-base text-gray-600 shadow-sm">
             {{ $hasFilters ? 'Belum ada data pengamatan pada periode dan filter ini.' : 'Pilih filter lalu tampilkan untuk membaca riwayat pengamatan.' }}
         </div>
     @endforelse
