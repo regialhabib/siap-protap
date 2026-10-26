@@ -1,4 +1,6 @@
 <x-app-layout title="Laporan Tahunan">
+    <x-filter-errors />
+
     <div class="mb-6 overflow-visible rounded-xl border border-gray-200 bg-white shadow-sm">
         <div class="rounded-t-xl border-b border-gray-100 bg-gray-50/50 px-6 py-4">
             <h2 class="text-xl font-bold leading-tight tracking-tight text-gray-800">Filter Laporan Tahunan</h2>

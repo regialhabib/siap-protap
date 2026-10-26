@@ -3,6 +3,8 @@
         $hektare = fn ($value) => \App\Services\PengamatanHistoryService::hektare((float) $value);
     @endphp
 
+    <x-filter-errors />
+
     <!-- Filter Form -->
     <div class="mb-6 bg-white rounded-xl border border-gray-200 shadow-sm overflow-visible">
         <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50 rounded-t-xl">
