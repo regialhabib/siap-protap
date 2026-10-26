@@ -181,7 +181,11 @@ Alpine.data('pengamatanForm', (config) => ({
                 return;
             }
             if (!response.ok) {
-                throw new Error('History request failed.');
+                this.historyError = {
+                    403: 'Masa edit data ini sudah berakhir. Muat ulang halaman.',
+                    422: 'Pilihan lokasi atau jenis pengamatan tidak valid. Pilih ulang data pengamatan.',
+                }[response.status] ?? 'Data sebelumnya belum berhasil dimuat.';
+                return;
             }
 
             const payload = await response.json();
@@ -199,7 +203,7 @@ Alpine.data('pengamatanForm', (config) => ({
             }
         } catch {
             if (requestId === this.historyRequest) {
-                this.historyError = 'Histori belum berhasil dimuat. Periksa koneksi lalu pilih ulang data pengamatan.';
+                this.historyError = 'Data sebelumnya belum berhasil dimuat. Periksa koneksi internet.';
             }
         } finally {
             if (requestId === this.historyRequest) {

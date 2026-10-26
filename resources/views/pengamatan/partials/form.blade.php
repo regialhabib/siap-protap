@@ -157,7 +157,10 @@
                     <p class="text-sm text-emerald-900" x-show="historyReady && !terakhir">Belum ada data pada periode ini.</p>
                     <p class="text-sm text-emerald-800" x-show="loadingHistory">Memuat data sebelumnya...</p>
                 </div>
-                <p class="mb-6 text-sm font-medium text-red-700" x-show="historyError" x-text="historyError" x-cloak></p>
+                <div class="mb-6 flex flex-wrap items-center gap-3 text-sm font-medium text-red-700" x-show="historyError" x-cloak>
+                    <p x-text="historyError"></p>
+                    <button type="button" @click="loadHistory()" class="rounded-md border border-red-200 bg-white px-3 py-1.5 font-semibold shadow-sm hover:bg-red-50">Coba lagi</button>
+                </div>
 
                 <div class="mb-6 bg-white p-6 md:p-8 rounded-xl border border-gray-200 shadow-sm">
                     <label for="luas_komoditi_ha" class="block text-sm font-bold text-gray-700 mb-3">Luas Komoditi (Ha) <span class="text-red-500">*</span></label>
