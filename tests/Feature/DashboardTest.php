@@ -50,12 +50,10 @@ class DashboardTest extends TestCase
 
         $response->assertOk();
 
-        // Assert that sum of added serangan is 15 * 4 = 60
-        $response->assertSee('60.00');
-        // Assert that distinct komoditas is 2
-        $response->assertSee('2');
-        // Assert that total pengamatan is 15
-        $response->assertSee('15');
+        $response->assertViewHas('stats', fn (array $stats): bool => (float) $stats['total_luas_serangan'] === 60.0
+            && (int) $stats['komoditas_terdampak'] === 2
+            && (int) $stats['total_pengamatan'] === 15);
+        $response->assertSee('>60</div>', false);
     }
 
     public function test_calculates_dashboard_uppt_chart_data()
@@ -283,8 +281,8 @@ class DashboardTest extends TestCase
 
         $response->assertOk()
             ->assertSee('"tanggal":"10 Februari 2026"')
-            ->assertSee('"tambah_jumlah":"3.00"')
-            ->assertSee('"kendali_jumlah":"1.00"');
+            ->assertSee('"tambah_jumlah":"3"')
+            ->assertSee('"kendali_jumlah":"1"');
         $this->assertSame(1, substr_count($response->getContent(), 'action="'.route('pengamatan.destroy', $pengamatan).'"'));
     }
 }
