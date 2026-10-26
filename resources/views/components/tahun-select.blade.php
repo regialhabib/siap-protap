@@ -1,10 +1,11 @@
 @props([
     'selected',
     'label' => 'Tahun (Periode Feb–Jan)',
+    'maxYear' => now()->year + 1,
 ])
 
 @php
-    $years = collect(range(now()->year + 1, now()->year - 5))->push((int) $selected)->unique()->sortDesc();
+    $years = collect(range($maxYear, now()->year - 5))->push((int) $selected)->unique()->sortDesc();
 @endphp
 
 <label for="tahun" class="mb-2 block text-sm font-semibold text-gray-700">{{ $label }}</label>

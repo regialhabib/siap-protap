@@ -459,6 +459,18 @@ class LaporanTest extends TestCase
         $pdf->assertOk()->assertHeader('content-type', 'application/pdf');
     }
 
+    public function test_monthly_report_is_available_only_up_to_the_current_month(): void
+    {
+        $this->travelTo('2026-10-26');
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        $this->actingAs($admin)->get(route('laporan.index', ['tahun' => 2026, 'bulan' => 11]))
+            ->assertRedirect()
+            ->assertSessionHasErrors(['bulan' => 'Laporan bulanan hanya tersedia sampai bulan berjalan.']);
+
+        $this->get(route('laporan.index', ['tahun' => 2026, 'bulan' => 10]))->assertOk();
+    }
+
     public function test_quarterly_report_rejects_an_unknown_quarter(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);

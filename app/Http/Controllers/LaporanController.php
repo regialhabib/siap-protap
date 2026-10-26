@@ -17,6 +17,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use Maatwebsite\Excel\Facades\Excel;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -144,9 +145,16 @@ class LaporanController extends Controller
             'search' => ['nullable', 'string', 'max:100'],
         ]);
 
+        $tahun = (int) ($validated['tahun'] ?? now()->year);
+        $bulan = (int) ($validated['bulan'] ?? now()->month);
+
+        if (CarbonImmutable::create($tahun, $bulan, 1)->greaterThan(now()->startOfMonth())) {
+            throw ValidationException::withMessages(['bulan' => 'Laporan bulanan hanya tersedia sampai bulan berjalan.']);
+        }
+
         return [
-            'tahun' => (int) ($validated['tahun'] ?? now()->year),
-            'bulan' => (int) ($validated['bulan'] ?? now()->month),
+            'tahun' => $tahun,
+            'bulan' => $bulan,
             'uppt_id' => (string) ($validated['uppt_id'] ?? ''),
             'kecamatan_id' => (string) ($validated['kecamatan_id'] ?? ''),
             'search' => trim((string) ($validated['search'] ?? '')),

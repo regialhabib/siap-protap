@@ -15,6 +15,18 @@
         <div class="p-6">
             <form id="filterForm" method="GET" action="{{ route('laporan.index') }}" class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5" autocomplete="off"
                   x-data="{
+                      tahun: @js((int) $tahun),
+                      bulan: @js((int) $bulan),
+                      bulanBerjalan: @js(['tahun' => now()->year, 'bulan' => now()->month]),
+                      isFutureMonth(month) {
+                          return Number(this.tahun) > this.bulanBerjalan.tahun
+                              || (Number(this.tahun) === this.bulanBerjalan.tahun && month > this.bulanBerjalan.bulan);
+                      },
+                      onTahunChanged() {
+                          if (this.isFutureMonth(Number(this.bulan))) {
+                              this.bulan = this.bulanBerjalan.bulan;
+                          }
+                      },
                       uppt_id: @js((string) $uppt_id),
                       openUpptOptions: false,
                       upptSearch: '',
@@ -51,9 +63,9 @@
                   @submit="if (!uppt_id) { $event.preventDefault(); $refs.upptSearch.setCustomValidity('Pilih wilayah UPPT dari daftar.'); $refs.upptSearch.reportValidity(); }">
             <div>
                 <label for="bulan" class="mb-2 block text-sm font-semibold text-gray-700">Bulan</label>
-                <select id="bulan" name="bulan" class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 text-sm">
+                <select id="bulan" name="bulan" x-model.number="bulan" class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 text-sm">
                     @foreach(range(1, 12) as $m)
-                        <option value="{{ $m }}" {{ $bulan == $m ? 'selected' : '' }}>
+                        <option value="{{ $m }}" {{ $bulan == $m ? 'selected' : '' }} :disabled="isFutureMonth({{ $m }})">
                             {{ \Carbon\Carbon::create()->month($m)->translatedFormat('F') }}
                         </option>
                     @endforeach
@@ -61,7 +73,7 @@
             </div>
 
             <div>
-                <x-tahun-select :selected="$tahun" label="Tahun" />
+                <x-tahun-select :selected="$tahun" :max-year="now()->year" label="Tahun" x-model.number="tahun" @change="onTahunChanged()" />
             </div>
 
             <!-- Filter UPPT -->
