@@ -249,7 +249,6 @@
 
             <!-- Footer Action Buttons -->
             <div class="pt-6 border-t border-gray-100 flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-4 mt-10">
-                <p class="text-sm font-medium text-amber-700 sm:mr-auto" x-show="submitBlocker" x-text="submitBlocker" x-cloak></p>
                 <a href="{{ route('dashboard') }}" class="inline-flex items-center justify-center px-6 py-3.5 bg-white border border-gray-300 rounded-xl font-bold text-sm text-gray-700 shadow-sm hover:bg-gray-50 transition-colors">
                     Batal & Kembali
                 </a>
@@ -258,6 +257,7 @@
                     <span x-show="!submitting">{{ $pengamatan ? 'Perbarui Data Pengamatan' : 'Simpan Data Pengamatan' }}</span>
                     <span x-show="submitting" x-cloak>Menyimpan...</span>
                 </button>
+                <p class="text-sm font-medium text-amber-700 sm:order-first sm:mr-auto" x-show="submitBlocker" x-text="submitBlocker" x-cloak></p>
             </div>
         </form>
     </div>
