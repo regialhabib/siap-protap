@@ -45,6 +45,8 @@
 @endif
 
 <div class="max-w-4xl mx-auto">
+    <x-filter-errors title="Data belum tersimpan. Periksa isian berikut:" />
+
     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-12">
 
         <!-- Header Banner -->

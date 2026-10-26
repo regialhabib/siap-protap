@@ -53,6 +53,15 @@ class PengamatanTest extends TestCase
         $response->assertSee('Serangan Tambahan')->assertDontSee('Sedang');
     }
 
+    public function test_lists_rejected_fields_above_the_form(): void
+    {
+        $this->actingAs($this->createPopt($this->createUppt()))
+            ->from('/pengamatan/create')
+            ->followingRedirects()
+            ->post('/pengamatan', [])
+            ->assertSee('Data belum tersimpan. Periksa isian berikut:');
+    }
+
     public function test_rejects_creation_when_required_fields_are_missing(): void
     {
         $response = $this->actingAs($this->createPopt($this->createUppt()))->post('/pengamatan', []);
