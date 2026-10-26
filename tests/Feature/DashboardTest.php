@@ -286,4 +286,25 @@ class DashboardTest extends TestCase
             ->assertSee('"kendali_jumlah":"1"');
         $this->assertSame(1, substr_count($response->getContent(), 'action="'.route('pengamatan.destroy', $pengamatan).'"'));
     }
+
+    public function test_popt_history_shows_entry_values_with_the_chain_condition_of_each_period(): void
+    {
+        DB::table('kabupatens')->insert(['id' => 1, 'nama_kabupaten' => 'Test Kab']);
+        $uppt = Uppt::create(['nama_uppt' => 'Test UPPT', 'kabupaten_id' => 1]);
+        $popt = User::factory()->create(['role' => 'popt', 'uppt_id' => $uppt->id]);
+        $common = [
+            'user_id' => $popt->id, 'uppt_id' => $uppt->id, 'luas_komoditi_ha' => 10,
+            'komoditas_id' => Komoditas::create(['nama_komoditas' => 'Karet'])->id,
+            'opt_id' => Opt::create(['nama_opt' => 'Gugur Daun'])->id,
+        ];
+        $lastPeriod = Pengamatan::create($common + ['tanggal_pengamatan' => '2025-06-10', 'serangan_ringan' => 5, 'serangan_jumlah' => 5]);
+        $february = Pengamatan::create($common + ['tanggal_pengamatan' => '2026-02-10', 'serangan_ringan' => 3, 'serangan_jumlah' => 3]);
+        $march = Pengamatan::create($common + ['tanggal_pengamatan' => '2026-03-10', 'kendali_apbd_kab' => 2]);
+
+        $response = $this->actingAs($popt)->get('/dashboard');
+
+        $response->assertSeeText('+ Serangan Baru')->assertSeeText('− Pengendalian')->assertDontSee('Luas Serangan</th>', false);
+        $kondisi = $response->viewData('pengamatans')->getCollection()->mapWithKeys(fn (Pengamatan $p): array => [$p->id => (float) $p->kondisi_serangan_ha]);
+        $this->assertSame([$march->id => 1.0, $february->id => 3.0, $lastPeriod->id => 5.0], $kondisi->all());
+    }
 }

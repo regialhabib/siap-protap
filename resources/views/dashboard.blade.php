@@ -265,6 +265,7 @@
             <div x-show="isLoading" class="absolute inset-0 bg-white/50 z-20 flex items-center justify-center backdrop-blur-[1px]" x-cloak></div>
             <div class="p-6 border-b border-gray-100 bg-white">
                 <h3 class="text-lg font-bold text-gray-900">Riwayat Pengamatan Terbaru</h3>
+                <p class="mt-1 text-sm text-gray-600">Data dapat diubah atau dihapus selama {{ \App\Models\Pengamatan::EDIT_WINDOW_DAYS }} hari sejak diinput.</p>
             </div>
             
             <div id="table-container">
@@ -393,8 +394,8 @@
                 stats: {
                     total_pengamatan: {{ $stats['total_pengamatan'] }},
                     total_luas_serangan: {{ $stats['total_luas_serangan'] }},
-                    komoditas_terdampak: {{ $stats['komoditas_terdampak'] }}
                     kondisi_serangan: {{ $stats['kondisi_serangan'] }},
+                    komoditas_terdampak: {{ $stats['komoditas_terdampak'] }}
                 },
                 
                 chartData: @json($chartData),

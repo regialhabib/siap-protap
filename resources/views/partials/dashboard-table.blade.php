@@ -39,7 +39,8 @@
             <dl class="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
                 <dt class="text-gray-600">Kecamatan</dt><dd class="text-right font-medium text-gray-900">{{ $item->kecamatan->nama_kecamatan ?? '-' }}</dd>
                 <dt class="text-gray-600">Luas komoditi</dt><dd class="text-right text-gray-900">{{ $hektare($item->luas_komoditi_ha) }} Ha</dd>
-                <dt class="text-gray-600">Luas serangan</dt><dd class="text-right text-gray-900">{{ $hektare($item->serangan_jumlah_berjalan) }} Ha</dd>
+                <dt class="text-gray-600">+ Serangan baru</dt><dd class="text-right text-red-700">{{ $hektare($item->serangan_ringan + $item->serangan_berat) }} Ha</dd>
+                <dt class="text-gray-600">− Pengendalian</dt><dd class="text-right text-blue-700">{{ $hektare($item->kendali_jumlah) }} Ha</dd>
                 <dt class="text-gray-600">Kondisi</dt><dd class="text-right font-semibold text-gray-900">{{ $hektare($item->kondisi_serangan_ha) }} Ha</dd>
             </dl>
             <div class="grid grid-cols-3 gap-2">
@@ -65,8 +66,9 @@
                 <th scope="col" class="whitespace-nowrap px-4 py-3 lg:px-6">Tanggal</th>
                 <th scope="col" class="whitespace-nowrap px-4 py-3">Kecamatan</th>
                 <th scope="col" class="whitespace-nowrap px-4 py-3">Komoditas / OPT</th>
-                <th scope="col" class="whitespace-nowrap px-4 py-3 text-right">Luas Komoditi</th>
-                <th scope="col" class="whitespace-nowrap px-4 py-3 text-right">Luas Serangan</th>
+                <th scope="col" class="px-4 py-3 text-right">Luas Komoditi</th>
+                <th scope="col" class="px-4 py-3 text-right"><span class="whitespace-nowrap">+ Serangan</span> Baru</th>
+                <th scope="col" class="whitespace-nowrap px-4 py-3 text-right">− Pengendalian</th>
                 <th scope="col" class="whitespace-nowrap px-4 py-3 text-right">Kondisi</th>
                 <th scope="col" class="whitespace-nowrap px-4 py-3 text-center lg:px-6">Aksi</th>
             </tr>
@@ -81,7 +83,8 @@
                         <span class="block text-sm text-gray-600">{{ $item->opt->nama_opt ?? '-' }}{{ $item->jenisOpt ? ' — '.$item->jenisOpt->nama_jenis_opt : '' }}</span>
                     </td>
                     <td class="whitespace-nowrap px-4 py-4 text-right">{{ $hektare($item->luas_komoditi_ha) }} Ha</td>
-                    <td class="whitespace-nowrap px-4 py-4 text-right">{{ $hektare($item->serangan_jumlah_berjalan) }} Ha</td>
+                    <td class="whitespace-nowrap px-4 py-4 text-right text-red-700">{{ $hektare($item->serangan_ringan + $item->serangan_berat) }} Ha</td>
+                    <td class="whitespace-nowrap px-4 py-4 text-right text-blue-700">{{ $hektare($item->kendali_jumlah) }} Ha</td>
                     <td class="whitespace-nowrap px-4 py-4 text-right font-semibold text-gray-900">{{ $hektare($item->kondisi_serangan_ha) }} Ha</td>
                     <td class="whitespace-nowrap px-4 py-4 lg:px-6">
                         <div class="flex items-center justify-center gap-2">
@@ -97,7 +100,7 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="7" class="px-6 py-8 text-center text-gray-500 bg-gray-50/50">
+                    <td colspan="8" class="px-6 py-8 text-center text-gray-500 bg-gray-50/50">
                         <svg class="w-10 h-10 mx-auto text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                         <p class="text-base font-medium text-gray-600 mb-1">Belum ada data pengamatan</p>
                     </td>
