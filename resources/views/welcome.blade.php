@@ -21,10 +21,29 @@
                 <span class="ml-3 text-lg font-extrabold tracking-wide text-emerald-700">SIAP-PROTAP</span>
             </a>
 
-            <nav class="hidden md:flex items-center space-x-8 text-sm font-medium text-gray-600">
-                <a href="#fitur" class="hover:text-emerald-600 transition">Fitur</a>
-                <a href="#alur" class="hover:text-emerald-600 transition">Alur Pelaporan</a>
-                <a href="#peran" class="hover:text-emerald-600 transition">Hak Akses</a>
+            {{-- Menu aktif mengikuti bagian yang sedang terlihat saat halaman di-scroll --}}
+            <nav class="hidden md:flex self-stretch gap-8 text-sm font-semibold text-gray-600"
+                x-data="{
+                    sections: ['fitur', 'alur', 'peran'],
+                    active: '',
+                    updateActive() {
+                        const atBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2;
+                        this.active = atBottom
+                            ? this.sections.at(-1)
+                            : this.sections.findLast((id) => document.getElementById(id).getBoundingClientRect().top <= 120) ?? '';
+                    },
+                }"
+                x-init="updateActive()"
+                @scroll.window.throttle.100ms="updateActive()">
+                @foreach (['fitur' => 'Fitur', 'alur' => 'Alur Pelaporan', 'peran' => 'Hak Akses'] as $sectionId => $menuLabel)
+                    <a href="#{{ $sectionId }}" @click="active = @js($sectionId)"
+                        class="relative flex items-center transition hover:text-emerald-600"
+                        :class="active === @js($sectionId) && 'text-emerald-700'"
+                        :aria-current="active === @js($sectionId) ? 'location' : null">
+                        {{ $menuLabel }}
+                        <span class="absolute inset-x-0 bottom-0 h-0.5 rounded-full bg-emerald-600 transition-opacity" :class="active === @js($sectionId) ? 'opacity-100' : 'opacity-0'"></span>
+                    </a>
+                @endforeach
             </nav>
 
             @auth
