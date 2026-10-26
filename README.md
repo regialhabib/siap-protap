@@ -92,6 +92,13 @@ php artisan migrate --seed
 
 > Ganti password akun contoh, atau jangan jalankan seeder akun ini, di server production.
 
+Data contoh pengamatan untuk development (4 UPPT, 12 bulan Periode 2026). **Seeder ini menghapus semua pengamatan yang ada** dan menolak berjalan di production:
+
+```bash
+php artisan db:seed --class=KecamatanSeeder
+php artisan db:seed --class=PengamatanDemoSeeder
+```
+
 Jalankan aplikasi:
 
 ```bash
