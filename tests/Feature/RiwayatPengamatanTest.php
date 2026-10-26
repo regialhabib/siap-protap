@@ -117,7 +117,9 @@ class RiwayatPengamatanTest extends TestCase
             'opt_id' => $opt->id,
             'jenis_opt_id' => $jenisOpt->id,
         ];
-        $karet = $this->actingAs($admin)->get(route('pengamatan.riwayat.index', [...$filters, 'komoditas_id' => $karet->id]))->viewData('chain');
+        $response = $this->actingAs($admin)->get(route('pengamatan.riwayat.index', [...$filters, 'komoditas_id' => $karet->id]));
+        $response->assertSee('Februari 2026')->assertDontSee('Maret 2026')->assertDontSee('belum ada data');
+        $karet = $response->viewData('chain');
         $this->assertSame('Karet', $karet->komoditas);
 
         $karetMonths = collect($karet->months)->keyBy('bulan_label');
