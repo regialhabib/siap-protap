@@ -23,7 +23,7 @@
         @can('popt')
             <!-- Menu Khusus POPT -->
             <div class="pt-4 pb-1">
-                <p class="px-3 text-[11px] font-bold text-gray-500 uppercase tracking-widest">Operasional</p>
+                <p class="px-3 text-xs font-bold text-gray-400 uppercase tracking-widest">Operasional</p>
             </div>
             <a href="{{ route('pengamatan.create') }}" class="flex items-center px-3 py-2 rounded-lg text-sm transition-all duration-200 {{ request()->routeIs('pengamatan.create') ? 'bg-emerald-600 text-white font-medium shadow-md shadow-emerald-900/20' : 'text-gray-400 hover:bg-gray-800 hover:text-gray-100 font-medium' }}">
                 <svg class="w-5 h-5 mr-3 {{ request()->routeIs('pengamatan.create') ? 'text-white' : 'text-gray-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
@@ -38,7 +38,7 @@
         @can('admin')
             <!-- Menu Khusus Admin -->
             <div class="pt-4 pb-1">
-                <p class="px-3 text-[11px] font-bold text-gray-500 uppercase tracking-widest">Pelaporan</p>
+                <p class="px-3 text-xs font-bold text-gray-400 uppercase tracking-widest">Pelaporan</p>
             </div>
             @php
                 $reportsActive = request()->routeIs('laporan.index', 'laporan.triwulan', 'laporan.tahunan', 'laporan.export.excel', 'laporan.export.pdf', 'laporan.export.triwulan.*', 'laporan.export.tahunan.*');
@@ -66,7 +66,7 @@
             </a>
 
             <div class="pt-4 pb-1">
-                <p class="px-3 text-[11px] font-bold text-gray-500 uppercase tracking-widest">Master Data</p>
+                <p class="px-3 text-xs font-bold text-gray-400 uppercase tracking-widest">Master Data</p>
             </div>
             <a href="{{ route('komoditas.index') }}" class="flex items-center px-3 py-2 rounded-lg text-sm transition-all duration-200 {{ request()->routeIs('komoditas.*') ? 'bg-emerald-600 text-white font-medium shadow-md shadow-emerald-900/20' : 'text-gray-400 hover:bg-gray-800 hover:text-gray-100 font-medium' }}">
                 <svg class="w-5 h-5 mr-3 {{ request()->routeIs('komoditas.*') ? 'text-white' : 'text-gray-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
@@ -88,7 +88,7 @@
 
         <!-- Menu Pengaturan / Akun -->
         <div class="pt-4 pb-1">
-            <p class="px-3 text-[11px] font-bold text-gray-500 uppercase tracking-widest">Pengaturan</p>
+            <p class="px-3 text-xs font-bold text-gray-400 uppercase tracking-widest">Pengaturan</p>
         </div>
         <a href="{{ route('profile.edit') }}" class="flex items-center px-3 py-2 rounded-lg text-sm transition-all duration-200 {{ request()->routeIs('profile.*') ? 'bg-emerald-600 text-white font-medium shadow-md shadow-emerald-900/20' : 'text-gray-400 hover:bg-gray-800 hover:text-gray-100 font-medium' }}">
             <svg class="w-5 h-5 mr-3 {{ request()->routeIs('profile.*') ? 'text-white' : 'text-gray-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>

@@ -59,53 +59,44 @@
     </div>
 
     <!-- Stats Cards (Solid Background Accents) -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 lg:gap-6 mb-8">
         <!-- Card 1 (Emerald) -->
-        <div class="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl shadow-md p-6 relative overflow-hidden text-white border border-emerald-700/20">
-            <div class="flex items-center justify-between mb-4 relative z-10">
+        <div class="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl shadow-md p-5 lg:p-6 text-white border border-emerald-700/20">
+            <div class="flex items-center justify-between mb-3">
                 <h3 class="text-sm font-semibold text-emerald-100">Total Pengamatan</h3>
                 <div class="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                 </div>
             </div>
-            <div class="text-3xl font-bold relative z-10" x-text="stats.total_pengamatan">{{ $stats['total_pengamatan'] }}</div>
-            <p class="text-xs text-emerald-100 mt-1 relative z-10">Data terkumpul bulan ini</p>
-            
-            <!-- Decorative circle -->
-            <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-white/10 rounded-full blur-xl"></div>
+            <div class="text-3xl font-bold" x-text="stats.total_pengamatan">{{ $stats['total_pengamatan'] }}</div>
+            <p class="text-xs text-emerald-100 mt-1">Data terkumpul bulan ini</p>
         </div>
 
         <!-- Card 2 (Red) -->
-        <div class="bg-gradient-to-br from-red-500 to-red-600 rounded-xl shadow-md p-6 relative overflow-hidden text-white border border-red-700/20">
-            <div class="flex items-center justify-between mb-4 relative z-10">
+        <div class="bg-gradient-to-br from-red-500 to-red-600 rounded-xl shadow-md p-5 lg:p-6 text-white border border-red-700/20">
+            <div class="flex items-center justify-between mb-3">
                 <h3 class="text-sm font-semibold text-red-100">Luas Serangan (Ha)</h3>
                 <div class="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
                 </div>
             </div>
-            <div class="text-3xl font-bold relative z-10" x-text="formatNumber(stats.total_luas_serangan)">{{ number_format($stats['total_luas_serangan'], 2) }}</div>
-            <p class="text-xs text-red-100 mt-1 font-medium flex items-center relative z-10">
+            <div class="text-3xl font-bold" x-text="formatNumber(stats.total_luas_serangan)">{{ \App\Services\PengamatanHistoryService::hektare((float) $stats['total_luas_serangan']) }}</div>
+            <p class="text-xs text-red-100 mt-1 font-medium flex items-center">
                 <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
                 Total luasan terdampak
             </p>
-            
-            <!-- Decorative circle -->
-            <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-white/10 rounded-full blur-xl"></div>
         </div>
 
         <!-- Card 3 (Amber) -->
-        <div class="bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl shadow-md p-6 relative overflow-hidden text-white border border-amber-700/20">
-            <div class="flex items-center justify-between mb-4 relative z-10">
+        <div class="bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl shadow-md p-5 lg:p-6 text-white border border-amber-700/20">
+            <div class="flex items-center justify-between mb-3">
                 <h3 class="text-sm font-semibold text-amber-100">Komoditas Terdampak</h3>
                 <div class="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
                 </div>
             </div>
-            <div class="text-3xl font-bold relative z-10" x-text="stats.komoditas_terdampak">{{ $stats['komoditas_terdampak'] }}</div>
-            <p class="text-xs text-amber-100 mt-1 relative z-10">Jenis tanaman terserang</p>
-            
-            <!-- Decorative circle -->
-            <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-white/10 rounded-full blur-xl"></div>
+            <div class="text-3xl font-bold" x-text="stats.komoditas_terdampak">{{ $stats['komoditas_terdampak'] }}</div>
+            <p class="text-xs text-amber-100 mt-1">Jenis tanaman terserang</p>
         </div>
     </div>
 
@@ -150,7 +141,7 @@
                         <template x-for="(uppt, index) in pagedSudah" :key="uppt.id">
                             <li class="bg-white rounded-lg px-3 py-2 text-sm font-medium text-gray-700 shadow-sm border border-gray-100 flex items-center justify-between">
                                 <div class="flex items-center">
-                                    <span class="w-5 h-5 rounded bg-emerald-100 text-emerald-700 text-[10px] flex items-center justify-center font-bold mr-2" x-text="(sudahPage - 1) * perPage + index + 1"></span>
+                                    <span class="w-6 h-6 shrink-0 rounded bg-emerald-100 text-emerald-700 text-xs flex items-center justify-center font-bold mr-2" x-text="(sudahPage - 1) * perPage + index + 1"></span>
                                     <span x-text="uppt.nama_uppt"></span>
                                 </div>
                                 <span class="flex w-2 h-2 rounded-full bg-emerald-500"></span>
@@ -162,11 +153,7 @@
                     </ul>
                     
                     <!-- Alpine Pagination Sudah -->
-                    <div class="mt-4 flex items-center justify-between border-t border-emerald-200/50 pt-4" x-show="totalSudahPages > 1" x-cloak>
-                        <button @click="if(sudahPage > 1) sudahPage--" :disabled="sudahPage === 1" class="px-3 py-1.5 text-xs font-semibold rounded-md border border-emerald-200 text-emerald-700 disabled:opacity-50 hover:bg-emerald-100 transition-colors">Sebelumnya</button>
-                        <span class="text-xs text-gray-600 font-medium"><span x-text="sudahPage"></span> / <span x-text="totalSudahPages"></span></span>
-                        <button @click="if(sudahPage < totalSudahPages) sudahPage++" :disabled="sudahPage === totalSudahPages" class="px-3 py-1.5 text-xs font-semibold rounded-md border border-emerald-200 text-emerald-700 disabled:opacity-50 hover:bg-emerald-100 transition-colors">Selanjutnya</button>
-                    </div>
+                    <x-client-pager class="mt-4 border-t border-emerald-200/50 pt-4" x-show="totalSudahPages > 1" x-cloak page="sudahPage" pages="totalSudahPages" prev="sudahPage--" next="sudahPage++" :summary="false" />
                 </div>
 
                 <!-- Belum Pengamatan -->
@@ -180,7 +167,7 @@
                         <template x-for="(uppt, index) in pagedBelum" :key="uppt.id">
                             <li class="bg-white rounded-lg px-3 py-2 text-sm font-medium text-gray-600 shadow-sm border border-gray-100 flex items-center justify-between">
                                 <div class="flex items-center">
-                                    <span class="w-5 h-5 rounded bg-gray-200 text-gray-600 text-[10px] flex items-center justify-center font-bold mr-2" x-text="(belumPage - 1) * perPage + index + 1"></span>
+                                    <span class="w-6 h-6 shrink-0 rounded bg-gray-200 text-gray-600 text-xs flex items-center justify-center font-bold mr-2" x-text="(belumPage - 1) * perPage + index + 1"></span>
                                     <span x-text="uppt.nama_uppt"></span>
                                 </div>
                                 <span class="flex w-2 h-2 rounded-full bg-gray-300"></span>
@@ -192,11 +179,7 @@
                     </ul>
                     
                     <!-- Alpine Pagination Belum -->
-                    <div class="mt-4 flex items-center justify-between border-t border-gray-200 pt-4" x-show="totalBelumPages > 1" x-cloak>
-                        <button @click="if(belumPage > 1) belumPage--" :disabled="belumPage === 1" class="px-3 py-1.5 text-xs font-semibold rounded-md border border-gray-300 text-gray-700 disabled:opacity-50 hover:bg-gray-100 transition-colors">Sebelumnya</button>
-                        <span class="text-xs text-gray-600 font-medium"><span x-text="belumPage"></span> / <span x-text="totalBelumPages"></span></span>
-                        <button @click="if(belumPage < totalBelumPages) belumPage++" :disabled="belumPage === totalBelumPages" class="px-3 py-1.5 text-xs font-semibold rounded-md border border-gray-300 text-gray-700 disabled:opacity-50 hover:bg-gray-100 transition-colors">Selanjutnya</button>
-                    </div>
+                    <x-client-pager class="mt-4 border-t border-gray-200 pt-4" x-show="totalBelumPages > 1" x-cloak page="belumPage" pages="totalBelumPages" prev="belumPage--" next="belumPage++" :summary="false" />
                 </div>
             </div>
         </div>
@@ -208,32 +191,56 @@
         <div class="p-6 border-b border-gray-100">
             <h3 class="text-lg font-bold text-gray-900">Laporan Bulan Ini ({{ now()->isoFormat('MMMM Y') }})</h3>
         </div>
-        <div class="overflow-x-auto">
+        <ul class="divide-y divide-gray-100 md:hidden">
+            @forelse($activeChains as $chain)
+                <li class="space-y-3 px-4 py-4">
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="min-w-0">
+                            <p class="font-semibold text-gray-900">{{ $chain->komoditas }}</p>
+                            <p class="text-sm text-gray-600">{{ $chain->opt }}</p>
+                            <p class="text-sm text-gray-600">Kec. {{ $chain->kecamatan }}</p>
+                        </div>
+                        @if($chain->sudah_lapor)
+                            <span class="shrink-0 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">Sudah dilaporkan</span>
+                        @else
+                            <span class="shrink-0 rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-800">Belum dilaporkan</span>
+                        @endif
+                    </div>
+                    <div class="flex items-center justify-between gap-3">
+                        <p class="text-sm text-gray-600">Kondisi serangan <span class="font-semibold text-gray-900">{{ \App\Services\PengamatanHistoryService::hektare((float) $chain->kondisi_serangan_ha) }} Ha</span></p>
+                        <a href="{{ $chain->input_url }}" class="inline-flex shrink-0 items-center rounded-md border border-emerald-200 bg-white px-3 py-1.5 text-sm font-semibold text-emerald-700 shadow-sm transition-colors hover:bg-emerald-50">Input Data</a>
+                    </div>
+                </li>
+            @empty
+                <li class="px-4 py-6 text-center text-gray-500">Belum ada data pengamatan pada periode ini.</li>
+            @endforelse
+        </ul>
+        <div class="hidden overflow-x-auto md:block">
             <table class="w-full text-sm text-left">
-                <thead class="text-[11px] font-bold text-gray-400 uppercase bg-gray-50/50 border-b border-gray-100 tracking-wider">
+                <thead class="text-xs font-bold text-gray-600 uppercase bg-gray-50 border-b border-gray-100 tracking-wider">
                     <tr>
-                        <th class="px-6 py-3">Kecamatan</th>
-                        <th class="px-6 py-3">Komoditas / OPT</th>
-                        <th class="px-6 py-3 text-center">Kondisi Serangan</th>
-                        <th class="px-6 py-3 text-center">Status Bulan Ini</th>
-                        <th class="px-6 py-3 text-center">Aksi</th>
+                        <th class="whitespace-nowrap px-6 py-3">Kecamatan</th>
+                        <th class="whitespace-nowrap px-6 py-3">Komoditas / OPT</th>
+                        <th class="whitespace-nowrap px-6 py-3 text-right">Kondisi Serangan</th>
+                        <th class="whitespace-nowrap px-6 py-3 text-center">Status Bulan Ini</th>
+                        <th class="whitespace-nowrap px-6 py-3 text-center">Aksi</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-100 text-gray-600">
+                <tbody class="divide-y divide-gray-100 text-gray-700">
                     @forelse($activeChains as $chain)
                         <tr>
-                            <td class="px-6 py-3 font-medium text-gray-900">{{ $chain->kecamatan }}</td>
-                            <td class="px-6 py-3">{{ $chain->komoditas }} · {{ $chain->opt }}</td>
-                            <td class="px-6 py-3 text-center">{{ number_format($chain->kondisi_serangan_ha, 2) }} Ha</td>
-                            <td class="px-6 py-3 text-center">
+                            <td class="whitespace-nowrap px-6 py-3 font-medium text-gray-900">{{ $chain->kecamatan }}</td>
+                            <td class="min-w-[14rem] px-6 py-3"><span class="font-medium text-gray-900">{{ $chain->komoditas }}</span><span class="block text-sm text-gray-600">{{ $chain->opt }}</span></td>
+                            <td class="whitespace-nowrap px-6 py-3 text-right">{{ \App\Services\PengamatanHistoryService::hektare((float) $chain->kondisi_serangan_ha) }} Ha</td>
+                            <td class="whitespace-nowrap px-6 py-3 text-center">
                                 @if($chain->sudah_lapor)
                                     <span class="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">Sudah dilaporkan</span>
                                 @else
-                                    <span class="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">Belum dilaporkan</span>
+                                    <span class="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-800">Belum dilaporkan</span>
                                 @endif
                             </td>
-                            <td class="px-6 py-3 text-center">
-                                <a href="{{ $chain->input_url }}" class="text-sm font-semibold text-emerald-700 hover:text-emerald-900">Input</a>
+                            <td class="whitespace-nowrap px-6 py-3 text-center">
+                                <a href="{{ $chain->input_url }}" class="inline-flex items-center rounded-md border border-emerald-200 bg-white px-3 py-1.5 text-sm font-semibold text-emerald-700 shadow-sm transition-colors hover:bg-emerald-50">Input Data</a>
                             </td>
                         </tr>
                     @empty
@@ -285,27 +292,27 @@
                     <!-- General Info Box -->
                     <div class="bg-gray-50 rounded-xl p-5 mb-6 grid grid-cols-2 sm:grid-cols-3 gap-4">
                         <div>
-                            <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Wilayah UPPT</p>
+                            <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Wilayah UPPT</p>
                             <p class="text-sm font-semibold text-gray-900" x-text="modalData.uppt"></p>
                         </div>
                         <div>
-                            <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Kecamatan</p>
+                            <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Kecamatan</p>
                             <p class="text-sm font-semibold text-gray-900" x-text="modalData.kecamatan"></p>
                         </div>
                         <div>
-                            <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Tanggal</p>
+                            <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Tanggal</p>
                             <p class="text-sm font-semibold text-gray-900" x-text="modalData.tanggal"></p>
                         </div>
                         <div>
-                            <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Komoditas</p>
+                            <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Komoditas</p>
                             <p class="text-sm font-semibold text-emerald-600" x-text="modalData.komoditas"></p>
                         </div>
                         <div>
-                            <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">OPT</p>
+                            <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">OPT</p>
                             <p class="text-sm font-semibold text-red-600" x-text="modalData.opt"></p>
                         </div>
                         <div>
-                            <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Luas Komoditi</p>
+                            <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Luas Komoditi</p>
                             <p class="text-sm font-semibold text-gray-900" x-text="modalData.luas_komoditi"></p>
                         </div>
                     </div>
@@ -314,7 +321,7 @@
                     <div class="mb-6">
                         <h4 class="text-sm font-bold text-gray-900 mb-3">Serangan (Ha)</h4>
                         <table class="w-full text-sm">
-                            <thead class="text-[11px] font-bold uppercase tracking-wider text-gray-400">
+                            <thead class="text-xs font-bold uppercase tracking-wider text-gray-500">
                                 <tr><th class="py-2 text-left"></th><th class="py-2 text-right">Ringan</th><th class="py-2 text-right">Berat</th><th class="py-2 text-right">Jumlah</th></tr>
                             </thead>
                             <tbody class="divide-y divide-gray-100 text-gray-700">
@@ -329,23 +336,23 @@
                         <h4 class="text-sm font-bold text-gray-900 mb-3">Pengendalian per Sumber Dana (Ha)</h4>
                         <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 border-b border-gray-100 pb-5">
                             <div>
-                                <p class="text-[11px] font-bold text-gray-400 mb-1">APBD I (Prov)</p>
+                                <p class="text-xs font-bold text-gray-500 mb-1">APBD I (Prov)</p>
                                 <p class="text-sm font-bold text-gray-900" x-text="modalData.kendali_apbd_prov"></p>
                             </div>
                             <div>
-                                <p class="text-[11px] font-bold text-gray-400 mb-1">APBD II (Kab)</p>
+                                <p class="text-xs font-bold text-gray-500 mb-1">APBD II (Kab)</p>
                                 <p class="text-sm font-bold text-gray-900" x-text="modalData.kendali_apbd_kab"></p>
                             </div>
                             <div>
-                                <p class="text-[11px] font-bold text-gray-400 mb-1">Masyarakat</p>
+                                <p class="text-xs font-bold text-gray-500 mb-1">Masyarakat</p>
                                 <p class="text-sm font-bold text-gray-900" x-text="modalData.kendali_masyarakat"></p>
                             </div>
                             <div>
-                                <p class="text-[11px] font-bold text-gray-400 mb-1">APBN</p>
+                                <p class="text-xs font-bold text-gray-500 mb-1">APBN</p>
                                 <p class="text-sm font-bold text-gray-900" x-text="modalData.kendali_apbn"></p>
                             </div>
                             <div>
-                                <p class="text-[11px] font-bold text-blue-500 mb-1">Jumlah</p>
+                                <p class="text-xs font-bold text-blue-600 mb-1">Jumlah</p>
                                 <p class="text-sm font-bold text-blue-700" x-text="modalData.kendali_jumlah"></p>
                             </div>
                         </div>
@@ -353,7 +360,7 @@
 
                     <!-- Kondisi Serangan Box -->
                     <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
-                        <p class="text-[11px] font-bold text-amber-800 uppercase tracking-wider mb-1">KONDISI SERANGAN</p>
+                        <p class="text-xs font-bold text-amber-800 uppercase tracking-wider mb-1">Kondisi Serangan</p>
                         <p class="text-sm font-medium text-amber-900" x-text="modalData.kondisi"></p>
                     </div>
 
@@ -453,7 +460,7 @@
                 },
 
                 formatNumber(num) {
-                    return parseFloat(num).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                    return (parseFloat(num) || 0).toLocaleString('id-ID', {maximumFractionDigits: 2});
                 },
 
                 async fetchData(url = null) {
