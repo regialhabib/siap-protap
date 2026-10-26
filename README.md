@@ -27,6 +27,7 @@ SIAP-PROTAP membantu petugas POPT (Pengendali Organisme Pengganggu Tumbuhan) men
 - Input pengamatan: lokasi, komoditas, OPT, luas komoditi, tambahan serangan (ringan/berat), dan pengendalian per sumber dana.
 - Formulir menampilkan kondisi sebelumnya dan batas pengendalian sebelum data dikirim.
 - Dashboard berisi kondisi serangan di wilayah UPPT-nya.
+- Riwayat Pengamatan rantai di UPPT-nya sendiri (Kabupaten/Kota dan UPPT terkunci).
 - Pendaftaran akun mandiri; akun baru berstatus nonaktif sampai disetujui Administrator.
 
 ## Konsep penting
