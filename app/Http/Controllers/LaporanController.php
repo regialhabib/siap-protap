@@ -76,17 +76,19 @@ class LaporanController extends Controller
     public function quarterly(Request $request): View
     {
         $filters = $this->quarterlyFilters($request);
+        $incomplete = $this->incompleteMessage($this->quarterlyTitle($filters), PeriodePengamatan::quarterMonths($filters['tahun'], $filters['triwulan']), $filters['kabupaten_id']);
 
         return view('laporan.triwulan', [
             'filters' => $filters,
-            'data' => $this->paginateData($this->quarterlyRows($filters), $request),
+            'incomplete' => $incomplete,
+            'data' => $this->paginateData($incomplete === null ? $this->quarterlyRows($filters) : collect(), $request),
             'kabupatens' => Kabupaten::orderBy('nama_kabupaten')->get(),
         ]);
     }
 
     public function exportQuarterlyExcel(Request $request): BinaryFileResponse
     {
-        $filters = $this->quarterlyFilters($request);
+        $filters = $this->completeQuarterlyFilters($request);
 
         return Excel::download(
             new LaporanExport($this->quarterlyRows($filters), 'triwulan', ['filters' => $filters]),
@@ -96,7 +98,7 @@ class LaporanController extends Controller
 
     public function exportQuarterlyPdf(Request $request): Response
     {
-        $filters = $this->quarterlyFilters($request);
+        $filters = $this->completeQuarterlyFilters($request);
         $pdf = Pdf::loadView('laporan.pdf-triwulan', ['filters' => $filters, 'data' => $this->quarterlyRows($filters)])
             ->setPaper('a4', 'landscape');
 
@@ -106,9 +108,11 @@ class LaporanController extends Controller
     public function historyTahunan(Request $request): View
     {
         $filters = $this->annualFilters($request);
+        $incomplete = $this->incompleteMessage("Laporan Tahunan {$filters['tahun']}", PeriodePengamatan::months($filters['tahun']), $filters['kabupaten_id']);
 
         return view('laporan.tahunan', [
-            'data' => $this->paginateData($this->annualRows($filters), $request),
+            'incomplete' => $incomplete,
+            'data' => $this->paginateData($incomplete === null ? $this->annualRows($filters) : collect(), $request),
             'tahun' => $filters['tahun'],
             'kabupatens' => Kabupaten::orderBy('nama_kabupaten')->get(),
             'filters' => $filters,
@@ -117,7 +121,7 @@ class LaporanController extends Controller
 
     public function exportAnnualExcel(Request $request): BinaryFileResponse
     {
-        $filters = $this->annualFilters($request);
+        $filters = $this->completeAnnualFilters($request);
 
         return Excel::download(
             new LaporanExport($this->annualRows($filters), 'tahunan', ['tahun' => $filters['tahun']]),
@@ -127,7 +131,7 @@ class LaporanController extends Controller
 
     public function exportAnnualPdf(Request $request): Response
     {
-        $filters = $this->annualFilters($request);
+        $filters = $this->completeAnnualFilters($request);
         $pdf = Pdf::loadView('laporan.pdf-tahunan', ['tahun' => $filters['tahun'], 'data' => $this->annualRows($filters)])
             ->setPaper('a3', 'landscape');
 
@@ -240,6 +244,21 @@ class LaporanController extends Controller
         ];
     }
 
+    /** @return array{tahun: int, triwulan: int, kabupaten_id: string} */
+    private function completeQuarterlyFilters(Request $request): array
+    {
+        $filters = $this->quarterlyFilters($request);
+        $this->ensureComplete('triwulan', $this->quarterlyTitle($filters), PeriodePengamatan::quarterMonths($filters['tahun'], $filters['triwulan']), $filters['kabupaten_id']);
+
+        return $filters;
+    }
+
+    /** @param array{tahun: int, triwulan: int, kabupaten_id: string} $filters */
+    private function quarterlyTitle(array $filters): string
+    {
+        return 'Laporan Triwulan '.PeriodePengamatan::quarterLabel($filters['triwulan'])." {$filters['tahun']}";
+    }
+
     /**
      * Baris triwulan per kabupaten: jumlah tambah serangan & pengendalian selama 3 bulan, kondisi akhir triwulan
      * dibandingkan dengan kondisi akhir triwulan sebelumnya.
@@ -271,6 +290,47 @@ class LaporanController extends Controller
             'kabupaten_id' => (string) ($filters['kabupaten_id'] ?? ''),
             'search' => trim((string) ($filters['search'] ?? '')),
         ];
+    }
+
+    /** @return array{tahun: int, kabupaten_id: string, search: string} */
+    private function completeAnnualFilters(Request $request): array
+    {
+        $filters = $this->annualFilters($request);
+        $this->ensureComplete('tahun', "Laporan Tahunan {$filters['tahun']}", PeriodePengamatan::months($filters['tahun']), $filters['kabupaten_id']);
+
+        return $filters;
+    }
+
+    /**
+     * Laporan triwulan & tahunan baru dibuat bila setiap bulannya punya minimal satu pengamatan di cakupan laporan.
+     * Null bila lengkap, atau pesan yang menyebut bulan yang belum ada datanya.
+     *
+     * @param  list<CarbonImmutable>  $months
+     */
+    private function incompleteMessage(string $title, array $months, string $kabupatenId): ?string
+    {
+        $observedMonths = Pengamatan::query()
+            ->observedBetween($months[0]->startOfMonth(), end($months)->endOfMonth())
+            ->when($kabupatenId !== '', fn (Builder $query) => $query->whereHas('uppt', fn (Builder $upptQuery) => $upptQuery->where('kabupaten_id', $kabupatenId)))
+            ->distinct()
+            ->pluck('tanggal_pengamatan')
+            ->map(fn ($tanggal): string => PeriodePengamatan::monthKey(CarbonImmutable::parse($tanggal)))
+            ->unique();
+        $missing = collect($months)->reject(fn (CarbonImmutable $month): bool => $observedMonths->contains(PeriodePengamatan::monthKey($month)));
+
+        return $missing->isEmpty()
+            ? null
+            : "{$title} belum lengkap. Belum ada data pengamatan bulan ".$missing->map(fn (CarbonImmutable $month): string => $month->translatedFormat('F Y'))->implode(', ').'.';
+    }
+
+    /** @param list<CarbonImmutable> $months */
+    private function ensureComplete(string $field, string $title, array $months, string $kabupatenId): void
+    {
+        $message = $this->incompleteMessage($title, $months, $kabupatenId);
+
+        if ($message !== null) {
+            throw ValidationException::withMessages([$field => $message]);
+        }
     }
 
     /**

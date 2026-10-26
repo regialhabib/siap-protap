@@ -3,12 +3,14 @@
 namespace Tests\Feature;
 
 use App\Models\JenisOpt;
+use App\Models\Kabupaten;
 use App\Models\Kecamatan;
 use App\Models\Komoditas;
 use App\Models\Opt;
 use App\Models\Pengamatan;
 use App\Models\Uppt;
 use App\Models\User;
+use App\Services\PeriodePengamatan;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
@@ -40,6 +42,17 @@ class LaporanTest extends TestCase
             'serangan_jumlah' => $ringan + $berat,
             ...$attributes,
         ]);
+    }
+
+    /**
+     * Laporan triwulan & tahunan butuh data di setiap bulannya. Entri tanpa serangan masuk ke baris komoditas/OPT
+     * yang sama tanpa mengubah angkanya.
+     */
+    private function observeEveryMonth(User $user, Uppt $uppt, Komoditas $komoditas, Opt $opt, ?JenisOpt $jenisOpt = null, float $luasKomoditi = 0): void
+    {
+        foreach (PeriodePengamatan::months(2026) as $month) {
+            $this->createObservation($user, $uppt, $komoditas, $opt, $month->setDay(1)->toDateString(), ['luas_komoditi_ha' => $luasKomoditi, 'jenis_opt_id' => $jenisOpt?->id]);
+        }
     }
 
     public function test_renders_laporan_page_for_admin()
@@ -227,6 +240,8 @@ class LaporanTest extends TestCase
         $this->createObservation($admin, $uppt, $komoditas, $opt, '2026-04-15', ['kecamatan_id' => $kecamatanDua->id, 'luas_komoditi_ha' => 20, 'serangan_ringan' => 4, 'serangan_berat' => 2, 'kendali_masyarakat' => 3, 'kendali_apbn' => 4, 'cara_pengendalian' => 'Sanitasi kebun']);
         $this->createObservation($admin, $uppt, $komoditas, $opt, '2026-01-20', ['kecamatan_id' => $kecamatanDua->id, 'luas_komoditi_ha' => 99, 'serangan_ringan' => 9]);
 
+        $this->observeEveryMonth($admin, $uppt, $komoditas, $opt);
+
         $response = $this->actingAs($admin)->get(route('laporan.tahunan', ['tahun' => 2026]));
 
         $response->assertSee('Laporan Tahunan 2026')->assertDontSee('Kerugian Hasil')->assertSee('Februari 2026 – Januari 2027');
@@ -280,6 +295,8 @@ class LaporanTest extends TestCase
             'tanggal_pengamatan' => '2026-05-10', 'luas_komoditi_ha' => 7, 'serangan_jumlah' => 3,
         ]);
 
+        $this->observeEveryMonth($admin, $uppt, $karet, $gugurDaun, $jenisGugurDaun);
+
         $this->actingAs($admin)->get(route('laporan.tahunan', [
             'tahun' => 2026,
             'komoditas_id' => $karet->id,
@@ -302,6 +319,8 @@ class LaporanTest extends TestCase
         Pengamatan::create($attributes + ['uppt_id' => $uppt->id]);
         Pengamatan::create($attributes + ['uppt_id' => $otherUppt->id]);
         Pengamatan::create(array_merge($attributes, ['uppt_id' => $uppt->id, 'tanggal_pengamatan' => '2025-12-10']));
+
+        $this->observeEveryMonth($admin, $uppt, $komoditas, $opt, luasKomoditi: 5);
 
         $this->actingAs($admin)->get(route('laporan.tahunan', ['tahun' => 2026]))
             ->assertViewHas('data', fn ($data): bool => $data->count() === 1 && $data->first()->luas_komoditi_ha === 10.0);
@@ -347,6 +366,8 @@ class LaporanTest extends TestCase
                 'serangan_jumlah' => 1,
             ]);
         }
+
+        $this->observeEveryMonth($admin, $uppt, $komoditas, $opt);
 
         $this->actingAs($admin)->get(route('laporan.index', ['jenis' => 'bulanan', 'bulan' => 5, 'tahun' => 2026, 'uppt_id' => $uppt->id]))
             ->assertViewHas('data', fn ($data): bool => $data->total() === 26 && $data->count() === 25)
@@ -401,6 +422,8 @@ class LaporanTest extends TestCase
         }
         $this->createObservation($admin, $upptDua, $komoditas, $opt, '2026-05-20', ['serangan_berat' => 3]);
 
+        $this->observeEveryMonth($admin, $uppt, $komoditas, $opt);
+
         $firstQuarter = $this->actingAs($admin)->get(route('laporan.triwulan', ['tahun' => 2026, 'triwulan' => 1]));
         $secondQuarter = $this->get(route('laporan.triwulan', ['tahun' => 2026, 'triwulan' => 2]));
 
@@ -429,6 +452,8 @@ class LaporanTest extends TestCase
         $this->createObservation($admin, $uppt, $karet, $opt, '2026-03-10', ['serangan_ringan' => 3, 'kendali_apbd_kab' => 3]);
         $this->createObservation($admin, $uppt, $sawit, $opt, '2026-03-12', ['serangan_ringan' => 5, 'kendali_apbd_kab' => 2]);
 
+        $this->observeEveryMonth($admin, $uppt, $sawit, $opt);
+
         $firstQuarter = $this->actingAs($admin)->get(route('laporan.triwulan', ['tahun' => 2026, 'triwulan' => 1]));
         $secondQuarter = $this->get(route('laporan.triwulan', ['tahun' => 2026, 'triwulan' => 2]));
 
@@ -446,6 +471,8 @@ class LaporanTest extends TestCase
         $this->createObservation($admin, $uppt, $komoditas, $opt, '2026-11-10', ['serangan_ringan' => 1]);
         $this->createObservation($admin, $uppt, $komoditas, $opt, '2027-01-10', ['serangan_ringan' => 2]);
         $this->createObservation($admin, $uppt, $komoditas, $opt, '2027-02-10', ['serangan_ringan' => 7]);
+
+        $this->observeEveryMonth($admin, $uppt, $komoditas, $opt);
 
         $response = $this->actingAs($admin)->get(route('laporan.triwulan', ['tahun' => 2026, 'triwulan' => 4]));
         $excel = $this->get(route('laporan.export.triwulan.excel', ['tahun' => 2026, 'triwulan' => 4]));
@@ -478,5 +505,58 @@ class LaporanTest extends TestCase
         $this->actingAs($admin)->get(route('laporan.triwulan', ['tahun' => 2026, 'triwulan' => 5]))
             ->assertRedirect()
             ->assertSessionHasErrors('triwulan');
+    }
+
+    public function test_quarterly_report_waits_until_every_month_has_an_observation(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $uppt = $this->createUppt();
+        $komoditas = Komoditas::create(['nama_komoditas' => 'Karet']);
+        $opt = Opt::create(['nama_opt' => 'Gugur Daun']);
+        $this->createObservation($admin, $uppt, $komoditas, $opt, '2026-11-10', ['serangan_ringan' => 1]);
+        $this->createObservation($admin, $uppt, $komoditas, $opt, '2026-12-10', ['serangan_ringan' => 2]);
+        $quarter = ['tahun' => 2026, 'triwulan' => 4];
+        $message = 'Laporan Triwulan IV 2026 belum lengkap. Belum ada data pengamatan bulan Januari 2027.';
+
+        $this->actingAs($admin)->get(route('laporan.triwulan', $quarter))
+            ->assertOk()
+            ->assertSee($message)
+            ->assertDontSee('Unduh Excel')
+            ->assertViewHas('data', fn ($data): bool => $data->isEmpty());
+        $this->from(route('laporan.triwulan', $quarter))->get(route('laporan.export.triwulan.excel', $quarter))
+            ->assertRedirect(route('laporan.triwulan', $quarter))
+            ->assertSessionHasErrors(['triwulan' => $message]);
+
+        $this->createObservation($admin, $uppt, $komoditas, $opt, '2027-01-10');
+
+        $this->get(route('laporan.triwulan', $quarter))
+            ->assertViewHas('incomplete', null)
+            ->assertSee('Unduh Excel')
+            ->assertViewHas('data', fn ($data): bool => $data->first()?->serangan_jumlah === 3.0);
+    }
+
+    public function test_annual_report_waits_for_twelve_months_within_the_selected_kabupaten(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $uppt = $this->createUppt();
+        $otherKabupaten = Kabupaten::create(['nama_kabupaten' => 'Kab Lain']);
+        $komoditas = Komoditas::create(['nama_komoditas' => 'Karet']);
+        $opt = Opt::create(['nama_opt' => 'Gugur Daun']);
+        foreach (PeriodePengamatan::months(2026) as $month) {
+            if ($month->month !== 12) {
+                $this->createObservation($admin, $uppt, $komoditas, $opt, $month->setDay(5)->toDateString(), ['serangan_ringan' => 1, 'kendali_apbd_kab' => 1]);
+            }
+        }
+        $this->createObservation($admin, Uppt::create(['nama_uppt' => 'UPPT Lain', 'kabupaten_id' => $otherKabupaten->id]), $komoditas, $opt, '2026-12-05');
+        $message = 'Laporan Tahunan 2026 belum lengkap. Belum ada data pengamatan bulan Desember 2026.';
+
+        $this->actingAs($admin)->get(route('laporan.tahunan', ['tahun' => 2026]))
+            ->assertDontSee('belum lengkap')
+            ->assertViewHas('data', fn ($data): bool => $data->count() === 2);
+        $this->get(route('laporan.tahunan', ['tahun' => 2026, 'kabupaten_id' => $uppt->kabupaten_id]))
+            ->assertSee($message)
+            ->assertViewHas('data', fn ($data): bool => $data->isEmpty());
+        $this->get(route('laporan.export.tahunan.pdf', ['tahun' => 2026, 'kabupaten_id' => $uppt->kabupaten_id]))
+            ->assertSessionHasErrors(['tahun' => $message]);
     }
 }

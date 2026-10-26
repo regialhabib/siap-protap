@@ -47,11 +47,16 @@
                 <h3 class="font-bold text-gray-900">Laporan Triwulan {{ $label }} Tahun {{ $filters['tahun'] }}</h3>
                 <p class="mt-1 text-sm text-gray-500">{{ $rentang }}</p>
             </div>
+            @unless($incomplete)
             <div class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
                 <a href="{{ route('laporan.export.triwulan.pdf', request()->query()) }}" target="_blank" rel="noopener noreferrer" class="inline-flex w-full items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-bold text-gray-700 shadow-sm transition-colors hover:bg-gray-50 sm:w-auto">Cetak PDF</a>
                 <a href="{{ route('laporan.export.triwulan.excel', request()->query()) }}" class="inline-flex w-full items-center justify-center rounded-lg bg-emerald-600 px-4 py-2 text-sm font-bold text-white shadow-sm transition-colors hover:bg-emerald-700 sm:w-auto">Unduh Excel</a>
             </div>
+            @endunless
         </div>
+        @if($incomplete)
+            <x-laporan-belum-lengkap :message="$incomplete" />
+        @else
         <x-keterangan-singkatan />
         <div class="overflow-x-auto">
             <table class="w-full text-left text-sm">
@@ -102,5 +107,6 @@
             </table>
         </div>
         <div class="border-t border-gray-100 px-4 py-3">{{ $data->links() }}</div>
+        @endif
     </div>
 </x-app-layout>
