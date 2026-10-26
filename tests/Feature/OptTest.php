@@ -3,7 +3,11 @@
 namespace Tests\Feature;
 
 use App\Models\JenisOpt;
+use App\Models\Kabupaten;
+use App\Models\Komoditas;
 use App\Models\Opt;
+use App\Models\Pengamatan;
+use App\Models\Uppt;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -237,6 +241,25 @@ class OptTest extends TestCase
         $this->assertDatabaseHas('jenis_opts', ['id' => $jenisPertama->id, 'nama_jenis_opt' => 'Jenis Diperbarui']);
         $this->assertDatabaseHas('jenis_opts', ['opt_id' => $opt->id, 'nama_jenis_opt' => 'Jenis Baru']);
         $this->assertDatabaseMissing('jenis_opts', ['id' => $jenisKedua->id]);
+    }
+
+    public function test_refuses_to_delete_child_types_used_by_observations(): void
+    {
+        $admin = $this->createAdmin();
+        $opt = Opt::create(['nama_opt' => 'Gugur Daun']);
+        $jenisOpt = JenisOpt::create(['opt_id' => $opt->id, 'nama_jenis_opt' => 'Corynespora']);
+        $uppt = Uppt::create(['nama_uppt' => 'UPPT Uji', 'kabupaten_id' => Kabupaten::create(['nama_kabupaten' => 'Kab Uji'])->id]);
+        Pengamatan::create([
+            'user_id' => $admin->id, 'uppt_id' => $uppt->id, 'komoditas_id' => Komoditas::create(['nama_komoditas' => 'Karet'])->id,
+            'opt_id' => $opt->id, 'jenis_opt_id' => $jenisOpt->id, 'tanggal_pengamatan' => '2026-02-10', 'luas_komoditi_ha' => 10,
+        ]);
+        $message = 'Jenis OPT "Corynespora" tidak dapat dihapus karena masih dipakai di data pengamatan.';
+
+        $this->actingAs($admin)->delete(route('opt.jenis.destroy', [$opt, $jenisOpt]))->assertSessionHas('error', $message);
+        $this->from(route('opt.index'))->put("/opt/{$opt->id}", ['nama_opt' => 'Gugur Daun', 'jenis_opts_present' => '1', 'jenis_opts' => []])
+            ->assertSessionHas('error', $message);
+
+        $this->assertModelExists($jenisOpt);
     }
 
     public function test_deletes_opt_and_redirects(): void

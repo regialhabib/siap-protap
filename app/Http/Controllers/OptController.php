@@ -49,6 +49,11 @@ class OptController extends Controller
     public function destroyJenis(Opt $opt, JenisOpt $jenisOpt): RedirectResponse
     {
         abort_unless($jenisOpt->opt_id === $opt->id, 404);
+
+        if ($jenisOpt->pengamatans()->exists()) {
+            return redirect()->route('opt.index')->with('error', "Jenis OPT \"{$jenisOpt->nama_jenis_opt}\" tidak dapat dihapus karena masih dipakai di data pengamatan.");
+        }
+
         $jenisOpt->delete();
 
         return redirect()->route('opt.index')->with('success', 'Jenis turunan OPT berhasil dihapus.');
@@ -91,6 +96,11 @@ class OptController extends Controller
             'jenis_opts.*.nama_jenis_opt.distinct' => 'Nama jenis turunan OPT tidak boleh duplikat.',
         ]);
 
+        $usedJenisOpt = $this->usedJenisOptToDelete($opt, $validated);
+        if ($usedJenisOpt !== null) {
+            return back()->withInput()->with('error', "Jenis OPT \"{$usedJenisOpt->nama_jenis_opt}\" tidak dapat dihapus karena masih dipakai di data pengamatan.");
+        }
+
         DB::transaction(function () use ($opt, $validated): void {
             $opt->update(['nama_opt' => $validated['nama_opt']]);
 
@@ -122,6 +132,27 @@ class OptController extends Controller
         });
 
         return redirect()->route('opt.index')->with('success', 'OPT dan jenis turunannya berhasil diperbarui!');
+    }
+
+    /**
+     * Jenis OPT yang akan terhapus oleh form edit tetapi masih dipakai pengamatan.
+     *
+     * @param  array{jenis_opts_present?: mixed, jenis_opts?: array<int, array{id?: int|string|null, nama_jenis_opt?: string|null}>}  $validated
+     */
+    private function usedJenisOptToDelete(Opt $opt, array $validated): ?JenisOpt
+    {
+        if (! array_key_exists('jenis_opts_present', $validated)) {
+            return null;
+        }
+
+        $retainedJenisOptIds = collect($validated['jenis_opts'] ?? [])
+            ->filter(fn (array $jenisOptData): bool => filled($jenisOptData['id'] ?? null) && filled(trim($jenisOptData['nama_jenis_opt'] ?? '')))
+            ->map(fn (array $jenisOptData): int => (int) $jenisOptData['id']);
+
+        return $opt->jenisOpts()
+            ->whereNotIn('id', $retainedJenisOptIds)
+            ->whereHas('pengamatans')
+            ->first();
     }
 
     public function destroy(Opt $opt): RedirectResponse
