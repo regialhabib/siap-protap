@@ -59,7 +59,7 @@
             </div>
         </div>
 
-        <form method="POST" action="{{ $pengamatan ? route('pengamatan.update', $pengamatan) : route('pengamatan.store') }}" class="p-6 md:p-10" x-data="pengamatanForm(@js($formConfig))">
+        <form method="POST" action="{{ $pengamatan ? route('pengamatan.update', $pengamatan) : route('pengamatan.store') }}" class="p-6 md:p-10" x-data="pengamatanForm(@js($formConfig))" @submit="submitting = true" @pageshow.window="submitting = false">
             @csrf
             @if($pengamatan)
                 @method('PUT')
@@ -251,9 +251,10 @@
                 <a href="{{ route('dashboard') }}" class="inline-flex items-center justify-center px-6 py-3.5 bg-white border border-gray-300 rounded-xl font-bold text-sm text-gray-700 shadow-sm hover:bg-gray-50 transition-colors">
                     Batal & Kembali
                 </a>
-                <button type="submit" :disabled="submitBlocker !== ''" class="inline-flex items-center justify-center px-8 py-3.5 bg-emerald-600 hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50 text-white font-bold text-sm rounded-xl shadow-lg shadow-emerald-600/30 transition-all duration-200 transform hover:-translate-y-0.5">
+                <button type="submit" :disabled="submitBlocker !== '' || submitting" class="inline-flex items-center justify-center px-8 py-3.5 bg-emerald-600 hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50 text-white font-bold text-sm rounded-xl shadow-lg shadow-emerald-600/30 transition-all duration-200 transform hover:-translate-y-0.5">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
-                    {{ $pengamatan ? 'Perbarui Data Pengamatan' : 'Simpan Data Pengamatan' }}
+                    <span x-show="!submitting">{{ $pengamatan ? 'Perbarui Data Pengamatan' : 'Simpan Data Pengamatan' }}</span>
+                    <span x-show="submitting" x-cloak>Menyimpan...</span>
                 </button>
             </div>
         </form>

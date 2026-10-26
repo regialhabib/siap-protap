@@ -31,6 +31,7 @@ Alpine.data('pengamatanForm', (config) => ({
     historyError: '',
     historyRequest: 0,
     currentKey: '',
+    submitting: false,
 
     init() {
         this.$nextTick(() => this.loadHistory());
