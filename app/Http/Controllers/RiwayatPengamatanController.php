@@ -12,18 +12,21 @@ use App\Models\Uppt;
 use App\Services\PengamatanHistoryService;
 use App\Services\PeriodePengamatan;
 use Illuminate\Http\Request;
-use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator as LaravelValidator;
 use Illuminate\View\View;
 
 class RiwayatPengamatanController extends Controller
 {
+    private const FILTERS = ['tahun', 'kabupaten_id', 'uppt_id', 'kecamatan_id', 'komoditas_id', 'opt_id', 'jenis_opt_id'];
+
     public function index(Request $request, PengamatanHistoryService $history): View
     {
-        $filters = $this->validatedFilters($request);
+        $hasFilters = collect(self::FILTERS)->contains(fn (string $filter): bool => $request->filled($filter));
+        $filters = $hasFilters ? $this->validatedFilters($request) : $this->emptyFilters();
         $periode = $filters['tahun'];
 
         $query = Pengamatan::query()
@@ -54,15 +57,12 @@ class RiwayatPengamatanController extends Controller
             $query->where('jenis_opt_id', $filters['jenis_opt_id']);
         }
 
-        $hasFilters = collect(['tahun', 'kabupaten_id', 'uppt_id', 'kecamatan_id', 'komoditas_id', 'opt_id', 'jenis_opt_id'])
-            ->contains(fn (string $filter): bool => $request->filled($filter));
-        $chains = $hasFilters
-            ? $this->chainHistories($history->monthlyChains($query->get(), $periode), $periode, $history)
-            : collect();
+        $chain = $hasFilters
+            ? $this->chainHistories($history->monthlyChains($query->get(), $periode), $periode, $history)->first()
+            : null;
 
         return view('pengamatan.riwayat', [
-            'data' => $this->paginateRows($chains, $request),
-            'chainLabels' => $chains->map(fn (object $chain): string => "{$chain->uppt} · Kec. {$chain->kecamatan} — {$chain->komoditas} · {$chain->opt}")->all(),
+            'chain' => $chain,
             'tahun' => $periode,
             'filters' => $filters,
             'hasFilters' => $hasFilters,
@@ -78,17 +78,28 @@ class RiwayatPengamatanController extends Controller
         ]);
     }
 
-    /** @return array{tahun: int, kabupaten_id: string, uppt_id: string, kecamatan_id: string, komoditas_id: string, opt_id: string, jenis_opt_id: string} */
+    /**
+     * Semua filter wajib diisi agar hasilnya tepat satu rantai pengamatan.
+     *
+     * @return array{tahun: int, kabupaten_id: string, uppt_id: string, kecamatan_id: string, komoditas_id: string, opt_id: string, jenis_opt_id: string} */
     private function validatedFilters(Request $request): array
     {
         $validator = Validator::make($request->query(), [
-            'tahun' => ['nullable', 'integer', 'min:2000', 'max:2100'],
-            'kabupaten_id' => ['nullable', 'exists:kabupatens,id'],
-            'uppt_id' => ['nullable', 'exists:uppts,id'],
-            'kecamatan_id' => ['nullable', 'exists:kecamatans,id'],
-            'komoditas_id' => ['nullable', 'exists:komoditas,id'],
-            'opt_id' => ['nullable', 'exists:opts,id'],
-            'jenis_opt_id' => ['nullable', 'exists:jenis_opts,id'],
+            'tahun' => ['required', 'integer', 'min:2000', 'max:2100'],
+            'kabupaten_id' => ['required', 'exists:kabupatens,id'],
+            'uppt_id' => ['required', 'exists:uppts,id'],
+            'kecamatan_id' => [
+                Rule::requiredIf(fn (): bool => $request->filled('uppt_id') && Kecamatan::where('uppt_id', $request->query('uppt_id'))->exists()),
+                'nullable',
+                'exists:kecamatans,id',
+            ],
+            'komoditas_id' => ['required', 'exists:komoditas,id'],
+            'opt_id' => ['required', 'exists:opts,id'],
+            'jenis_opt_id' => [
+                Rule::requiredIf(fn (): bool => $request->filled('opt_id') && JenisOpt::where('opt_id', $request->query('opt_id'))->exists()),
+                'nullable',
+                'exists:jenis_opts,id',
+            ],
         ]);
 
         $validator->after(function (LaravelValidator $validator) use ($request): void {
@@ -132,7 +143,7 @@ class RiwayatPengamatanController extends Controller
         $filters = $validator->validate();
 
         return [
-            'tahun' => (int) ($filters['tahun'] ?? PeriodePengamatan::current()),
+            'tahun' => (int) $filters['tahun'],
             'kabupaten_id' => (string) ($filters['kabupaten_id'] ?? ''),
             'uppt_id' => (string) ($filters['uppt_id'] ?? ''),
             'kecamatan_id' => (string) ($filters['kecamatan_id'] ?? ''),
@@ -140,6 +151,12 @@ class RiwayatPengamatanController extends Controller
             'opt_id' => (string) ($filters['opt_id'] ?? ''),
             'jenis_opt_id' => (string) ($filters['jenis_opt_id'] ?? ''),
         ];
+    }
+
+    /** @return array{tahun: int, kabupaten_id: string, uppt_id: string, kecamatan_id: string, komoditas_id: string, opt_id: string, jenis_opt_id: string} */
+    private function emptyFilters(): array
+    {
+        return ['tahun' => PeriodePengamatan::current(), ...array_fill_keys(array_slice(self::FILTERS, 1), '')];
     }
 
     /**
@@ -194,20 +211,5 @@ class RiwayatPengamatanController extends Controller
                 $chain->kabupaten, $chain->uppt, $chain->kecamatan, $chain->komoditas, $chain->opt,
             ])))
             ->values();
-    }
-
-    /** @param Collection<int, object> $rows */
-    private function paginateRows(Collection $rows, Request $request): LengthAwarePaginator
-    {
-        $perPage = 1;
-        $currentPage = max(1, $request->integer('page', 1));
-
-        return new LengthAwarePaginator(
-            $rows->forPage($currentPage, $perPage)->values(),
-            $rows->count(),
-            $perPage,
-            $currentPage,
-            ['path' => $request->url(), 'query' => $request->query()]
-        );
     }
 }

@@ -27,6 +27,7 @@
                     this.kecamatans = [];
                 },
                 async onUpptChanged() {
+                    this.kabupatenId = this.uppts.find((uppt) => uppt.id === this.upptId)?.kabupaten_id ?? this.kabupatenId;
                     this.kecamatanId = '';
                     this.kecamatans = [];
                     await this.loadKecamatans(false);
@@ -62,10 +63,10 @@
                 @error('tahun') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
             </div>
             <div>
-                <label for="kabupaten_id" class="mb-2 block text-sm font-semibold text-gray-700">Kabupaten/Kota</label>
-                <select id="kabupaten_id" name="kabupaten_id" x-model="kabupatenId" @change="onKabupatenChanged()"
+                <label for="kabupaten_id" class="mb-2 block text-sm font-semibold text-gray-700">Kabupaten/Kota <span class="text-red-500">*</span></label>
+                <select id="kabupaten_id" name="kabupaten_id" x-model="kabupatenId" @change="onKabupatenChanged()" required
                     class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-emerald-500 focus:ring-emerald-500">
-                    <option value="">Semua Kabupaten/Kota</option>
+                    <option value="">-- Pilih Kabupaten/Kota --</option>
                     @foreach($kabupatens as $kabupaten)
                         <option value="{{ $kabupaten->id }}" @selected($filters['kabupaten_id'] == $kabupaten->id)>{{ $kabupaten->nama_kabupaten }}</option>
                     @endforeach
@@ -73,10 +74,10 @@
                 @error('kabupaten_id') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
             </div>
             <div>
-                <label for="uppt_id" class="mb-2 block text-sm font-semibold text-gray-700">UPPT</label>
-                <select id="uppt_id" name="uppt_id" x-model="upptId" @change="onUpptChanged()"
+                <label for="uppt_id" class="mb-2 block text-sm font-semibold text-gray-700">UPPT <span class="text-red-500">*</span></label>
+                <select id="uppt_id" name="uppt_id" x-model="upptId" @change="onUpptChanged()" required
                     class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-emerald-500 focus:ring-emerald-500">
-                    <option value="">Semua UPPT</option>
+                    <option value="">-- Pilih UPPT --</option>
                     <template x-for="uppt in filteredUppts" :key="uppt.id">
                         <option :value="uppt.id" :selected="uppt.id === upptId" x-text="uppt.nama"></option>
                     </template>
@@ -84,10 +85,10 @@
                 @error('uppt_id') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
             </div>
             <div>
-                <label for="kecamatan_id" class="mb-2 block text-sm font-semibold text-gray-700">Kecamatan</label>
-                <select id="kecamatan_id" name="kecamatan_id" x-model="kecamatanId" :disabled="kecamatans.length === 0"
+                <label for="kecamatan_id" class="mb-2 block text-sm font-semibold text-gray-700">Kecamatan <span class="text-red-500">*</span></label>
+                <select id="kecamatan_id" name="kecamatan_id" x-model="kecamatanId" :disabled="kecamatans.length === 0" :required="kecamatans.length > 0"
                     class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-emerald-500 focus:ring-emerald-500 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500">
-                    <option value="" x-text="kecamatans.length ? 'Semua Kecamatan' : 'Pilih UPPT dulu'"></option>
+                    <option value="" x-text="kecamatans.length ? '-- Pilih Kecamatan --' : (upptId ? 'UPPT ini tidak punya kecamatan' : 'Pilih UPPT dulu')"></option>
                     <template x-for="kecamatan in kecamatans" :key="kecamatan.id">
                         <option :value="kecamatan.id" :selected="kecamatan.id === kecamatanId" x-text="kecamatan.nama"></option>
                     </template>
@@ -95,9 +96,9 @@
                 @error('kecamatan_id') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
             </div>
             <div>
-                <label for="komoditas_id" class="mb-2 block text-sm font-semibold text-gray-700">Komoditas</label>
-                <select id="komoditas_id" name="komoditas_id" class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-emerald-500 focus:ring-emerald-500">
-                    <option value="">Semua Komoditas</option>
+                <label for="komoditas_id" class="mb-2 block text-sm font-semibold text-gray-700">Komoditas <span class="text-red-500">*</span></label>
+                <select id="komoditas_id" name="komoditas_id" required class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-emerald-500 focus:ring-emerald-500">
+                    <option value="">-- Pilih Komoditas --</option>
                     @foreach($komoditasList as $komoditas)
                         <option value="{{ $komoditas->id }}" @selected($filters['komoditas_id'] == $komoditas->id)>{{ $komoditas->nama_komoditas }}</option>
                     @endforeach
@@ -105,10 +106,10 @@
                 @error('komoditas_id') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
             </div>
             <div>
-                <label for="opt_id" class="mb-2 block text-sm font-semibold text-gray-700">OPT</label>
-                <select id="opt_id" name="opt_id" x-model="optId" @change="onOptChanged()"
+                <label for="opt_id" class="mb-2 block text-sm font-semibold text-gray-700">OPT <span class="text-red-500">*</span></label>
+                <select id="opt_id" name="opt_id" x-model="optId" @change="onOptChanged()" required
                     class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-emerald-500 focus:ring-emerald-500">
-                    <option value="">Semua OPT</option>
+                    <option value="">-- Pilih OPT --</option>
                     @foreach($opts as $opt)
                         <option value="{{ $opt->id }}" @selected($filters['opt_id'] == $opt->id)>{{ $opt->nama_opt }}</option>
                     @endforeach
@@ -116,10 +117,10 @@
                 @error('opt_id') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
             </div>
             <div>
-                <label for="jenis_opt_id" class="mb-2 block text-sm font-semibold text-gray-700">Jenis OPT</label>
-                <select id="jenis_opt_id" name="jenis_opt_id" x-model="jenisOptId" :disabled="jenisOptions.length === 0"
+                <label for="jenis_opt_id" class="mb-2 block text-sm font-semibold text-gray-700">Jenis OPT <span class="text-red-500">*</span></label>
+                <select id="jenis_opt_id" name="jenis_opt_id" x-model="jenisOptId" :disabled="jenisOptions.length === 0" :required="jenisOptions.length > 0"
                     class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-emerald-500 focus:ring-emerald-500 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500">
-                    <option value="" x-text="jenisOptions.length ? 'Semua Jenis OPT' : (optId ? 'OPT ini tidak punya jenis' : 'Pilih OPT dulu')"></option>
+                    <option value="" x-text="jenisOptions.length ? '-- Pilih Jenis OPT --' : (optId ? 'OPT ini tidak punya jenis' : 'Pilih OPT dulu')"></option>
                     <template x-for="jenis in jenisOptions" :key="jenis.id">
                         <option :value="jenis.id" :selected="jenis.id === jenisOptId" x-text="jenis.nama"></option>
                     </template>
@@ -147,36 +148,12 @@
             };
         };
     @endphp
-    @if($data->isNotEmpty())
+    @if($chain)
         <h2 class="mb-4 text-lg font-bold text-gray-900">Periode {{ $tahun }} <span class="font-medium text-gray-600">(Februari {{ $tahun }} – Januari {{ $tahun + 1 }})</span></h2>
     @endif
 
-    @if($data->total() > 1)
-        <div class="mb-4 flex flex-col gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3 shadow-sm md:flex-row md:items-center" x-data>
-            <label for="chain-select" class="shrink-0 text-sm font-semibold text-gray-700">Data Pengamatan</label>
-            <select id="chain-select" @change="window.location.href = $event.target.value"
-                class="block w-full flex-1 rounded-lg border-gray-300 text-sm shadow-sm focus:border-emerald-500 focus:ring-emerald-500">
-                @foreach($chainLabels as $index => $label)
-                    <option value="{{ $data->url($index + 1) }}" @selected($data->currentPage() === $index + 1)>{{ $index + 1 }}. {{ $label }}</option>
-                @endforeach
-            </select>
-            <div class="flex shrink-0 items-center gap-2">
-                @if($data->onFirstPage())
-                    <span class="inline-flex h-10 cursor-not-allowed items-center rounded-lg border border-gray-200 bg-gray-50 px-3 text-sm font-semibold text-gray-400 sm:px-4">Sebelumnya</span>
-                @else
-                    <a href="{{ $data->previousPageUrl() }}" rel="prev" class="inline-flex h-10 items-center rounded-lg border border-gray-300 bg-white px-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 sm:px-4">Sebelumnya</a>
-                @endif
-                <span class="whitespace-nowrap px-1 text-sm text-gray-600 sm:px-2">Data <span class="font-semibold text-gray-800">{{ $data->currentPage() }}</span> dari {{ $data->total() }}</span>
-                @if($data->hasMorePages())
-                    <a href="{{ $data->nextPageUrl() }}" rel="next" class="inline-flex h-10 items-center rounded-lg border border-gray-300 bg-white px-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 sm:px-4">Selanjutnya</a>
-                @else
-                    <span class="inline-flex h-10 cursor-not-allowed items-center rounded-lg border border-gray-200 bg-gray-50 px-3 text-sm font-semibold text-gray-400 sm:px-4">Selanjutnya</span>
-                @endif
-            </div>
-        </div>
-    @endif
 
-    @forelse($data as $chain)
+    @if($chain)
         @php
             $totalPerubahan = $perubahan($chain->total['kondisi_awal'], $chain->total['kondisi_akhir']);
             $monthGroups = collect($chain->months)->chunkWhile(fn ($month, $key, $chunk) => $month->is_blank && $chunk->last()->is_blank);
@@ -345,9 +322,9 @@
                 </table>
             </div>
         </div>
-    @empty
+    @else
         <div class="mb-6 rounded-xl border border-gray-200 bg-white px-6 py-12 text-center text-base text-gray-600 shadow-sm">
-            {{ $hasFilters ? 'Belum ada data pengamatan pada periode dan filter ini.' : 'Pilih filter lalu tampilkan untuk membaca riwayat pengamatan.' }}
+            {{ $hasFilters ? 'Belum ada data pengamatan untuk pilihan ini pada periode tersebut.' : 'Isi semua filter lalu klik Tampilkan untuk membaca riwayat pengamatan.' }}
         </div>
-    @endforelse
+    @endif
 </x-app-layout>
