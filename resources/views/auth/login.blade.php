@@ -12,7 +12,7 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="font-sans antialiased text-gray-800 bg-[#f4f7f6]">
-    <div class="min-h-screen flex items-center justify-center p-4 sm:p-6">
+    <div class="min-h-screen flex flex-col items-center justify-center p-4 sm:p-6">
         
         <!-- The Floating Card -->
         <div class="w-full max-w-4xl bg-white rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.1)] flex flex-col md:flex-row overflow-hidden min-h-[550px]">
@@ -95,7 +95,7 @@
                     @if (Route::has('register'))
                         <div>
                             <a href="{{ route('register') }}" class="w-full flex justify-center py-3 px-4 border border-emerald-600 rounded-md text-sm font-bold text-emerald-600 hover:bg-emerald-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition duration-150 ease-in-out">
-                                Register
+                                Daftar Akun Baru
                             </a>
                         </div>
                     @endif
@@ -104,6 +104,7 @@
             </div>
         </div>
         
+        <a href="{{ route('home') }}" class="mt-6 inline-flex items-center gap-1 text-sm font-medium text-gray-600 hover:text-emerald-700"><span aria-hidden="true">&larr;</span> Kembali ke beranda</a>
     </div>
 </body>
 </html>
