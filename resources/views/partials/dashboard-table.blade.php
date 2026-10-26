@@ -118,4 +118,3 @@
                 {{ $pengamatans->links() }}
             </div>
             @endif
-        </div>
