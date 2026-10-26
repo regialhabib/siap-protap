@@ -31,8 +31,8 @@ class RiwayatPengamatanTest extends TestCase
 
         $response->assertOk()
             ->assertSee('Riwayat Pengamatan Periode')
-            ->assertSee('Serangan Bulan Ini')
-            ->assertSee('Pengendalian Bulan Ini')
+            ->assertSee('Kondisi Awal')
+            ->assertSee('= Kondisi Akhir')
             ->assertSee('Total Periode')
             ->assertDontSee('Bulan Lalu')
             ->assertViewHas('data', fn ($data): bool => $data->total() === 1
@@ -94,6 +94,9 @@ class RiwayatPengamatanTest extends TestCase
         $karetMonths = collect($karet->months)->keyBy('bulan_label');
         $this->assertSame(['tambah_jumlah' => 3.0, 'kendali_jumlah' => 1.25], array_intersect_key($karetMonths['Februari 2026']->values, array_flip(['tambah_jumlah', 'kendali_jumlah'])));
         $this->assertSame('1,75 Ha (Bertambah 1,75 Ha)', $karetMonths['Februari 2026']->kondisi_label);
+        $this->assertSame([0.0, 1.75], [$karetMonths['Februari 2026']->kondisi_awal, $karetMonths['Februari 2026']->kondisi_akhir]);
+        $this->assertSame([1.75, 1.75], [$karetMonths['Maret 2026']->kondisi_awal, $karetMonths['Maret 2026']->kondisi_akhir]);
+        $this->assertNull($karetMonths['Mei 2026']->kondisi_awal);
         $this->assertFalse($karetMonths['Maret 2026']->ada_input);
         $this->assertSame('1,75 Ha (Tetap)', $karetMonths['April 2026']->kondisi_label);
         $this->assertTrue($karetMonths['Mei 2026']->is_blank);

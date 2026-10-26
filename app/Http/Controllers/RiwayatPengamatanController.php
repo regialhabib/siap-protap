@@ -171,6 +171,8 @@ class RiwayatPengamatanController extends Controller
                         'is_blank' => $isBlank,
                         'ada_input' => ! $isBlank && $state['ada_input'],
                         'values' => $isBlank ? null : Arr::only($state, ['tambah_ringan', 'tambah_berat', 'tambah_jumlah', ...PengamatanHistoryService::CONTROL_FIELDS, 'kendali_jumlah']),
+                        'kondisi_awal' => $isBlank ? null : $state['kondisi_awal'],
+                        'kondisi_akhir' => $isBlank ? null : $state['kondisi_akhir'],
                         'kondisi_label' => $isBlank ? null : $history->kondisiLabel($state['kondisi_awal'], $state['kondisi_akhir']),
                     ];
                 }
