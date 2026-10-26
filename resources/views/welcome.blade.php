@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="SIAP-PROTAP — Sistem Informasi Administrasi Pelaporan Proteksi Tanaman Perkebunan, Dinas Perkebunan Provinsi Jambi.">
-    <title>{{ config('app.name', 'SIAP-PROTAP') }} — Pelaporan Proteksi Tanaman Perkebunan</title>
+    <title>{{ config('app.name', 'SIAP-PROTAP') }} · Pelaporan Proteksi Tanaman Perkebunan</title>
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=figtree:400,500,600,700,800&display=swap" rel="stylesheet" />
