@@ -21,6 +21,7 @@
         'kendali_jumlah' => $hektare($item->kendali_jumlah),
     ];
     $neutralButton = 'inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-semibold text-gray-700 shadow-sm transition-colors hover:bg-gray-50';
+    $lockedLabel = 'Terkunci: lewat '.\App\Models\Pengamatan::EDIT_WINDOW_DAYS.' hari sejak diinput';
     $dangerButton = 'inline-flex items-center justify-center rounded-md border border-red-200 bg-white px-3 py-1.5 text-sm font-semibold text-red-700 shadow-sm transition-colors hover:bg-red-50';
 @endphp
 
@@ -46,6 +47,8 @@
                 @can('update', $item)
                     <a href="{{ route('pengamatan.edit', $item->id) }}" class="{{ $neutralButton }}">Edit</a>
                     <button type="button" x-data="" x-on:click.prevent="$dispatch('open-modal', 'confirm-deletion-{{ $item->id }}')" class="{{ $dangerButton }}">Hapus</button>
+                @else
+                    <p class="col-span-2 self-center text-sm text-gray-500">{{ $lockedLabel }}</p>
                 @endcan
             </div>
         </li>
@@ -86,6 +89,8 @@
                             @can('update', $item)
                                 <a href="{{ route('pengamatan.edit', $item->id) }}" class="{{ $neutralButton }}">Edit</a>
                                 <button type="button" x-data="" x-on:click.prevent="$dispatch('open-modal', 'confirm-deletion-{{ $item->id }}')" class="{{ $dangerButton }}">Hapus</button>
+                            @else
+                                <span class="text-sm text-gray-500" title="{{ $lockedLabel }}">Terkunci</span>
                             @endcan
                         </div>
                     </td>

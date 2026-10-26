@@ -65,7 +65,7 @@ class PengamatanController extends Controller
             'terakhir' => $context['terakhir']?->tanggal_pengamatan->translatedFormat('d F Y'),
             'bulan_sama' => $context['bulan_sama']->map(fn (Pengamatan $pengamatan): array => [
                 'tanggal' => $pengamatan->tanggal_pengamatan->translatedFormat('d F Y'),
-                'edit_url' => route('pengamatan.edit', $pengamatan),
+                'edit_url' => $user->can('update', $pengamatan) ? route('pengamatan.edit', $pengamatan) : null,
             ])->values(),
         ]);
     }

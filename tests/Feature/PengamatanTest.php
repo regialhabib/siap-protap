@@ -313,6 +313,28 @@ class PengamatanTest extends TestCase
         $this->assertDatabaseCount('pengamatans', 0);
     }
 
+    public function test_popt_can_change_an_observation_only_within_two_days_of_input(): void
+    {
+        $popt = $this->createPopt($this->createUppt());
+        $komoditas = Komoditas::create(['nama_komoditas' => 'Karet']);
+        $opt = Opt::create(['nama_opt' => 'Gugur Daun']);
+        $pengamatan = $this->createObservation($popt, $komoditas, $opt, '2026-02-10', ['serangan_ringan' => 2]);
+        $historyUrl = route('pengamatan.history', [
+            'tanggal_pengamatan' => '2026-02-20', 'komoditas_id' => $komoditas->id, 'opt_id' => $opt->id,
+        ]);
+
+        $this->travel(47)->hours();
+        $this->actingAs($popt)->get(route('pengamatan.edit', $pengamatan))->assertOk();
+
+        $this->travel(1)->hours();
+        $this->get(route('pengamatan.edit', $pengamatan))->assertForbidden();
+        $this->delete(route('pengamatan.destroy', $pengamatan))->assertForbidden();
+        $this->getJson($historyUrl)->assertJsonPath('bulan_sama.0.edit_url', null);
+        $this->get(route('dashboard'))->assertSee('Terkunci');
+        $this->assertModelExists($pengamatan);
+        $this->assertTrue($this->createAdmin()->can('update', $pengamatan));
+    }
+
     public function test_rejects_update_that_makes_a_later_condition_negative(): void
     {
         $popt = $this->createPopt($this->createUppt());

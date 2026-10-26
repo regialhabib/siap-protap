@@ -10,6 +10,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Pengamatan extends Model
 {
+    /** Lama (hari) petugas POPT masih dapat mengubah atau menghapus data sejak diinput. */
+    public const EDIT_WINDOW_DAYS = 2;
+
     protected $fillable = [
         'user_id', 'uppt_id', 'komoditas_id', 'opt_id', 'jenis_opt_id',
         'tanggal_pengamatan', 'luas_komoditi_ha', 'serangan_ringan',
@@ -36,6 +39,11 @@ class Pengamatan extends Model
     {
         $query->where('tanggal_pengamatan', '>=', $from->toDateString())
             ->where('tanggal_pengamatan', '<', $until->copy()->addDay()->toDateString());
+    }
+
+    public function isWithinEditWindow(): bool
+    {
+        return $this->created_at !== null && $this->created_at->copy()->addDays(self::EDIT_WINDOW_DAYS)->isFuture();
     }
 
     public function uppt(): BelongsTo

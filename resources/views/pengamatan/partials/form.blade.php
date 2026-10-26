@@ -133,8 +133,8 @@
                 <div class="mb-6 rounded-xl border border-amber-300 bg-amber-50 p-5 text-sm text-amber-900" x-show="historyReady && bulanSama.length > 0" x-cloak>
                     <p class="font-bold">Sudah ada input di bulan yang sama</p>
                     <ul class="mt-2 space-y-1">
-                        <template x-for="entri in bulanSama" :key="entri.edit_url">
-                            <li><span x-text="entri.tanggal"></span> · <a :href="entri.edit_url" class="font-semibold underline hover:text-amber-700">Edit</a></li>
+                        <template x-for="(entri, index) in bulanSama" :key="index">
+                            <li><span x-text="entri.tanggal"></span> · <a x-show="entri.edit_url" :href="entri.edit_url" class="font-semibold underline hover:text-amber-700">Edit</a><span x-show="!entri.edit_url" class="text-amber-800">Terkunci</span></li>
                         </template>
                     </ul>
                     <p class="mt-2">Data baru akan ditambahkan, bukan menggantikan.</p>

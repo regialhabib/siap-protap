@@ -32,7 +32,7 @@ class PengamatanPolicy
     }
 
     /**
-     * Determine whether the user can update the model.
+     * Admin selalu dapat mengubah; POPT hanya data UPPT-nya selama masa edit sejak diinput.
      */
     public function update(User $user, Pengamatan $pengamatan): bool
     {
@@ -40,11 +40,11 @@ class PengamatanPolicy
             return true;
         }
 
-        return $user->isPopt() && $user->uppt_id === $pengamatan->uppt_id;
+        return $user->isPopt() && $user->uppt_id === $pengamatan->uppt_id && $pengamatan->isWithinEditWindow();
     }
 
     /**
-     * Determine whether the user can delete the model.
+     * Aturan hapus sama dengan aturan ubah.
      */
     public function delete(User $user, Pengamatan $pengamatan): bool
     {
@@ -52,7 +52,7 @@ class PengamatanPolicy
             return true;
         }
 
-        return $user->isPopt() && $user->uppt_id === $pengamatan->uppt_id;
+        return $user->isPopt() && $user->uppt_id === $pengamatan->uppt_id && $pengamatan->isWithinEditWindow();
     }
 
     /**
