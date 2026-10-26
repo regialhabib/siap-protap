@@ -50,8 +50,8 @@
                 <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener" class="underline hover:text-white">CC BY-SA 4.0</a>
             </p>
 
-            <div class="relative max-w-6xl mx-auto px-4 sm:px-6 py-16 md:py-24 grid gap-12 md:grid-cols-2 items-center">
-                <div class="text-center md:text-left">
+            <div class="relative max-w-6xl mx-auto px-4 sm:px-6 py-16 md:py-28">
+                <div class="max-w-2xl text-center md:text-left">
                     <span class="inline-block px-3 py-1 rounded-full bg-white/15 text-emerald-50 text-xs font-semibold tracking-wide uppercase">
                         Dinas Perkebunan Provinsi Jambi
                     </span>
@@ -74,37 +74,6 @@
                         <a href="#alur" class="inline-flex justify-center items-center px-6 py-3 rounded-md border border-white/60 text-white text-sm font-bold hover:bg-white/10 transition">
                             Lihat Alur Pelaporan
                         </a>
-                    </div>
-                </div>
-
-                <!-- Ilustrasi formulir pengamatan -->
-                <div class="hidden md:block">
-                    <div class="bg-white rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.2)] p-6 max-w-md ml-auto" aria-hidden="true">
-                        <div class="flex items-center justify-between">
-                            <p class="text-sm font-bold text-gray-900">Formulir Pengamatan Lapangan</p>
-                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-                        </div>
-                        <div class="mt-5 grid grid-cols-2 gap-3">
-                            @foreach (['Tanggal Pengamatan' => '12 Oktober 2026', 'Kecamatan' => 'Rimbo Bujang', 'Komoditas' => 'Karet', 'OPT (Hama/Penyakit)' => 'Gugur Daun'] as $fieldLabel => $exampleValue)
-                                <div>
-                                    <p class="text-xs font-semibold text-gray-500">{{ $fieldLabel }}</p>
-                                    <p class="mt-1 rounded-md border border-gray-200 bg-gray-50 px-3 py-1.5 text-sm font-medium text-gray-800">{{ $exampleValue }}</p>
-                                </div>
-                            @endforeach
-                        </div>
-                        <p class="mt-5 text-xs font-semibold text-gray-500">Serangan Tambahan (Ha)</p>
-                        <div class="mt-2 grid grid-cols-3 gap-2 text-center text-xs font-semibold">
-                            @foreach (['Ringan' => ['1,5', 'bg-amber-50 text-amber-700'], 'Berat' => ['0,5', 'bg-red-50 text-red-700'], 'Jumlah' => ['2', 'bg-gray-100 text-gray-700']] as $attackLevel => [$attackValue, $attackClasses])
-                                <div class="rounded-md py-2 {{ $attackClasses }}">{{ $attackLevel }}<span class="block text-sm font-bold">{{ $attackValue }} Ha</span></div>
-                            @endforeach
-                        </div>
-                        <p class="mt-5 text-xs font-semibold text-gray-500">Luas Pengendalian per Sumber Dana (Ha)</p>
-                        <div class="mt-2 grid grid-cols-4 gap-2 text-center text-xs font-medium text-gray-600">
-                            @foreach (['APBD I' => '1', 'APBD II' => '0,5', 'Masyarakat' => '0', 'APBN' => '0'] as $fundingSource => $controlValue)
-                                <div class="rounded-md border border-gray-200 py-2">{{ $fundingSource }}<span class="block text-sm font-bold text-gray-800">{{ $controlValue }}</span></div>
-                            @endforeach
-                        </div>
-                        <div class="mt-6 h-10 rounded-md bg-emerald-600 flex items-center justify-center text-sm font-bold text-white">Simpan</div>
                     </div>
                 </div>
             </div>
