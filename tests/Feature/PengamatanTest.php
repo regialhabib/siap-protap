@@ -53,6 +53,18 @@ class PengamatanTest extends TestCase
         $response->assertSee('Serangan Tambahan')->assertDontSee('Sedang');
     }
 
+    public function test_create_page_lists_kecamatans_of_the_uppt_alphabetically(): void
+    {
+        $uppt = $this->createUppt();
+        Kecamatan::create(['nama_kecamatan' => 'Rimbo Ulu', 'uppt_id' => $uppt->id]);
+        Kecamatan::create(['nama_kecamatan' => 'Rimbo Bujang', 'uppt_id' => $uppt->id]);
+        Kecamatan::create(['nama_kecamatan' => 'Kecamatan Lain', 'uppt_id' => $this->createUppt()->id]);
+
+        $response = $this->actingAs($this->createPopt($uppt))->get('/pengamatan/create');
+
+        $response->assertViewHas('kecamatans', fn ($kecamatans): bool => $kecamatans->pluck('nama_kecamatan')->all() === ['Rimbo Bujang', 'Rimbo Ulu']);
+    }
+
     public function test_lists_rejected_fields_above_the_form(): void
     {
         $this->actingAs($this->createPopt($this->createUppt()))

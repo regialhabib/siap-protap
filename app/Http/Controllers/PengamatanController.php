@@ -27,9 +27,7 @@ class PengamatanController extends Controller
         $komoditas = Komoditas::orderBy('nama_komoditas')->get();
         $opts = Opt::with('jenisOpts')->orderBy('nama_opt')->get();
 
-        $user = Auth::user();
-        $user->loadMissing('uppt.kecamatans');
-        $kecamatans = $user->uppt ? $user->uppt->kecamatans : collect();
+        $kecamatans = Kecamatan::where('uppt_id', Auth::user()->uppt_id)->orderBy('nama_kecamatan')->get();
 
         return view('pengamatan.create', compact('komoditas', 'opts', 'kecamatans'));
     }
