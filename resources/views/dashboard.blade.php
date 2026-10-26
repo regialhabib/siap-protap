@@ -1,4 +1,4 @@
-<x-app-layout>
+<x-app-layout title="Dashboard">
     @if (session('success'))
         <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 3000)" x-transition.duration.500ms class="mb-6 flex items-center justify-between bg-emerald-100 border border-emerald-300 text-emerald-800 px-4 py-3 rounded-lg shadow-sm font-medium" role="alert">
             <span>{{ session('success') }}</span>
@@ -17,7 +17,7 @@
     <!-- Header / Title -->
     <div class="mb-6 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
-            <h1 class="text-2xl font-bold text-gray-900">Overview</h1>
+            <h1 class="text-2xl font-bold text-gray-900">Ringkasan Pengamatan</h1>
             <p class="text-sm text-gray-500 mt-1">Pantau statistik dan riwayat data pengamatan lapangan.</p>
         </div>
         <div class="flex items-center space-x-3">

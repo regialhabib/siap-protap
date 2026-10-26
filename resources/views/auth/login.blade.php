@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Login - {{ config('app.name', 'SIAP-PROTAP') }}</title>
+    <title>Masuk - {{ config('app.name', 'SIAP-PROTAP') }}</title>
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=figtree:400,500,600,700,800&display=swap" rel="stylesheet" />
@@ -44,7 +44,7 @@
             <!-- Right Side: Login Form -->
             <div class="md:w-1/2 p-10 sm:p-12 flex flex-col justify-center bg-white">
                 
-                <h2 class="text-2xl font-bold text-gray-900 mb-8">Log In</h2>
+                <h2 class="text-2xl font-bold text-gray-900 mb-8">Masuk ke Akun</h2>
 
                 <!-- Session Status -->
                 <x-auth-session-status class="mb-4" :status="session('status')" />
@@ -56,10 +56,10 @@
 
                     <!-- Email Address -->
                     <div>
-                        <label for="email" class="block text-sm font-semibold text-gray-700 mb-1">Email Address</label>
+                        <label for="email" class="block text-sm font-semibold text-gray-700 mb-1">Alamat Email</label>
                         <input id="email" type="email" name="email" value="{{ old('email') }}" required autofocus autocomplete="username" 
                             class="block w-full px-4 py-3 rounded-md border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm transition duration-150" 
-                            placeholder="Enter your Email">
+                            placeholder="contoh: nama@email.com">
                         <x-input-error :messages="$errors->get('email')" class="mt-2" />
                     </div>
 
@@ -68,7 +68,7 @@
                         <label for="password" class="block text-sm font-semibold text-gray-700 mb-1">Password</label>
                         <input id="password" type="password" name="password" required autocomplete="current-password" 
                             class="block w-full px-4 py-3 rounded-md border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm transition duration-150" 
-                            placeholder="Enter Password">
+                            placeholder="Masukkan password">
                         <x-input-error :messages="$errors->get('password')" class="mt-2" />
                     </div>
 
@@ -76,7 +76,7 @@
                     <div class="flex items-center justify-between pt-2">
                         <label for="remember_me" class="flex items-center cursor-pointer">
                             <input id="remember_me" type="checkbox" name="remember" class="w-4 h-4 rounded border-gray-300 text-emerald-500 focus:ring-emerald-500">
-                            <span class="ml-2 text-sm text-gray-600">Remember Me</span>
+                            <span class="ml-2 text-sm text-gray-600">Ingat saya</span>
                         </label>
 
                         @if (Route::has('password.request'))
@@ -88,7 +88,7 @@
 
                     <div class="pt-2">
                         <button type="submit" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-md text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition duration-150 ease-in-out">
-                            Login
+                            Masuk
                         </button>
                     </div>
 

@@ -1,4 +1,4 @@
-<x-app-layout>
+<x-app-layout title="Laporan Bulanan">
     @php
         $hektare = fn ($value) => \App\Services\PengamatanHistoryService::hektare((float) $value);
     @endphp

@@ -1,4 +1,4 @@
-<x-app-layout>
+<x-app-layout title="Profil Akun">
     <div class="space-y-6">
         <!-- Main Form Container -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">

@@ -1,4 +1,4 @@
-<x-app-layout>
+<x-app-layout title="Laporan Triwulan">
     @php
         $hektare = fn ($value) => \App\Services\PengamatanHistoryService::hektare((float) $value);
         $months = \App\Services\PeriodePengamatan::quarterMonths($filters['tahun'], $filters['triwulan']);

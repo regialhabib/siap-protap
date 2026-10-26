@@ -40,10 +40,10 @@
                     @csrf
 
                     <div>
-                        <label for="email" class="block text-sm font-semibold text-gray-700 mb-1">Email Address</label>
+                        <label for="email" class="block text-sm font-semibold text-gray-700 mb-1">Alamat Email</label>
                         <input id="email" type="email" name="email" value="{{ old('email') }}" required autofocus autocomplete="username"
                             class="block w-full px-4 py-3 rounded-md border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm transition duration-150"
-                            placeholder="Enter your Email">
+                            placeholder="contoh: nama@email.com">
                         <x-input-error :messages="$errors->get('email')" class="mt-2" />
                     </div>
 
@@ -54,7 +54,7 @@
                     </div>
 
                     <p class="text-center text-sm text-gray-600">
-                        <a class="font-medium text-emerald-500 hover:text-emerald-600" href="{{ route('login') }}">Kembali ke Login</a>
+                        <a class="font-medium text-emerald-500 hover:text-emerald-600" href="{{ route('login') }}">Kembali ke halaman masuk</a>
                     </p>
                 </form>
             </div>

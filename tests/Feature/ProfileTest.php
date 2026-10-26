@@ -31,7 +31,7 @@ class ProfileTest extends TestCase
 
         $response->assertOk();
         $response->assertSee(route('profile.edit'));
-        $response->assertSee('Profile');
+        $response->assertSee('Profil Akun');
     }
 
     public function test_profile_information_can_be_updated(): void
