@@ -40,6 +40,7 @@ class RiwayatPengamatanTest extends TestCase
             ->assertSee('Total Periode')
             ->assertDontSee('Bulan Lalu')
             ->assertViewHas('chain', fn ($chain): bool => count($chain->months) === 12
+                && [$chain->komoditas, $chain->opt, $chain->jenis_opt] === ['Karet', 'Gugur Daun', 'Corynespora']
                 && $chain->months[0]->bulan_label === 'Februari 2026'
                 && $chain->months[11]->bulan_label === 'Januari 2027');
     }

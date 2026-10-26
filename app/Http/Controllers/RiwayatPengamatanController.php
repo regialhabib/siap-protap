@@ -201,14 +201,15 @@ class RiwayatPengamatanController extends Controller
                     'uppt' => $chain->uppt?->nama_uppt ?? '-',
                     'kecamatan' => $chain->kecamatan?->nama_kecamatan ?? '-',
                     'komoditas' => $chain->komoditas?->nama_komoditas ?? '-',
-                    'opt' => ($chain->opt?->nama_opt ?? '-').($chain->jenisOpt ? ' — '.$chain->jenisOpt->nama_jenis_opt : ''),
+                    'opt' => $chain->opt?->nama_opt ?? '-',
+                    'jenis_opt' => $chain->jenisOpt?->nama_jenis_opt,
                     'luas_komoditi_ha' => $total['luas_komoditi_ha'],
                     'months' => $months,
                     'total' => $total,
                 ];
             })
             ->sortBy(fn (object $chain): string => mb_strtolower(implode('|', [
-                $chain->kabupaten, $chain->uppt, $chain->kecamatan, $chain->komoditas, $chain->opt,
+                $chain->kabupaten, $chain->uppt, $chain->kecamatan, $chain->komoditas, $chain->opt, $chain->jenis_opt,
             ])))
             ->values();
     }

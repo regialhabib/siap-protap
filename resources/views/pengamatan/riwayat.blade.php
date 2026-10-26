@@ -169,7 +169,19 @@
             <div class="flex flex-col gap-1 border-b border-gray-100 bg-gray-50/50 px-6 py-4 md:flex-row md:items-center md:justify-between">
                 <div>
                     <h3 class="font-bold text-gray-900">{{ $chain->uppt }} · Kec. {{ $chain->kecamatan }} · {{ $chain->kabupaten }}</h3>
-                    <p class="mt-1 text-sm text-gray-600">{{ $chain->komoditas }} — {{ $chain->opt }}</p>
+                    <div class="mt-2 flex flex-wrap items-center gap-2 text-sm">
+                        <span class="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 font-semibold text-emerald-800 ring-1 ring-inset ring-emerald-200">
+                            <span class="font-normal text-emerald-700">Komoditas</span> {{ $chain->komoditas }}
+                        </span>
+                        <span class="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1 font-semibold text-amber-900 ring-1 ring-inset ring-amber-200">
+                            <span class="font-normal text-amber-800">OPT</span> {{ $chain->opt }}
+                        </span>
+                        @if ($chain->jenis_opt)
+                            <span class="inline-flex items-center gap-1.5 rounded-full bg-orange-50 px-3 py-1 font-semibold text-orange-900 ring-1 ring-inset ring-orange-200">
+                                <span class="font-normal text-orange-800">Jenis OPT</span> {{ $chain->jenis_opt }}
+                            </span>
+                        @endif
+                    </div>
                 </div>
                 <p class="text-sm text-gray-600">Luas komoditi <span class="font-bold text-gray-900">{{ $hektare($chain->luas_komoditi_ha) }} Ha</span></p>
             </div>
