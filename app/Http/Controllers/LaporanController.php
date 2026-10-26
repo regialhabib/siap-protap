@@ -367,7 +367,7 @@ class LaporanController extends Controller
 
     private function paginateData(Collection $data, Request $request): LengthAwarePaginator
     {
-        $perPage = 5;
+        $perPage = 25;
         $currentPage = max(1, $request->integer('page', 1));
 
         return new LengthAwarePaginator(

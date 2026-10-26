@@ -329,13 +329,13 @@ class LaporanTest extends TestCase
             ->assertSessionHasErrors('uppt_id');
     }
 
-    public function test_monthly_and_annual_reports_paginate_five_rows_per_page(): void
+    public function test_monthly_and_annual_reports_paginate_twenty_five_rows_per_page(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);
         $uppt = $this->createUppt();
         $komoditas = Komoditas::create(['nama_komoditas' => 'Karet']);
 
-        foreach (range(1, 6) as $number) {
+        foreach (range(1, 26) as $number) {
             $opt = Opt::create(['nama_opt' => "OPT {$number}"]);
             Pengamatan::create([
                 'user_id' => $admin->id,
@@ -349,14 +349,14 @@ class LaporanTest extends TestCase
         }
 
         $this->actingAs($admin)->get(route('laporan.index', ['jenis' => 'bulanan', 'bulan' => 5, 'tahun' => 2026, 'uppt_id' => $uppt->id]))
-            ->assertViewHas('data', fn ($data): bool => $data->total() === 6 && $data->count() === 5)
+            ->assertViewHas('data', fn ($data): bool => $data->total() === 26 && $data->count() === 25)
             ->assertSee('page=2');
 
         $this->get(route('laporan.index', ['jenis' => 'bulanan', 'bulan' => 5, 'tahun' => 2026, 'uppt_id' => $uppt->id, 'page' => 2]))
-            ->assertViewHas('data', fn ($data): bool => $data->total() === 6 && $data->count() === 1);
+            ->assertViewHas('data', fn ($data): bool => $data->total() === 26 && $data->count() === 1);
 
         $this->get(route('laporan.tahunan', ['tahun' => 2026, 'page' => 2]))
-            ->assertViewHas('data', fn ($data): bool => $data->total() === 6 && $data->count() === 1);
+            ->assertViewHas('data', fn ($data): bool => $data->total() === 26 && $data->count() === 1);
     }
 
     public function test_returns_kecamatans_for_uppt()
