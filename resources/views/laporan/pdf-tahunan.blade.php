@@ -62,11 +62,11 @@
                 <th rowspan="2">Kabupaten/Kota</th>
                 <th rowspan="2">Jenis Komoditas</th>
                 <th rowspan="2">Luas Komoditas (Ha)</th>
-                <th rowspan="2">Jenis OPT</th>
+                <th rowspan="2" style="width: 8%;">Jenis OPT</th>
                 <th rowspan="2">Luas Pengendalian (Ha)</th>
                 <th colspan="3">Luas Serangan (Ha)</th>
                 <th colspan="5">Luas Pengendalian (Ha)</th>
-                <th rowspan="2">Cara Pengendalian</th>
+                <th rowspan="2" style="width: 18%;">Cara Pengendalian</th>
                 <th rowspan="2">Kerugian Hasil (Rp 000)</th>
             </tr>
             <tr>
