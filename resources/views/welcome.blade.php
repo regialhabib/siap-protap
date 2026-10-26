@@ -85,23 +85,23 @@
                             <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
                         </div>
                         <div class="mt-5 grid grid-cols-2 gap-3">
-                            @foreach (['Tanggal Pengamatan', 'Kecamatan', 'Komoditas', 'OPT (Hama/Penyakit)'] as $fieldLabel)
+                            @foreach (['Tanggal Pengamatan' => '12 Oktober 2026', 'Kecamatan' => 'Rimbo Bujang', 'Komoditas' => 'Karet', 'OPT (Hama/Penyakit)' => 'Gugur Daun'] as $fieldLabel => $exampleValue)
                                 <div>
-                                    <p class="text-[11px] font-semibold text-gray-500">{{ $fieldLabel }}</p>
-                                    <div class="mt-1 h-8 rounded-md border border-gray-200 bg-gray-50"></div>
+                                    <p class="text-xs font-semibold text-gray-500">{{ $fieldLabel }}</p>
+                                    <p class="mt-1 rounded-md border border-gray-200 bg-gray-50 px-3 py-1.5 text-sm font-medium text-gray-800">{{ $exampleValue }}</p>
                                 </div>
                             @endforeach
                         </div>
-                        <p class="mt-5 text-[11px] font-semibold text-gray-500">Serangan Tambahan (Ha)</p>
+                        <p class="mt-5 text-xs font-semibold text-gray-500">Serangan Tambahan (Ha)</p>
                         <div class="mt-2 grid grid-cols-3 gap-2 text-center text-xs font-semibold">
-                            <div class="rounded-md bg-amber-50 text-amber-700 py-2">Ringan</div>
-                            <div class="rounded-md bg-red-50 text-red-700 py-2">Berat</div>
-                            <div class="rounded-md bg-gray-100 text-gray-700 py-2">Jumlah</div>
+                            @foreach (['Ringan' => ['1,5', 'bg-amber-50 text-amber-700'], 'Berat' => ['0,5', 'bg-red-50 text-red-700'], 'Jumlah' => ['2', 'bg-gray-100 text-gray-700']] as $attackLevel => [$attackValue, $attackClasses])
+                                <div class="rounded-md py-2 {{ $attackClasses }}">{{ $attackLevel }}<span class="block text-sm font-bold">{{ $attackValue }} Ha</span></div>
+                            @endforeach
                         </div>
-                        <p class="mt-5 text-[11px] font-semibold text-gray-500">Luas Pengendalian per Sumber (Ha)</p>
-                        <div class="mt-2 grid grid-cols-4 gap-2 text-center text-[11px] font-medium text-gray-600">
-                            @foreach (['APBD Kab', 'APBD Prov', 'APBN', 'Masyarakat'] as $fundingSource)
-                                <div class="rounded-md border border-gray-200 py-2">{{ $fundingSource }}</div>
+                        <p class="mt-5 text-xs font-semibold text-gray-500">Luas Pengendalian per Sumber Dana (Ha)</p>
+                        <div class="mt-2 grid grid-cols-4 gap-2 text-center text-xs font-medium text-gray-600">
+                            @foreach (['APBD I' => '1', 'APBD II' => '0,5', 'Masyarakat' => '0', 'APBN' => '0'] as $fundingSource => $controlValue)
+                                <div class="rounded-md border border-gray-200 py-2">{{ $fundingSource }}<span class="block text-sm font-bold text-gray-800">{{ $controlValue }}</span></div>
                             @endforeach
                         </div>
                         <div class="mt-6 h-10 rounded-md bg-emerald-600 flex items-center justify-center text-sm font-bold text-white">Simpan</div>
@@ -121,7 +121,7 @@
                 $features = [
                     [
                         'title' => 'Input Pengamatan Lapangan',
-                        'description' => 'Petugas mencatat lokasi, komoditas, OPT, luas serangan ringan/sedang/berat, dan luas pengendalian per sumber dana.',
+                        'description' => 'Petugas mencatat lokasi, komoditas, OPT, luas serangan ringan dan berat, serta luas pengendalian per sumber dana.',
                         'icon' => 'M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z',
                     ],
                     [
@@ -131,7 +131,7 @@
                     ],
                     [
                         'title' => 'Laporan Bulanan, Triwulan & Tahunan',
-                        'description' => 'Rekapitulasi otomatis yang dapat difilter berdasarkan periode, UPPT, dan komoditas.',
+                        'description' => 'Rekapitulasi otomatis per periode Februari–Januari: bulanan per UPPT dan kecamatan, triwulan dan tahunan per kabupaten.',
                         'icon' => 'M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
                     ],
                     [
@@ -175,9 +175,9 @@
 
                 @php
                     $reportingSteps = [
-                        ['title' => 'Login Petugas', 'description' => 'Petugas POPT masuk menggunakan akun yang didaftarkan Administrator.'],
+                        ['title' => 'Masuk ke Sistem', 'description' => 'Petugas POPT masuk dengan akun yang didaftarkan atau disetujui Administrator.'],
                         ['title' => 'Isi Pengamatan', 'description' => 'Pilih kecamatan, komoditas, dan OPT, lalu isi kondisi serangan serta cara pengendalian.'],
-                        ['title' => 'Validasi & Simpan', 'description' => 'Sistem memeriksa kelengkapan data sebelum menyimpannya secara terpusat.'],
+                        ['title' => 'Periksa & Simpan', 'description' => 'Sistem memeriksa kelengkapan data dan memastikan pengendalian tidak melebihi luas serangan sebelum menyimpan.'],
                         ['title' => 'Pantau & Rekap', 'description' => 'Administrator memantau dashboard dan mencetak laporan bulanan, triwulan, atau tahunan.'],
                     ];
                 @endphp
@@ -219,7 +219,7 @@
                     <p class="text-xs font-bold text-emerald-600 uppercase tracking-widest">Petugas Lapangan (POPT)</p>
                     <h3 class="mt-2 text-xl font-bold text-gray-900">Mencatat kondisi di lapangan</h3>
                     <ul class="mt-6 space-y-3 text-sm text-gray-600">
-                        @foreach (['Menginput hasil pengamatan OPT di wilayah tugas', 'Mencatat luas serangan dan tindakan pengendalian', 'Memperbarui data pengamatan yang sudah dikirim', 'Melihat riwayat pengamatan pribadi'] as $poptCapability)
+                        @foreach (['Menginput hasil pengamatan OPT di wilayah UPPT-nya', 'Mencatat luas serangan dan tindakan pengendalian', 'Memperbaiki data dalam '.\App\Models\Pengamatan::EDIT_WINDOW_DAYS.' hari setelah diinput', 'Memantau kondisi serangan di wilayahnya lewat dashboard'] as $poptCapability)
                             <li class="flex items-start">
                                 <svg class="w-5 h-5 mr-3 shrink-0 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
                                 {{ $poptCapability }}
@@ -251,7 +251,7 @@
     </main>
 
     <footer class="border-t border-gray-200 bg-white">
-        <div class="max-w-6xl mx-auto px-4 sm:px-6 py-6 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-gray-400">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 py-6 flex flex-col sm:flex-row items-center justify-between gap-2 text-center text-sm text-gray-600">
             <p>&copy; {{ date('Y') }} Dinas Perkebunan Provinsi Jambi</p>
             <p>Sistem Informasi Administrasi Pelaporan Proteksi Tanaman Perkebunan</p>
         </div>
