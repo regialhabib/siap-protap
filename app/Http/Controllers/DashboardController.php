@@ -64,18 +64,21 @@ class DashboardController extends Controller
      */
     private function recentObservations(User $user, PengamatanHistoryService $history): LengthAwarePaginator
     {
-        $historyRows = Pengamatan::where('uppt_id', $user->uppt_id)
-            ->orderBy('tanggal_pengamatan')
-            ->orderBy('id')
-            ->get();
-        $history->attachRunningTotals($historyRows);
-        $historyById = $historyRows->keyBy('id');
-
         $pengamatans = Pengamatan::with(['komoditas', 'opt', 'jenisOpt', 'uppt', 'kecamatan'])
             ->where('uppt_id', $user->uppt_id)
             ->latest('tanggal_pengamatan')
             ->paginate(5)
             ->withQueryString();
+
+        // Angka berjalan cukup dihitung dari periode yang tampil di halaman ini, bukan seluruh riwayat UPPT.
+        $periodes = $pengamatans->getCollection()->map(fn (Pengamatan $pengamatan): int => PeriodePengamatan::forDate($pengamatan->tanggal_pengamatan));
+        $historyRows = $periodes->isEmpty() ? collect() : Pengamatan::where('uppt_id', $user->uppt_id)
+            ->observedBetween(PeriodePengamatan::start($periodes->min()), PeriodePengamatan::end($periodes->max()))
+            ->orderBy('tanggal_pengamatan')
+            ->orderBy('id')
+            ->get();
+        $history->attachRunningTotals($historyRows);
+        $historyById = $historyRows->keyBy('id');
 
         $pengamatans->getCollection()->each(function (Pengamatan $pengamatan) use ($historyById): void {
             $historyRecord = $historyById->get($pengamatan->id);
