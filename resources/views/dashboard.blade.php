@@ -61,41 +61,46 @@
     <!-- Stats Cards (Solid Background Accents) -->
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 lg:gap-6 mb-8">
         <!-- Card 1 (Emerald) -->
-        <div class="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl shadow-md p-5 lg:p-6 text-white border border-emerald-700/20">
-            <div class="flex items-center justify-between mb-3">
+        <div class="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl shadow-md grid grid-cols-[1fr_auto] items-center gap-x-4 p-4 sm:block sm:p-5 lg:p-6 text-white border border-emerald-700/20">
+            <div class="flex items-center justify-between sm:mb-3">
                 <h3 class="text-sm font-semibold text-emerald-100">Total Pengamatan</h3>
-                <div class="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
+                <div class="hidden sm:block p-2 bg-white/20 rounded-lg backdrop-blur-sm">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                 </div>
             </div>
-            <div class="text-3xl font-bold" x-text="stats.total_pengamatan">{{ $stats['total_pengamatan'] }}</div>
+            <div class="col-start-2 row-span-2 row-start-1 text-2xl font-bold sm:text-3xl" x-text="stats.total_pengamatan">{{ $stats['total_pengamatan'] }}</div>
             <p class="text-xs text-emerald-100 mt-1">Data terkumpul bulan ini</p>
         </div>
 
         <!-- Card 2 (Red) -->
-        <div class="bg-gradient-to-br from-red-500 to-red-600 rounded-xl shadow-md p-5 lg:p-6 text-white border border-red-700/20">
-            <div class="flex items-center justify-between mb-3">
-                <h3 class="text-sm font-semibold text-red-100">Luas Serangan (Ha)</h3>
-                <div class="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
+        <div class="bg-gradient-to-br from-red-500 to-red-600 rounded-xl shadow-md grid grid-cols-[1fr_auto] items-center gap-x-4 p-4 sm:block sm:p-5 lg:p-6 text-white border border-red-700/20">
+            <div class="flex items-center justify-between sm:mb-3">
+                <h3 class="text-sm font-semibold text-red-100">@can('popt') Kondisi Serangan Saat Ini @else Luas Serangan (Ha) @endcan</h3>
+                <div class="hidden sm:block p-2 bg-white/20 rounded-lg backdrop-blur-sm">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
                 </div>
             </div>
-            <div class="text-3xl font-bold" x-text="formatNumber(stats.total_luas_serangan)">{{ \App\Services\PengamatanHistoryService::hektare((float) $stats['total_luas_serangan']) }}</div>
-            <p class="text-xs text-red-100 mt-1 font-medium flex items-center">
-                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
-                Total luasan terdampak
-            </p>
+            @can('popt')
+                <div class="col-start-2 row-span-2 row-start-1 text-2xl font-bold sm:text-3xl"><span x-text="formatNumber(stats.kondisi_serangan)">{{ \App\Services\PengamatanHistoryService::hektare((float) $stats['kondisi_serangan']) }}</span> Ha</div>
+                <p class="text-xs text-red-100 mt-1 font-medium">Sisa serangan setelah pengendalian</p>
+            @else
+                <div class="col-start-2 row-span-2 row-start-1 text-2xl font-bold sm:text-3xl" x-text="formatNumber(stats.total_luas_serangan)">{{ \App\Services\PengamatanHistoryService::hektare((float) $stats['total_luas_serangan']) }}</div>
+                <p class="text-xs text-red-100 mt-1 font-medium flex items-center">
+                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+                    Total luasan terdampak
+                </p>
+            @endcan
         </div>
 
         <!-- Card 3 (Amber) -->
-        <div class="bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl shadow-md p-5 lg:p-6 text-white border border-amber-700/20">
-            <div class="flex items-center justify-between mb-3">
+        <div class="bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl shadow-md grid grid-cols-[1fr_auto] items-center gap-x-4 p-4 sm:block sm:p-5 lg:p-6 text-white border border-amber-700/20">
+            <div class="flex items-center justify-between sm:mb-3">
                 <h3 class="text-sm font-semibold text-amber-100">Komoditas Terdampak</h3>
-                <div class="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
+                <div class="hidden sm:block p-2 bg-white/20 rounded-lg backdrop-blur-sm">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
                 </div>
             </div>
-            <div class="text-3xl font-bold" x-text="stats.komoditas_terdampak">{{ $stats['komoditas_terdampak'] }}</div>
+            <div class="col-start-2 row-span-2 row-start-1 text-2xl font-bold sm:text-3xl" x-text="stats.komoditas_terdampak">{{ $stats['komoditas_terdampak'] }}</div>
             <p class="text-xs text-amber-100 mt-1">Jenis tanaman terserang</p>
         </div>
     </div>
@@ -389,6 +394,7 @@
                     total_pengamatan: {{ $stats['total_pengamatan'] }},
                     total_luas_serangan: {{ $stats['total_luas_serangan'] }},
                     komoditas_terdampak: {{ $stats['komoditas_terdampak'] }}
+                    kondisi_serangan: {{ $stats['kondisi_serangan'] }},
                 },
                 
                 chartData: @json($chartData),

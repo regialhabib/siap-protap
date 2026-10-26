@@ -188,6 +188,7 @@ class DashboardTest extends TestCase
             && $chains[0]->kondisi_serangan_ha === 3.0
             && $chains[1]->sudah_lapor === true
             && str_contains($chains[0]->input_url, 'komoditas_id='.$karet->id));
+        $response->assertViewHas('stats', fn (array $stats): bool => $stats['kondisi_serangan'] === 5.0);
     }
 
     public function test_popt_dashboard_skips_chains_already_controlled_to_zero(): void

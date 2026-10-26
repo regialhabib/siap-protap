@@ -34,9 +34,12 @@ class DashboardController extends Controller
         $statsQuery = Pengamatan::observedBetween($monthStart, $monthStart->copy()->endOfMonth())
             ->when($isPopt, fn ($query) => $query->where('uppt_id', $user->uppt_id));
 
+        $activeChains = $this->activeChains($user, $history);
+
         $stats = [
             'total_pengamatan' => $statsQuery->count(),
             'total_luas_serangan' => $statsQuery->sum('serangan_jumlah'),
+            'kondisi_serangan' => round($activeChains->sum('kondisi_serangan_ha'), 2),
             'komoditas_terdampak' => $statsQuery->distinct('komoditas_id')->count('komoditas_id'),
         ];
 
@@ -50,8 +53,6 @@ class DashboardController extends Controller
                 'table_html' => $pengamatans ? view('partials.dashboard-table', compact('pengamatans'))->render() : null,
             ]);
         }
-
-        $activeChains = $this->activeChains($user, $history);
 
         return view('dashboard', compact('stats', 'chartData', 'pengamatans', 'activeChains'));
     }
